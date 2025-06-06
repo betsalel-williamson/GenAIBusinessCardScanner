@@ -3,4 +3,4 @@ dbt_card_processor:
   outputs:
     dev:
       type: duckdb
-      path: dbt_project/target/dbt.duckdb
+      path: target/dbt.duckdb
