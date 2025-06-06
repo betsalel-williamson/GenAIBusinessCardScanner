@@ -1,0 +1,28 @@
+-- This model primarily serves to define the schema structure.
+-- It won't hold data itself but allows DBT to manage the table contract.
+select
+    cast(null as string) as company,
+    cast(null as string) as website,
+    cast(null as string) as prefix,
+    cast(null as string) as full_name,
+    cast(null as string) as first_name,
+    cast(null as string) as last_name,
+    cast(null as string) as title,
+    cast(null as string) as address_1,
+    cast(null as string) as address_2,
+    cast(null as string) as address_3,
+    cast(null as string) as city,
+    cast(null as string) as state_or_state_code,
+    cast(null as string) as country_or_country_code,
+    cast(null as string) as zip_code_or_post_code,
+    cast(null as string) as phone,
+    cast(null as string) as extension,
+    cast(null as string) as cell,
+    cast(null as string) as email,
+    cast(null as string) as retailer_type,
+    cast(null as string) as contact_type,
+    cast(null as string) as source,
+    cast(null as string) as date_imported,
+    cast(null as string) as time_imported,
+    cast(null as string) as notes,
+    cast(null as string) as products

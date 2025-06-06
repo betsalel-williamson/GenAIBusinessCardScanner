@@ -1,0 +1,61 @@
+version: 2
+
+models:
+  - name: stg_cards_data
+    description: "Staging model defining the data contract for business card extractions."
+    columns:
+      - name: company
+        description: "Identify the primary business name. Prioritize the legal name if present (e.g., `Peachy Clean Cutz LLC`). If only a brand name is visible, use that."
+      - name: website
+        description: "The company's website URL."
+      - name: prefix
+        description: "An honorific prefix for the contact's name (e.g., Mr., Mrs., Dr.)."
+      - name: full_name
+        description: "The full name of the contact person."
+      - name: first_name
+        description: "The first name extracted from the Full Name."
+      - name: last_name
+        description: "The last name extracted from the Full Name."
+      - name: title
+        description: "The job title of the contact, usually found under their name."
+      - name: address_1
+        description: "The first line of the street address. Split the physical address logically across the address_1 address_2 and address_3 fields."
+      - name: address_2
+        description: "The second line of the address (e.g., suite, apartment number).Split the physical address logically across the address_1 address_2 and address_3 fields."
+      - name: address_3
+        description: "The third line of the address. Split the physical address logically across the address_1 address_2 and address_3 fields."
+      - name: city
+        description: "The city name from the address."
+      - name: state_or_state_code
+        description: "The state, province, or territory."
+      - name: country_or_country_code
+        description: "The country name. Infer 'United States' for US-formatted addresses if not specified."
+      - name: zip_code_or_post_code
+        description: "The postal or ZIP code."
+      - name: phone
+        description: "The primary phone number."
+      - name: extension
+        description: "A phone number extension, if present."
+      - name: cell
+        description: "The cellular or mobile phone number, if explicitly labeled."
+      - name: fax
+        description: "The fax number, if explicitly labeled."
+      - name: email
+        description: "The primary email address found on the card."
+      - name: retailer_type
+        description: "Inferred type of business (e.g., Retail Store, Groomer, Manufacturer)."
+      - name: contact_type
+        description: >
+          Classify the contact as either `B2B` (Business-to-Business) or `D2C` (Direct-to-Consumer).
+          * Use **`B2B`** if the company primarily sells to other businesses (e.g., packaging, ingredients, wholesale, logistics).
+          * Use **`D2C`** if they primarily sell to the public (e.g., a single grooming salon, a local pet shop, a photographer).
+      - name: source
+        description: "The filename of the source PDF. If the prompt says `Filename: card_001.jpg`, the value for this key must be `card_001.jpg`."
+      - name: date_imported
+        description: "The UTC date of processing in ISO 8601 (YYYY-MM-DD) format."
+      - name: time_imported
+        description: "The UTC time of processing in ISO 8601 (HH:MM:SSZ) format."
+      - name: notes
+        description: "A compilation of qualitative information, including slogans, visual details, handwritten notes, and decoded QR code URLs."
+      - name: products
+        description: "Capture the main product, service, or tagline that describes what the company does (e.g., `Jerky Specialties for dogs`, `Trucker hats for dogs...and for their humans`)."

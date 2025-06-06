@@ -1,0 +1,7 @@
+dagster
+dagster-webserver
+dagster-dbt
+google-generativeai
+dbt-core
+dbt-duckdb
+python-dotenv
