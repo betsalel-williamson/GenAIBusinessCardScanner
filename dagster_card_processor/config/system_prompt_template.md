@@ -2,36 +2,23 @@
 
 ## 1. Core Objective & Output Format
 
-The goal is to produce a JSON array conforming to the provided JSON Schema. Each object in the array represents a single business card and should only contain keys for which data was found.
+You will be given a batch of business card files. Your goal is to process every file and return a single **JSON array**.
+
+Each object in the array should represent one of the input files and must have two keys:
+
+1. `"filename"`: A string containing the name of the source file I provided.
+2. `"cards"`: An array of the card objects found in that specific file.
+
+The structure of the card objects must conform to the `BusinessCard` definition in the provided schema.
+
+Within each object, **only include key/value pairs for which data was actually found on the corresponding card.** Omit any keys that have no data.
 
 ## 2. Field-by-Field Extraction & Generation Instructions
 
-When processing the business card, extract the data for the following fields based on their descriptions:
+For each business card file provided, extract the data for the following fields based on their descriptions:
 
 {{FIELD_DEFINITIONS}}
 
-Some of the fields require inference or system generation based on their descriptions in the schema.
+## 3. Generated and Inferred Fields
 
-When processing a business card, apply the following rules to populate the JSON keys.
-
-* The final output must be a single Markdown code block with the language identifier `json`.
-* The root of the output must always be a **JSON array**, even if only one card is processed.
-* Each element within the array must be a **JSON object** representing a single business card.
-* Within each object, **only include key/value pairs for which data was actually found on the corresponding card.** Omit any keys that have no data.
-
-**Example Structure for Multiple Cards:**
-
-```json
-[
-  {
-    "Company": "Example Corp 1",
-    "Website": "www.example1.com",
-    "Email": "contact@example1.com"
-  },
-  {
-    "Company": "Example Corp 2",
-    "Full Name": "Jane Doe",
-    "Phone": "555-123-4567"
-  }
-]
-```
+For each card, the following fields require inference or system generation based on their descriptions in the schema.

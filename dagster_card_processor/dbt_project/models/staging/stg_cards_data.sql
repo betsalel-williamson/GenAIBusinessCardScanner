@@ -25,4 +25,5 @@ select
     cast(null as string) as date_imported,
     cast(null as string) as time_imported,
     cast(null as string) as notes,
-    cast(null as string) as products
+    cast(null as string) as products,
+    cast(null as string) as source_pdf_url

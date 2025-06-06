@@ -50,11 +50,13 @@ models:
           * Use **`B2B`** if the company primarily sells to other businesses (e.g., packaging, ingredients, wholesale, logistics).
           * Use **`D2C`** if they primarily sell to the public (e.g., a single grooming salon, a local pet shop, a photographer).
       - name: source
-        description: "The filename of the source PDF. If the prompt says `Filename: card_001.jpg`, the value for this key must be `card_001.jpg`."
+        description: "[SYSTEM-INJECTED] The filename of the source PDF."
       - name: date_imported
-        description: "The UTC date of processing in ISO 8601 (YYYY-MM-DD) format."
+        description: "[SYSTEM-INJECTED] The UTC date of processing in YYYY-MM-DD format."
       - name: time_imported
-        description: "The UTC time of processing in ISO 8601 (HH:MM:SSZ) format."
+        description: "[SYSTEM-INJECTED] The UTC time of processing in HH:MM:SSZ format."
+      - name: source_pdf_url
+        description: "[SYSTEM-INJECTED] The public URL to view the source PDF."
       - name: notes
         description: "A compilation of qualitative information, including slogans, visual details, handwritten notes, and decoded QR code URLs."
       - name: products
