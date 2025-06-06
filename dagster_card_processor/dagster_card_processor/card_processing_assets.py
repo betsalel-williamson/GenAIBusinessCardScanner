@@ -13,18 +13,27 @@ class AssetConfig(Config):
 pdf_partitions = DynamicPartitionsDefinition(name="pdf_files")
 
 
-@asset(partitions_def=pdf_partitions)
+@asset(
+    partitions_def=pdf_partitions,
+    deps=[response_schema_json],
+)
 def processed_card_json(
     context: AssetExecutionContext,
     config: AssetConfig,
     gemini: GeminiResource,
-    response_schema_json: dict,
 ) -> list:
+
+    schema_path = os.path.join(config.output_dir, "response_schema.json")
+    context.log.info(f"Loading response schema from: {schema_path}")
+    with open(schema_path, "r") as f:
+        schema = json.load(f)
+
     pdf_filename = context.partition_key
     pdf_path = os.path.join(config.input_dir, pdf_filename)
     context.log.info(f"Processing card from: {pdf_path}")
 
-    extracted_data = gemini.process_pdf(pdf_path, schema=response_schema_json)
+    # Pass the loaded schema to the resource method
+    extracted_data = gemini.process_pdf(pdf_path, schema=schema)
 
     context.add_output_metadata(
         {

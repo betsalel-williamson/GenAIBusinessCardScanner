@@ -1,7 +1,7 @@
 import os
 import json
 from dagster import asset, AssetExecutionContext, Config, AssetKey
-from .dbt_assets import dbt_manifest_path  # Import from our other file
+from .dbt_assets import dbt_manifest_path
 
 
 class AssetConfig(Config):
@@ -9,7 +9,7 @@ class AssetConfig(Config):
 
 
 @asset(deps=[AssetKey(("dbt_card_processor_assets", "stg_cards_data"))])
-def response_schema_json(context: AssetExecutionContext, config: AssetConfig) -> dict:
+def response_schema_json(context: AssetExecutionContext, config: AssetConfig) -> None:
     """Parses the dbt manifest.json to generate the JSON schema for the Gemini model."""
     with open(dbt_manifest_path) as f:
         manifest = json.load(f)
@@ -33,4 +33,3 @@ def response_schema_json(context: AssetExecutionContext, config: AssetConfig) ->
         json.dump(schema, f, indent=2)
 
     context.log.info(f"Generated response schema from DBT manifest at {output_path}")
-    return schema
