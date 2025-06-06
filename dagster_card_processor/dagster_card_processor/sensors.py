@@ -1,5 +1,6 @@
-import json
 import os
+import json
+import time  # <-- IMPORT THE TIME MODULE
 from dagster import (
     sensor,
     SensorEvaluationContext,
@@ -7,51 +8,48 @@ from dagster import (
     RunRequest,
     AssetSelection,
 )
-from .card_processing_assets import pdf_partitions, AssetConfig
+from .card_processing_assets import BatchAssetConfig
 
 
-@sensor(asset_selection=AssetSelection.assets("processed_card_json"))
+@sensor(asset_selection=AssetSelection.assets("per_batch_card_data_json"))
 def pdf_files_sensor(context: SensorEvaluationContext):
     """
-    A sensor that checks for new PDF files in the input directory and creates
-    partitions and run requests for them.
+    A sensor that checks for new PDF files and triggers a single run for the entire batch.
     """
-    # Use the default config to find the input directory.
-    # In a real-world scenario, you might fetch this from a more robust config source.
-    config = AssetConfig()
+    config = BatchAssetConfig(pdf_filenames=[])
     input_dir = config.input_dir
 
     if not os.path.isdir(input_dir):
         return
 
-    # Get the set of files currently in the directory
     current_files = {f for f in os.listdir(input_dir) if f.lower().endswith(".pdf")}
-
-    # Get the set of partitions that Dagster already knows about from the last run
-    # The cursor acts as the sensor's memory.
     last_processed_files = set(json.loads(context.cursor)) if context.cursor else set()
-
-    # Find the new files that haven't been processed yet
-    new_files = current_files - last_processed_files
+    new_files = sorted(list(current_files - last_processed_files))
 
     if not new_files:
         return
 
-    # For each new file, create a run request
-    run_requests = [
-        RunRequest(
-            run_key=filename,
-            partition_key=filename,
-        )
-        for filename in new_files
-    ]
+    # --- THIS IS THE FIX ---
+    # Generate a unique run_key using the current timestamp.
+    # Using int() makes it a bit cleaner than a float.
+    run_key = f"batch_{int(time.time())}"
 
-    # Tell Dagster to add these new files as partitions
-    new_partitions_request = pdf_partitions.build_add_request(list(new_files))
+    # The rest of the logic remains the same
+    run_config = {
+        "ops": {
+            # --- UPDATE THE OP NAME ---
+            "per_batch_card_data_json": {
+                "config": {
+                    "pdf_filenames": new_files,
+                    "max_batch_size": config.max_batch_size,
+                }
+            }
+        }
+    }
 
-    # Update the cursor to the current state so we don't process these files again
     context.update_cursor(json.dumps(list(current_files)))
 
-    return SensorResult(
-        run_requests=run_requests, dynamic_partitions_requests=[new_partitions_request]
+    return RunRequest(
+        run_key=run_key,
+        run_config=run_config,
     )
