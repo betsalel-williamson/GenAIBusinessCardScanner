@@ -1,7 +1,7 @@
 import os
 import json
 from dagster import asset, AssetExecutionContext, Config, AssetKey
-from .dbt_assets import dbt_manifest_path
+from .project import business_card_project
 
 class AssetConfig(Config):
     output_dir: str = os.getenv("OUTPUT_DIR", "output")
@@ -12,7 +12,7 @@ def response_schema_json(context: AssetExecutionContext, config: AssetConfig) ->
     """
     Parses the dbt manifest to generate a JSON schema for a SINGLE card object.
     """
-    with open(dbt_manifest_path) as f:
+    with open(business_card_project.manifest_path) as f:
         manifest = json.load(f)
 
     model_node = manifest["nodes"]["model.dbt_card_processor.stg_cards_data"]

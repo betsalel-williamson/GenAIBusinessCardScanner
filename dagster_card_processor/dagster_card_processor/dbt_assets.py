@@ -1,36 +1,68 @@
-from pathlib import Path
 import json
-from dagster import AssetExecutionContext
+import os
+from dagster import AssetExecutionContext, asset
 from dagster_dbt import DbtCliResource, dbt_assets
+import duckdb
+from .config import FileConfig
+from .card_processing_assets import processed_card_json
+from .project import business_card_project
 
-DBT_PROJECT_PATH = Path(__file__).parent.parent.joinpath("dbt_project")
+duckdb_database_path = business_card_project.project_dir.joinpath("business_cards.duckdb")
 
-dbt_resource = DbtCliResource(
-    project_dir=DBT_PROJECT_PATH.as_posix(),
-    profiles_dir=DBT_PROJECT_PATH.as_posix()
-)
 
-dbt_manifest_path = DBT_PROJECT_PATH.joinpath("target", "manifest.json")
+@asset(compute_kind="python", deps=[processed_card_json])
+def aggregated_results_json_to_db(context: AssetExecutionContext, config: FileConfig) -> None:
+    """
+    Aggregates all individual processed card JSON files into a single results.json file.
+    Returns the path to the aggregated file.
+    """
+    output_dir = config.output_dir
+    all_results = []
 
-@dbt_assets(
-    manifest=dbt_manifest_path
-)
+    processed_files = [
+        f
+        for f in os.listdir(output_dir)
+        if f.startswith("processed_") and f.endswith(".json")
+    ]
+    context.log.info(f"Found {len(processed_files)} processed files to aggregate.")
+    for filename in processed_files:
+        with open(os.path.join(output_dir, filename), "r") as f:
+            # Each processed_*.json file contains a single JSON object
+            card_data = json.load(f)
+            all_results.append(card_data)
+    final_output_path = os.path.join(output_dir, "results.json")
+    with open(final_output_path, "w", encoding="utf-8") as f:
+        json.dump(all_results, f, ensure_ascii=False, indent=2)
+    context.log.info(f"Aggregated results saved to {final_output_path}")
+    context.add_output_metadata(
+        {
+            "total_records": len(all_results),
+            "total_files_aggregated": len(processed_files),
+            "output_path": final_output_path,
+        }
+    )
+
+    with duckdb.connect(os.fspath(duckdb_database_path)) as con:
+        con.execute("create schema if not exists raw_card_data")
+        # Use an f-string to correctly insert the path variable
+        load_query = "create or replace table raw_card_data.validated_json_blobs as select * from read_json_auto(?)"
+        con.execute(load_query, [final_output_path])
+        context.log.info(
+            f"Loaded data from {final_output_path} into raw_card_data.validated_json_blobs"
+        )
+
+        # Count the records and add as metadata
+        record_count_result = con.execute(
+            "SELECT COUNT(*) FROM raw_card_data.validated_json_blobs"
+        ).fetchone()
+        record_count = record_count_result[0] if record_count_result else 0
+        context.add_output_metadata({"num_records_loaded": record_count})
+        context.log.info(f"Loaded {record_count} records into the table.")
+
+
+@dbt_assets(manifest=business_card_project.manifest_path)
 def dbt_card_processor_assets(
     context: AssetExecutionContext,
     dbt: DbtCliResource,
 ):
-    """
-    This asset executes the dbt project. It receives the path to the aggregated
-    JSON file from the upstream `aggregated_results_json` asset.
-    """
-    # The file path is the value of our input.
-    json_path = "/Users/saul/Repos/businessCardGenAI/dagster_card_processor/output/results.json"
-
-    dbt_vars = {"validated_json_path": json_path}
-
-    context.log.info(f"Running dbt build for stg_cards_data with vars: {dbt_vars}")
-
-    # We only want to run the model that depends on this input.
-    dbt_build_args = ["build", "--select", "stg_cards_data", "--vars", json.dumps(dbt_vars)]
-
-    yield from dbt.cli(dbt_build_args, context=context).stream()
+    yield from dbt.cli(["build"], context=context).stream()
