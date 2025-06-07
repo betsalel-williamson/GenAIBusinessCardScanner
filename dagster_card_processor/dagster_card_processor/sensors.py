@@ -20,7 +20,6 @@ def pdf_files_sensor(context: SensorEvaluationContext):
     if not new_files:
         return
 
-    # --- THIS IS THE FIX ---
     # Define the tag that matches the rule in dagster.yaml
     concurrency_tag = {"concurrency_key": "gemini_api"}
 
@@ -29,7 +28,7 @@ def pdf_files_sensor(context: SensorEvaluationContext):
         RunRequest(
             run_key=filename,
             partition_key=filename,
-            tags=concurrency_tag, # <-- ADD THIS LINE
+            tags=concurrency_tag,
         )
         for filename in new_files
     ]

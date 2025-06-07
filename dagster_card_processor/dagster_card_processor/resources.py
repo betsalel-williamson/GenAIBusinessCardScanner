@@ -4,7 +4,6 @@ from pathlib import Path
 import time
 import google.generativeai as genai
 from google.generativeai import protos as genai_protos
-# --- ADD THESE IMPORTS ---
 from google.api_core import exceptions as google_exceptions
 from dagster import ConfigurableResource, InitResourceContext, get_dagster_logger, RetryRequested
 
@@ -18,7 +17,7 @@ class GeminiResource(ConfigurableResource):
     _log = get_dagster_logger()
 
     def _generate_prompt_from_schema(self, schema: dict) -> str:
-        # This helper method is now correct for the simpler schema
+
         with open(self.prompt_template_path, 'r') as f:
             template = f.read()
 
@@ -32,7 +31,7 @@ class GeminiResource(ConfigurableResource):
         return template.replace("{{FIELD_DEFINITIONS}}", field_text)
 
     def _convert_json_schema_to_gemini_schema(self, json_dict: dict) -> genai_protos.Schema:
-        # This helper method is also now correct for the simpler schema
+
         if not json_dict: return None
         type_map = {
             "STRING": genai_protos.Type.STRING, "NUMBER": genai_protos.Type.NUMBER,
@@ -74,7 +73,7 @@ class GeminiResource(ConfigurableResource):
             response_schema=gemini_schema,
             max_output_tokens=8192,
         )
-        # --- NEW: WRAP THE API CALL WITH API-AWARE RETRY LOGIC ---
+
         try:
             response = self._model.generate_content(
                 prompt_parts,

@@ -28,8 +28,6 @@ def response_schema_json(context: AssetExecutionContext, config: AssetConfig) ->
                 "description": description
             }
 
-    # --- THIS IS THE NEW, SIMPLER SCHEMA ---
-    # It defines a single object, not an array.
     schema = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "Business Card",

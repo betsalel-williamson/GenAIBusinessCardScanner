@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from dagster import AssetExecutionContext, AssetKey, AssetIn
+from dagster import AssetExecutionContext
 from dagster_dbt import DbtCliResource, dbt_assets
 
 DBT_PROJECT_PATH = Path(__file__).parent.parent.joinpath("dbt_project")
@@ -12,20 +12,16 @@ dbt_resource = DbtCliResource(
 
 dbt_manifest_path = DBT_PROJECT_PATH.joinpath("target", "manifest.json")
 
-# This is the key to connecting the Python and DBT assets.
-# We declare that this dbt asset collection has an input from a regular asset.
 @dbt_assets(
-    manifest=dbt_manifest_path,
+    manifest=dbt_manifest_path
 )
 def dbt_card_processor_assets(
     context: AssetExecutionContext,
     dbt: DbtCliResource,
-    # The input is passed here. We can name it whatever we want.
-    # validated_cards_data_input: str
 ):
     """
-    This asset executes the dbt project. It receives the path to the validated
-    JSON file from the upstream `validated_cards_data` asset.
+    This asset executes the dbt project. It receives the path to the aggregated
+    JSON file from the upstream `aggregated_results_json` asset.
     """
     # The file path is the value of our input.
     json_path = "/Users/saul/Repos/businessCardGenAI/dagster_card_processor/output/results.json"

@@ -14,7 +14,7 @@ from .schema_assets import response_schema_json
 )
 def processed_card_json(
     context: AssetExecutionContext,
-    config: FileConfig, # <-- Use the shared config class
+    config: FileConfig,
     gemini: GeminiResource,
 ) -> None:
     """

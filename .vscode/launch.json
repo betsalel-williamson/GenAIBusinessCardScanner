@@ -15,8 +15,10 @@
       ],
       "envFile": "${workspaceFolder}/dagster_card_processor/.env",
       "subProcess": true,
-      "cwd": "${workspaceFolder}/dagster_card_processor"
-
+      "cwd": "${workspaceFolder}/dagster_card_processor",
+      "env": {
+        "DAGSTER_HOME": "${workspaceFolder}/dagster_card_processor/.tmp_dagster_home_5esbzrji"
+      }
     }
   ]
 }
