@@ -1,18 +1,15 @@
 import os
 import json
 from dagster import sensor, SensorEvaluationContext, SensorResult, RunRequest
-from .partitions import pdf_partitions # <-- Import from the new location
-from .config import FileConfig # <-- Import the shared config
+from .partitions import pdf_partitions
 
 @sensor(job_name="process_all_assets")
 def pdf_files_sensor(context: SensorEvaluationContext):
     """
-    A sensor that checks for new PDF files and creates a partition and a run request for each one.
+    A sensor that checks for new PDF files and creates a partition and a run request for each one,
+    tagging each run for concurrency control.
     """
-    # Use the centralized config to get the input directory
-    config = FileConfig()
-    input_dir = config.input_dir
-
+    input_dir = "cards_to_process"
     if not os.path.isdir(input_dir):
         return
 
@@ -23,8 +20,17 @@ def pdf_files_sensor(context: SensorEvaluationContext):
     if not new_files:
         return
 
+    # --- THIS IS THE FIX ---
+    # Define the tag that matches the rule in dagster.yaml
+    concurrency_tag = {"concurrency_key": "gemini_api"}
+
+    # Create one run request for each new file, applying the tag
     run_requests = [
-        RunRequest(run_key=filename, partition_key=filename)
+        RunRequest(
+            run_key=filename,
+            partition_key=filename,
+            tags=concurrency_tag, # <-- ADD THIS LINE
+        )
         for filename in new_files
     ]
 
