@@ -11,11 +11,11 @@ class AssetConfig(Config):
     )
 
 
-@asset(deps=[AssetKey(("dbt_card_processor_assets", "stg_cards_data"))])
+@asset(deps=[AssetKey(["staging", "stg_cards_data"])])
 def response_schema_json(context: AssetExecutionContext, config: AssetConfig) -> dict:
     """
-    Parses the dbt manifest to generate a JSON schema for the Gemini model.
-    The schema defines an array of objects, where each object contains a filename and a list of cards.
+    Parses the dbt manifest to generate the JSON schema for the Gemini model.
+    The schema defines a single object containing a list of file extractions.
     """
     with open(dbt_manifest_path) as f:
         manifest = json.load(f)
@@ -33,25 +33,34 @@ def response_schema_json(context: AssetExecutionContext, config: AssetConfig) ->
                 "description": description,
             }
 
-    # --- THIS IS THE NEW SCHEMA STRUCTURE ---
+    # --- THIS IS THE NEW, ROBUST SCHEMA STRUCTURE ---
     schema = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "Batched Card Extraction Response",
-        "description": "An array of objects, where each object represents a file and its extracted cards.",
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-                "filename": {
-                    "type": "string",
-                    "description": "The name of the source PDF file.",
+        "description": "A single object containing a list of all file extractions.",
+        "type": "object",
+        "properties": {
+            "file_extractions": {
+                "type": "array",
+                "description": "A list where each item corresponds to one processed file.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "filename": {
+                            "type": "string",
+                            "description": "The name of the source PDF file.",
+                        },
+                        "cards": {
+                            "type": "array",
+                            "description": "A list of business card objects extracted from this file.",
+                            "items": {
+                                "type": "object",
+                                "properties": business_card_properties,
+                            },
+                        },
+                    },
                 },
-                "cards": {
-                    "type": "array",
-                    "description": "A list of business card objects extracted from this file.",
-                    "items": {"type": "object", "properties": business_card_properties},
-                },
-            },
+            }
         },
     }
 

@@ -29,12 +29,25 @@ def per_batch_card_data_json(
         f"Processing batch of {len(pdf_paths)} cards for run {context.run_id}."
     )
 
-    nested_results = gemini.process_pdf_batch(pdf_paths, schema=ai_schema)
+    # The AI now returns a single object: {"file_extractions": [...]}
+    response_object = gemini.process_pdf_batch(pdf_paths, schema=ai_schema)
+    output_path = os.path.join(config.output_dir, f"json_dump_batch_{context.run_id}.json")
+    with open(output_path, "w", encoding="utf-8") as fp:
+        context.add_output_metadata(
+            {
+                "response_object": MetadataValue.json(json.dump(response_object, fp)),
+            }
+        )
 
+
+    # --- UPDATED PARSING LOGIC ---
     final_results = []
     per_card_metadata = {}
 
-    for file_object in nested_results or []:
+    # Safely get the list of file objects from the response
+    file_extractions = (response_object or {}).get("file_extractions", [])
+
+    for file_object in file_extractions:
         source_filename = file_object.get("filename")
         cards_from_file = file_object.get("cards", [])
 
@@ -43,12 +56,14 @@ def per_batch_card_data_json(
             continue
 
         for card_data in cards_from_file:
+            # Inject all system-managed data
             card_data["source"] = source_filename
             card_data["date_imported"] = date_imported_str
             card_data["time_imported"] = time_imported_str
 
             final_results.append(card_data)
 
+            # Generate metadata for this card
             encoded_filename = quote(source_filename)
             pdf_url = f"{config.pdf_base_url}/{config.input_dir}/{encoded_filename}"
             company_name = card_data.get("Company", "Unknown Company")

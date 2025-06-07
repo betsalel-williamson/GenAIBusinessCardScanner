@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dagster: Debug Dagit UI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dagster",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": true,
+      "args": [
+        "dev",
+        "-m",
+        "dagster_card_processor"
+      ],
+      "envFile": "${workspaceFolder}/dagster_card_processor/.env",
+      "subProcess": true,
+      "cwd": "${workspaceFolder}/dagster_card_processor"
+
+    }
+  ]
+}
