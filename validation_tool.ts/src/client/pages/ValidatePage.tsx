@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useUndoableState } from '../hooks/useUndoableState';
 import { useDebounce } from '../hooks/useDebounce';
 import ImagePane from '../components/ImagePane';
-import DataEntryPane from '../components/DataEntryPane';
+import DataEntryPane, { DataEntryPaneHandle } from '../components/DataEntryPane'; // Import handle type
 import type { DataRecord, AppState, TransformationState } from '../../../types/types';
 
 // Helper to get PDF path from record source (e.g., "file.pdf" -> "/images/file.pdf")
@@ -19,7 +19,8 @@ const ValidatePage: React.FC = () => {
     const { json_filename } = useParams<{ json_filename: string }>();
     const navigate = useNavigate();
 
-    const imageWrapperRef = useRef<HTMLDivElement>(null);
+    const imageWrapperRef = useRef<HTMLDivElement>(null); // Ref for the PDF canvases container
+    const dataEntryPaneRef = useRef<DataEntryPaneHandle>(null); // Ref for the DataEntryPane component instance
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -152,8 +153,8 @@ const ValidatePage: React.FC = () => {
         if (currentRecordIndex < records.length - 1) {
             setCurrentRecordIndex(prev => prev + 1);
             setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view for new record
+            dataEntryPaneRef.current?.scrollToTop(); // Scroll fields to top
         } else {
-            // No more records, prompt to commit or go back to list
             if (window.confirm("No more records. Do you want to commit changes and go back to file list?")) {
                 handleCommit();
             } else {
@@ -166,6 +167,7 @@ const ValidatePage: React.FC = () => {
         if (currentRecordIndex > 0) {
             setCurrentRecordIndex(prev => prev - 1);
             setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view for new record
+            dataEntryPaneRef.current?.scrollToTop(); // Scroll fields to top
         }
     }, [currentRecordIndex]);
 
@@ -179,7 +181,6 @@ const ValidatePage: React.FC = () => {
             if (!response.ok) throw new Error('Failed to fetch source data.');
 
             const sourceData: DataRecord[] = await response.json();
-            // Find the original value for the specific record and key
             const originalValue = sourceData[currentRecordIndex]?.[keyToRevert];
 
             if (originalValue !== undefined) {
@@ -250,9 +251,10 @@ const ValidatePage: React.FC = () => {
             </div>
             <div className="w-1/3 max-w-md h-full flex flex-col border-l border-gray-200 bg-white">
                 <DataEntryPane
+                    ref={dataEntryPaneRef}
                     currentRecord={currentRecord}
                     onFieldChange={handleFieldChange}
-                    onAddField={handleAddField} // Pass the new handler
+                    onAddField={handleAddField}
                     onNextRecord={handleNextRecord}
                     onPrevRecord={handlePrevRecord}
                     autosaveStatus={autosaveStatus}
