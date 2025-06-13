@@ -73,7 +73,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
 
     const loadingTask = pdfjsRef.current.getDocument(pdfSrc);
     loadingTask.promise.then(
-      async (pdf) => { // Use async here to await getPage
+      async (pdf) => {
         setPdfDoc(pdf);
         setLoadingPdf(false);
 
@@ -186,33 +186,42 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
     return () => window.removeEventListener('mouseup', handleMouseUpGlobal);
   }, []);
 
-  // Handle zoom with mouse wheel (zoom towards mouse pointer)
+  // Handle zoom/pan with mouse wheel
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const scaleAmount = 0.1; // Increased sensitivity slightly for smoother feel
-    let newScale = transformation.scale;
-    if (e.deltaY < 0) { // Zoom in
-      newScale += scaleAmount;
-    } else { // Zoom out
-      newScale -= scaleAmount;
+    e.preventDefault(); // Prevent default browser scroll/zoom
+    const currentScale = transformation.scale;
+    let newScale = currentScale;
+    let newOffsetX = transformation.offsetX;
+    let newOffsetY = transformation.offsetY;
+
+    if (e.ctrlKey) { // Interpret Ctrl + Scroll as Zoom (like many trackpads)
+      const scaleAmount = 0.1;
+      if (e.deltaY < 0) { // Zoom in
+        newScale += scaleAmount;
+      } else { // Zoom out
+        newScale -= scaleAmount;
+      }
+      newScale = Math.max(0.1, Math.min(5.0, newScale)); // Clamp scale
+
+      const viewportDiv = viewportRef.current;
+      if (!viewportDiv) return;
+
+      const rect = viewportDiv.getBoundingClientRect();
+      const mouseXInViewport = e.clientX - rect.left;
+      const mouseYInViewport = e.clientY - rect.top;
+
+      const mouseXInContent = (mouseXInViewport - transformation.offsetX) / currentScale;
+      const mouseYInContent = (mouseYInViewport - transformation.offsetY) / currentScale;
+
+      newOffsetX = mouseXInViewport - mouseXInContent * newScale;
+      newOffsetY = mouseYInViewport - mouseYInContent * newScale;
+
+    } else { // Regular scroll for Panning
+      // Scale delta by 1/currentScale to make panning feel consistent at different zoom levels
+      const panSpeed = 1 / currentScale;
+      newOffsetX = transformation.offsetX - e.deltaX * panSpeed;
+      newOffsetY = transformation.offsetY - e.deltaY * panSpeed;
     }
-    newScale = Math.max(0.1, Math.min(5.0, newScale));
-
-    const viewportDiv = viewportRef.current;
-    if (!viewportDiv) return;
-
-    // Get mouse position relative to the viewport
-    const rect = viewportDiv.getBoundingClientRect();
-    const mouseXInViewport = e.clientX - rect.left;
-    const mouseYInViewport = e.clientY - rect.top;
-
-    // Calculate mouse position relative to the *transformed* content before the new scale
-    const mouseXInContent = (mouseXInViewport - transformation.offsetX) / transformation.scale;
-    const mouseYInContent = (mouseYInViewport - transformation.offsetY) / transformation.scale;
-
-    // Calculate new offsets to keep the content under the mouse cursor stable
-    const newOffsetX = mouseXInViewport - mouseXInContent * newScale;
-    const newOffsetY = mouseYInViewport - mouseYInContent * newScale;
 
     onTransformationChange({
       scale: newScale,
