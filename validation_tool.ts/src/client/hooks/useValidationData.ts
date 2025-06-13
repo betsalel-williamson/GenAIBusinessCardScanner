@@ -11,7 +11,8 @@ const getPDFSrcFromRecord = (record: DataRecord | undefined) => {
         return ""; // Return empty string if source is missing, not a string, or empty
     }
     const baseName = record.source.split(".").slice(0, -1).join(".");
-    return `/images/${baseName}.pdf`; // Changed to .pdf
+    // Encode the basename to handle spaces and other special characters in filenames
+    return `/images/${encodeURIComponent(baseName)}.pdf`;
 };
 
 const LOCAL_STORAGE_KEY_LAST_VIEWED_PREFIX = 'lastViewedRecord_';
