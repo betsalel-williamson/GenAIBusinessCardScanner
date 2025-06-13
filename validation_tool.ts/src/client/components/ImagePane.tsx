@@ -42,8 +42,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
   const [pdfError, setPdfError] = useState<string | null>(null);
   const pdfjsRef = useRef<PdfJs | null>(null); // Ref to hold the dynamically imported pdfjs object
 
-  // Ref for the main viewport div, where dragging interactions will be handled
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null); // Ref for the main viewport div
 
 
   // Dynamically import pdfjs-dist on client-side mount
@@ -61,7 +60,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
   }, []);
 
 
-  // Load PDF document
+  // Load PDF document and calculate initial zoom
   useEffect(() => {
     if (!pdfSrc || !pdfjsRef.current) {
       setPdfDoc(null);
@@ -74,11 +73,27 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
 
     const loadingTask = pdfjsRef.current.getDocument(pdfSrc);
     loadingTask.promise.then(
-      (pdf) => {
+      async (pdf) => { // Use async here to await getPage
         setPdfDoc(pdf);
         setLoadingPdf(false);
-        // Reset transformation when a new PDF is loaded
-        onTransformationChange({ offsetX: 0, offsetY: 0, scale: 1.0 });
+
+        // --- Auto-zoom to fit width ---
+        if (viewportRef.current && pdf.numPages > 0) {
+          const paddingHorizontal = 40; // Corresponds to the 20px padding on left/right in css
+          const availableWidth = viewportRef.current.clientWidth - paddingHorizontal;
+
+          const firstPage = await pdf.getPage(1);
+          const pageViewport = firstPage.getViewport({ scale: 1.0 }); // Get natural size at 1x
+          const pageNaturalWidth = pageViewport.width;
+
+          const fitToWidthScale = availableWidth / pageNaturalWidth;
+          // Apply this new scale and reset offsets
+          onTransformationChange({ offsetX: 0, offsetY: 0, scale: fitToWidthScale });
+        } else {
+            // If no viewport or pages, just reset
+            onTransformationChange({ offsetX: 0, offsetY: 0, scale: 1.0 });
+        }
+        // --- End auto-zoom ---
       },
       (reason) => {
         console.error('Error loading PDF:', reason);
@@ -101,12 +116,15 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
     const context = canvas.getContext('2d');
     if (!context) return;
 
+    // Set canvas internal dimensions to the higher resolution
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    const baseViewport = page.getViewport({ scale: 1.0 });
-    canvas.style.width = baseViewport.width + 'px';
-    canvas.style.height = baseViewport.height + 'px';
+    // Set canvas display dimensions to fill 100% of its parent's width,
+    // and let height adjust proportionally.
+    // The actual zoom will be handled by the outer `transformation.scale`.
+    canvas.style.width = '100%';
+    canvas.style.height = 'auto'; // Maintain aspect ratio
 
     const renderContext = {
       canvasContext: context,
@@ -140,12 +158,11 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
   }, [pdfDoc, renderPage, imageWrapperRef]);
 
 
-  // Simplified handleMouseDown: Start drag on any click in the viewport
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
     initialTransform.current = { offsetX: transformation.offsetX, offsetY: transformation.offsetY };
-    e.preventDefault(); // Prevent text selection or other default browser behaviors
+    e.preventDefault();
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -163,17 +180,16 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
     setIsDragging(false);
   };
 
-  // Global mouseup listener to stop dragging even if mouse leaves the component
   useEffect(() => {
     const handleMouseUpGlobal = () => setIsDragging(false);
     window.addEventListener('mouseup', handleMouseUpGlobal);
     return () => window.removeEventListener('mouseup', handleMouseUpGlobal);
   }, []);
 
-  // Handle zoom with mouse wheel
+  // Handle zoom with mouse wheel (zoom towards mouse pointer)
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const scaleAmount = 0.05;
+    const scaleAmount = 0.1; // Increased sensitivity slightly for smoother feel
     let newScale = transformation.scale;
     if (e.deltaY < 0) { // Zoom in
       newScale += scaleAmount;
@@ -237,7 +253,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
                 alignItems: 'center',
                 minWidth: '100%',
                 minHeight: '100%',
-                padding: '20px',
+                padding: '20px', // Apply padding here for spacing around the pages
                 boxSizing: 'content-box',
                 backgroundColor: '#fff',
             }}
