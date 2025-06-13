@@ -206,13 +206,13 @@ const ValidatePage: React.FC = () => {
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             // Prevent default behavior for arrow keys to avoid browser scrolling
-            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'Enter') {
                 event.preventDefault();
             }
 
             if (event.key === 'ArrowLeft') {
                 handlePrevRecord();
-            } else if (event.key === 'ArrowRight') {
+            } else if (event.key === 'ArrowRight' || event.key === 'Enter') {
                 handleNextRecord();
             }
         };

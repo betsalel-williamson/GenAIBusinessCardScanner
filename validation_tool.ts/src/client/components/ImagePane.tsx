@@ -26,7 +26,7 @@ interface PDFPageProxy {
 }
 
 
-interface ImagePaneProps {
+export interface ImagePaneProps {
   pdfSrc: string;
   transformation: TransformationState;
   onTransformationChange: (newTransformation: TransformationState) => void;
