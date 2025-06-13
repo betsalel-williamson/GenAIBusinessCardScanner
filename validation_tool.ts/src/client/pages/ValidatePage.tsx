@@ -16,7 +16,8 @@ const getPDFSrcFromRecord = (record: DataRecord | undefined) => {
 };
 
 const ValidatePage: React.FC = () => {
-    const { json_filename } = useParams<{ json_filename: string }>();
+    // Get json_filename and record_index from path parameters
+    const { json_filename, record_index } = useParams<{ json_filename: string; record_index: string }>();
     const navigate = useNavigate();
 
     const imageWrapperRef = useRef<HTMLDivElement>(null); // Ref for the PDF canvases container
@@ -25,6 +26,12 @@ const ValidatePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [autosaveStatus, setAutosaveStatus] = useState({ message: '', type: ''});
+
+    // Initialize currentRecordIndex from URL path parameter (1-based to 0-based)
+    const initialRecordIndex = useMemo(() => {
+        const parsedIndex = record_index ? parseInt(record_index, 10) - 1 : 0; // Convert 1-based URL to 0-based internal
+        return Math.max(0, parsedIndex); // Ensure index is not negative
+    }, [record_index]);
 
     // useUndoableState manages the array of records
     const [
@@ -38,7 +45,7 @@ const ValidatePage: React.FC = () => {
     ] = useUndoableState<DataRecord[]>([]);
 
     // Local state for current record and image transformation
-    const [currentRecordIndex, setCurrentRecordIndex] = useState(0);
+    const [currentRecordIndex, setCurrentRecordIndex] = useState(initialRecordIndex);
     const [transformation, setTransformation] = useState<TransformationState>({
         offsetX: 0,
         offsetY: 0,
@@ -49,6 +56,19 @@ const ValidatePage: React.FC = () => {
 
     // Memoize the current record
     const currentRecord = useMemo(() => records[currentRecordIndex] || null, [records, currentRecordIndex]);
+
+    // Effect to update the URL when currentRecordIndex changes
+    useEffect(() => {
+        // Only update URL if records have loaded and the current path's record index doesn't match
+        if (records.length > 0) {
+            const urlRecordIndex = parseInt(record_index || '1', 10); // Default to 1 if missing for comparison
+            if (currentRecordIndex + 1 !== urlRecordIndex) {
+                // Update URL path parameter (0-based internal to 1-based URL)
+                navigate(`/validate/${json_filename}/${currentRecordIndex + 1}`, { replace: true });
+            }
+        }
+    }, [currentRecordIndex, records.length, json_filename, record_index, navigate]);
+
 
     // Initial data load
     useEffect(() => {
@@ -64,13 +84,15 @@ const ValidatePage: React.FC = () => {
                     throw new Error("Invalid data format: Expected an array of records.");
                 }
                 resetRecords(initialData); // Set initial records for undo history
-                setCurrentRecordIndex(0);
+                // Set currentRecordIndex, clamping to the max available index based on loaded data
+                setCurrentRecordIndex(prev => Math.min(prev, initialData.length - 1));
                 setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view
                 setError(null);
             })
             .catch(err => setError(err.message))
             .finally(() => setLoading(false));
     }, [json_filename, resetRecords]);
+
 
     const autoSave = useCallback(async (dataToSave: DataRecord[]) => {
         if (!json_filename) return;
@@ -139,9 +161,9 @@ const ValidatePage: React.FC = () => {
             if (!response.ok) throw new Error("Commit failed on server");
             const result = await response.json();
             if (result.nextFile) {
-                navigate(`/validate/${result.nextFile}`);
+                navigate(`/validate/${result.nextFile}/1`, { replace: true }); // Start next file at record 1 (URL)
             } else {
-                navigate('/');
+                navigate('/', { replace: true }); // Navigate back to list
             }
         } catch (err) {
             setAutosaveStatus({ message: "Commit Failed!", type: "status-error" });
@@ -158,7 +180,7 @@ const ValidatePage: React.FC = () => {
             if (window.confirm("No more records. Do you want to commit changes and go back to file list?")) {
                 handleCommit();
             } else {
-                navigate('/');
+                navigate('/', { replace: true }); // Navigate back to list
             }
         }
     }, [currentRecordIndex, records.length, navigate, handleCommit]);
@@ -215,7 +237,7 @@ const ValidatePage: React.FC = () => {
             } else if (event.key === 'ArrowRight' || event.key === 'Enter') {
                 handleNextRecord();
             } else if (event.key === 'Escape') {
-                navigate('/');
+                navigate('/', { replace: true }); // Navigate back to list
             }
         };
 

@@ -61,7 +61,8 @@ const HomePage: React.FC = () => {
               files.map((file) => (
                 <li key={file.filename} className="py-4 flex justify-between items-center">
                   <Link
-                    to={`/validate/${file.filename}`}
+                    // Link to the first record (index 0, but URL shows 1)
+                    to={`/validate/${file.filename}/1`}
                     className="text-lg text-blue-700 hover:text-blue-900 hover:underline font-medium"
                   >
                     {file.filename}

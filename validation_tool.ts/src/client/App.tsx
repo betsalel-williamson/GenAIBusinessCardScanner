@@ -7,7 +7,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/validate/:json_filename" element={<ValidatePage />} />
+      <Route path="/validate/:json_filename/:record_index" element={<ValidatePage />} />
     </Routes>
   );
 }
