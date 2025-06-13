@@ -2,13 +2,13 @@ import { Router, Request, Response } from "express";
 import fs from 'fs/promises';
 import path from 'path';
 import {
-    loadData,
-    applyTransformationsToData,
+    applyRecordsUpdate, // Renamed/repurposed utility function
     VALIDATED_DATA_DIR,
     IN_PROGRESS_DATA_DIR,
     getJsonFiles,
     getFileStatus
 } from '../utils.js';
+import { DataRecord } from '../../../types/types'; // Import new type
 
 const router = Router();
 
@@ -16,17 +16,20 @@ const router = Router();
 router.patch("/:json_filename", async (req: Request, res: Response) => {
     const { json_filename } = req.params;
     try {
-        const baseData = await loadData(json_filename);
-        if (!baseData) {
-            return res.status(404).json({ error: "Cannot commit, base file not found." });
+        // The frontend now sends the full updated array of records in the request body
+        const updatedRecords: DataRecord[] = req.body;
+        if (!Array.isArray(updatedRecords)) {
+            return res.status(400).json({ error: "Invalid data format: Expected an array of records in body." });
         }
 
-        const transformedData = applyTransformationsToData(baseData, req.body);
-        transformedData.validated = true;
+        // Apply any final server-side processing
+        const dataToSave = applyRecordsUpdate(updatedRecords);
 
+        // Save to validated directory
         const validatedPath = path.join(VALIDATED_DATA_DIR, json_filename);
-        await fs.writeFile(validatedPath, JSON.stringify(transformedData, null, 2));
+        await fs.writeFile(validatedPath, JSON.stringify(dataToSave, null, 2));
 
+        // Delete from in-progress directory
         const inProgressPath = path.join(IN_PROGRESS_DATA_DIR, json_filename);
         try {
             await fs.unlink(inProgressPath);
@@ -34,6 +37,7 @@ router.patch("/:json_filename", async (req: Request, res: Response) => {
             if (e.code !== 'ENOENT') console.error(`Could not remove in-progress file: ${e.message}`);
         }
 
+        // Find next file to validate
         const allFiles = await getJsonFiles();
         const currentIndex = allFiles.indexOf(json_filename);
 

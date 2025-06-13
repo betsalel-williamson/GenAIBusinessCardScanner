@@ -1,44 +1,18 @@
-export interface BoundingBox {
-  x_min: number;
-  y_min: number;
-  x_max: number;
-  y_max: number;
+export interface DataRecord {
+  [key: string]: string | number | boolean | undefined; // Represents a single contact/entry, allow undefined for new fields
+  source?: string; // e.g., "06032025_006.pdf" - used to link to image
 }
 
-export interface Word {
-  id?: string; // Optional on initial load, but assigned during processing
-  text: string;
-  bounding_box: BoundingBox;
+// Global state for the entire validation process for a file
+export interface AppState {
+  records: DataRecord[]; // All records in the current JSON file
+  currentRecordIndex: number; // Index of the currently active record
+  currentFieldIndex: number; // Index of the currently active field within the current record
 }
 
-export interface Annotation extends Word {
-  id: string; // Guaranteed to exist after processing
-  display_id: number;
-}
-
-export interface Line {
-  words: Word[];
-}
-
-export interface ImageDimensions {
-  width: number;
-  height: number;
-}
-
-export interface ValidationData {
-  image_source: string;
-  image_dimensions: ImageDimensions;
-  lines: Line[];
-  validated?: boolean;
-}
-
+// Simple transformation state for basic image viewing
 export interface TransformationState {
   offsetX: number;
   offsetY: number;
-  rotation: number;
   scale: number;
-}
-
-export interface TextState {
-  [wordId: string]: string;
 }

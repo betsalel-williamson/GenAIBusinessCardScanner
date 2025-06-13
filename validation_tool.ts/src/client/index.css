@@ -4,68 +4,37 @@
 
 /*
   The following CSS has been ported from the original style.css.
-  While this app now uses TailwindCSS, these more complex rules for the
-  image overlay and bounding boxes have been kept for convenience.
-  They can be refactored into Tailwind classes over time.
+  While this app now uses TailwindCSS, these rules for the
+  image overlay have been kept for convenience, adjusted for new behavior.
 */
 
-.image-wrapper {
+.image-display-area {
   position: relative;
-  /* This is crucial for positioning the overlay */
   display: inline-block;
-  /* Shrink-wrap the container to the image size */
   overflow: hidden;
-}
-
-.image-wrapper img {
-  display: block;
-  max-width: 100%;
-  height: auto;
+  cursor: grab;
+  /* Allow dragging */
+  user-select: none; /* Prevent text selection during drag */
+  transform-origin: top left; /* Scale and translate from top-left */
+  width: 100%;
+  height: 100%;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
 
-/* The overlay that contains all boxes and is draggable */
-#bbox-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  cursor: grab;
-  /* Indicates this element is draggable */
-  transform-origin: center center;
-}
-
-#bbox-overlay.dragging {
+.image-display-area.grabbing {
   cursor: grabbing;
-  /* Change cursor while dragging */
 }
 
-/* Individual bounding box style */
-.bounding-box {
-  position: absolute;
-  box-sizing: border-box;
-  /* Ensures border width is included in element's size */
-  border: 2px solid red;
-  background-color: rgb(255 0 0 / 10%);
-  /* Slight red tint inside */
+.image-display-area img {
+  display: block;
+  max-width: none; /* Allow image to be larger than container when zoomed */
+  max-height: none; /* Allow image to be larger than container when zoomed */
+  width: 100%; /* Default width to fill container */
+  height: auto; /* Maintain aspect ratio */
+  image-rendering: -webkit-optimize-contrast; /* Better scaling for low-res images */
 }
 
-/* Label for each box */
-.box-label {
-  position: absolute;
-  top: -20px;
-  /* Position above the box */
-  left: 0;
-  background-color: red;
-  color: white;
-  font-size: 14px;
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-weight: bold;
-  user-select: none;
-}
 
 /* Make the body and html take up the full height of the browser window */
 html, body, #root {

@@ -1,17 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react';
-import type { Annotation, TransformationState } from '../../../types/types';
-import BoundingBox from './BoundingBox';
+import type { TransformationState } from '../../../types/types';
 
 interface ImagePaneProps {
   imageSrc: string;
-  annotations: Annotation[];
   transformation: TransformationState;
   onTransformationChange: (newTransformation: TransformationState) => void;
-  onWordSelect: (wordId: string) => void;
   imageWrapperRef: React.RefObject<HTMLDivElement>;
 }
 
-const ImagePane: React.FC<ImagePaneProps> = ({ imageSrc, annotations, transformation, onTransformationChange, onWordSelect, imageWrapperRef }) => {
+const ImagePane: React.FC<ImagePaneProps> = ({ imageSrc, transformation, onTransformationChange, imageWrapperRef }) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const initialTransform = useRef({ offsetX: 0, offsetY: 0 });
@@ -44,22 +41,36 @@ const ImagePane: React.FC<ImagePaneProps> = ({ imageSrc, annotations, transforma
     return () => window.removeEventListener('mouseup', handleMouseUpGlobal);
   }, []);
 
+  // Handle zoom with mouse wheel
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const scaleAmount = 0.05;
+    let newScale = transformation.scale;
+    if (e.deltaY < 0) { // Zoom in
+      newScale += scaleAmount;
+    } else { // Zoom out
+      newScale -= scaleAmount;
+    }
+    newScale = Math.max(0.1, Math.min(5.0, newScale)); // Clamp scale between 0.1 and 5.0
+    onTransformationChange({ ...transformation, scale: newScale });
+  };
+
   return (
-    <div className="flex justify-center items-start">
-        <div ref={imageWrapperRef} className="image-wrapper" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
-            <img src={imageSrc} alt="Document for validation" />
-            <div
-                id="bbox-overlay"
-                className={isDragging ? 'dragging' : ''}
-                style={{
-                    transform: `translate(${transformation.offsetX}px, ${transformation.offsetY}px) rotate(${transformation.rotation}deg) scale(${transformation.scale})`,
-                }}
-                onMouseDown={handleMouseDown}
-            >
-                {annotations.map((word) => (
-                    <BoundingBox key={word.id} word={word} onClick={onWordSelect} />
-                ))}
-            </div>
+    <div className="flex justify-center items-start overflow-hidden flex-grow relative" ref={imageWrapperRef}>
+        <div
+            className={`image-display-area ${isDragging ? 'grabbing' : 'grab'}`}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onWheel={handleWheel}
+            style={{
+                transform: `translate(${transformation.offsetX}px, ${transformation.offsetY}px) scale(${transformation.scale})`,
+                transformOrigin: '0 0', // Apply transform from top-left for easier mental model
+            }}
+        >
+            {imageSrc && <img src={imageSrc} alt="Document for validation" className="w-full h-auto" />}
+            {!imageSrc && <div className="p-4 text-center text-gray-500">No image available for this record.</div>}
         </div>
     </div>
   );
