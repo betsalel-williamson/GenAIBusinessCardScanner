@@ -10,7 +10,7 @@ import {
 } from '../utils.js';
 import { DataRecord } from '../../../types/types'; // Import new type
 
-const router = Router();
+const router: Router = Router();
 
 // Route to commit final changes
 router.patch("/:json_filename", async (req: Request, res: Response) => {

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { getJsonFiles, getFileStatus, loadData } from '../utils.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Route to get the list of all files and their statuses
 router.get("/", async (req: Request, res: Response) => {
