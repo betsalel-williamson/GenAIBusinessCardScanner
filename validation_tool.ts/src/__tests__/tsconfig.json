@@ -1,0 +1,16 @@
+{
+  // Inherit all the base rules from the root tsconfig.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // This 'types' array is the key fix. It tells TypeScript which specific
+    // type definitions to load for the files included by this config.
+    "types": [
+      "vite/client",
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ]
+  },
+  // This tells TypeScript that this configuration applies to all files
+  // within the current `src/__tests__` directory.
+  "include": ["./**/*"]
+}
