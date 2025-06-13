@@ -40,6 +40,7 @@ interface UseValidationDataHook {
     undoRecords: () => void;
     redoRecords: () => void;
     navigateBackToList: () => void;
+    handleFieldFocus: (key: string, initialValue: string) => void; // Expose new handler
 }
 
 export const useValidationData = (dataEntryPaneRef: React.RefObject<DataEntryPaneHandle>): UseValidationDataHook => {
@@ -49,6 +50,9 @@ export const useValidationData = (dataEntryPaneRef: React.RefObject<DataEntryPan
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [autosaveStatus, setAutosaveStatus] = useState({ message: '', type: '' });
+
+    // Store info about the currently focused field for Escape/Ctrl+Enter behavior
+    const [focusedFieldInfo, setFocusedFieldInfo] = useState<{ key: string; initialValue: string } | null>(null);
 
     const initialRecordIndexRef = useRef(0);
     const [softValidatedIndices, setSoftValidatedIndices] = useState<Set<number>>(new Set());
@@ -303,33 +307,66 @@ export const useValidationData = (dataEntryPaneRef: React.RefObject<DataEntryPan
         navigate('/', { replace: true });
     }, [navigate]);
 
+    // Handler for when a field gains focus (used by DataEntryPane)
+    const handleFieldFocus = useCallback((key: string, initialValue: string) => {
+        setFocusedFieldInfo({ key, initialValue });
+    }, []);
+
     // Keyboard Navigation Effect
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             const activeElement = document.activeElement;
             const isInputField = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
 
+            // Global Undo/Redo (Ctrl/Cmd + Z/Y or Shift+Z) - always works
+            if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
+                if (canUndoRecords) {
+                    event.preventDefault(); // Prevent browser undo
+                    undoRecords();
+                }
+                return;
+            }
+            if ((event.metaKey || event.ctrlKey) && (event.key === 'y' || (event.shiftKey && event.key === 'Z'))) {
+                if (canRedoRecords) {
+                    event.preventDefault(); // Prevent browser redo
+                    redoRecords();
+                }
+                return;
+            }
+
             if (isInputField) {
-                // If an input field is focused:
+                // Field-specific Escape behavior
                 if (event.key === 'Escape') {
-                    event.preventDefault(); // Prevent default browser behavior
-                    undoRecords(); // Revert the last change to the record
-                    // Optionally, you might want to blur the field after undoing: (activeElement as HTMLElement).blur();
+                    event.preventDefault();
+                    if (focusedFieldInfo && focusedFieldInfo.key === (activeElement as HTMLInputElement | HTMLTextAreaElement).name) {
+                        handleFieldChange(focusedFieldInfo.key, focusedFieldInfo.initialValue);
+                    }
+                    (activeElement as HTMLElement).blur(); // Blur the field
+                    setFocusedFieldInfo(null); // Clear focused field info
+                    return;
                 }
-                // For ArrowLeft, ArrowRight, Enter: do NOT prevent default.
-                // Let the browser handle cursor movement, new lines, etc.
-            } else {
-                // If no input field is focused (global navigation):
-                if (event.key === 'ArrowLeft') {
-                    event.preventDefault(); // Prevent default browser scroll
-                    handlePrevRecord();
-                } else if (event.key === 'ArrowRight' || event.key === 'Enter') {
-                    event.preventDefault(); // Prevent default browser scroll/submit
-                    handleNextRecord();
-                } else if (event.key === 'Escape') {
-                    event.preventDefault(); // Prevent default browser behavior
-                    navigateBackToList();
+                // Ctrl/Cmd + Enter to accept change and blur field
+                if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                    event.preventDefault();
+                    (activeElement as HTMLElement).blur(); // Blur the field
+                    setFocusedFieldInfo(null); // Clear focused field info
+                    return;
                 }
+                // For ArrowLeft, ArrowRight, Enter (without modifier):
+                // Do NOT preventDefault() to allow native text input behavior (cursor movement, new lines).
+                return; // Consume event, no global navigation
+            }
+
+            // Global navigation when no input field is focused
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                handlePrevRecord();
+            } else if (event.key === 'ArrowRight' || event.key === 'Enter') {
+                event.preventDefault();
+                handleNextRecord();
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                navigateBackToList();
             }
         };
 
@@ -338,7 +375,17 @@ export const useValidationData = (dataEntryPaneRef: React.RefObject<DataEntryPan
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [handlePrevRecord, handleNextRecord, navigateBackToList, undoRecords]); // Add undoRecords to dependencies
+    }, [
+        handlePrevRecord,
+        handleNextRecord,
+        navigateBackToList,
+        undoRecords,
+        redoRecords,
+        handleFieldChange,
+        focusedFieldInfo, // Dependency for field-specific Escape logic
+        canUndoRecords, // Dependency for global undo
+        canRedoRecords, // Dependency for global redo
+    ]);
 
     return {
         loading,
@@ -362,5 +409,6 @@ export const useValidationData = (dataEntryPaneRef: React.RefObject<DataEntryPan
         undoRecords,
         redoRecords,
         navigateBackToList,
+        handleFieldFocus, // Return the new handler
     };
 };
