@@ -10,7 +10,7 @@ import type { DataRecord, AppState, TransformationState } from '../../../types/t
 const getImageSrcFromRecord = (record: DataRecord | undefined) => {
     if (!record?.source) return '';
     const baseName = record.source.split('.').slice(0, -1).join('.');
-    return `/public/images/${baseName}.jpg`;
+    return `/images/${baseName}.jpg`; // Changed from /public/images/
 };
 
 const ValidatePage: React.FC = () => {

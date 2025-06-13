@@ -39,6 +39,7 @@ async function createServer() {
 
   // Serve static images from public directory
   app.use("/public", express.static(path.resolve(__dirname, "public")));
+  app.use("/images", express.static(path.resolve(__dirname, "..", "dagster_card_processor", "cards_to_process")));
 
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
@@ -88,3 +89,4 @@ Promise.all(dataDirs.map(dir => fs.mkdir(dir, { recursive: true })))
     console.error("Failed to create data directories:", err);
     process.exit(1);
   });
+

@@ -44,3 +44,6 @@ public/images/
 #
 
 update.sh
+
+# Dagster related directories
+dagster_card_processor/
