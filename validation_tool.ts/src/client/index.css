@@ -8,8 +8,9 @@
   image overlay have been kept for convenience, adjusted for new behavior.
 */
 
-/* The outer viewport div in ImagePane */
+/* The outer viewport div in ImagePane (now holds the grab/grabbing cursor) */
 /* Already has flex-grow, overflow-hidden, relative from Tailwind and React props */
+/* Cursor is now applied via template literal in component's className */
 
 /* The transformed content container */
 .pdf-transformed-content {
@@ -19,10 +20,6 @@
   /* width and height are removed from inline style to allow content to define them */
   /* min-width/height are set inline */
   /* transform-origin, display, flex-direction, align-items, padding, box-sizing, background-color are set inline */
-}
-
-.pdf-transformed-content.grabbing {
-  cursor: grabbing;
 }
 
 /* Container for individual canvases */
