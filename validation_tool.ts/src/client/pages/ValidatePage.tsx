@@ -36,9 +36,8 @@ const ValidatePage: React.FC = () => {
         canRedoRecords
     ] = useUndoableState<DataRecord[]>([]);
 
-    // Local state for current record/field navigation and image transformation
+    // Local state for current record and image transformation
     const [currentRecordIndex, setCurrentRecordIndex] = useState(0);
-    const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
     const [transformation, setTransformation] = useState<TransformationState>({
         offsetX: 0,
         offsetY: 0,
@@ -47,16 +46,8 @@ const ValidatePage: React.FC = () => {
 
     const debouncedRecords = useDebounce(records, 1000);
 
-    // Memoize the current record and its field keys
+    // Memoize the current record
     const currentRecord = useMemo(() => records[currentRecordIndex] || null, [records, currentRecordIndex]);
-    const fieldKeys = useMemo(() => {
-        if (!currentRecord) return [];
-        // Exclude system fields or non-string fields if needed, e.g., 'source', 'date_imported', 'time_imported'
-        return Object.keys(currentRecord).filter(key => typeof currentRecord[key] === 'string');
-    }, [currentRecord]);
-
-    const currentFieldKey = useMemo(() => fieldKeys[currentFieldIndex] || '', [fieldKeys, currentFieldIndex]);
-    const currentFieldValue = useMemo(() => currentRecord ? String(currentRecord[currentFieldKey]) : '', [currentRecord, currentFieldKey]);
 
     // Initial data load
     useEffect(() => {
@@ -73,7 +64,6 @@ const ValidatePage: React.FC = () => {
                 }
                 resetRecords(initialData); // Set initial records for undo history
                 setCurrentRecordIndex(0);
-                setCurrentFieldIndex(0);
                 setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view
                 setError(null);
             })
@@ -86,8 +76,6 @@ const ValidatePage: React.FC = () => {
 
         setAutosaveStatus({ message: "Saving...", type: "status-progress" });
 
-        // Backend expects the entire file content, not just a delta
-        // We'll send it as JSON in the body
         try {
             const response = await fetch(`/api/autosave/${json_filename}`, {
                 method: 'PATCH',
@@ -104,44 +92,37 @@ const ValidatePage: React.FC = () => {
 
     // Autosave effect (triggered by debouncedRecords)
     useEffect(() => {
-        // Only autosave if records are loaded and changes have been made (or reverted)
         if (debouncedRecords.length > 0 && (canUndoRecords || canRedoRecords)) {
-            // Send the *entire current state of records* for autosave
             autoSave(debouncedRecords);
         }
     }, [debouncedRecords, autoSave, canUndoRecords, canRedoRecords]);
 
-    // Handlers for data updates
-    const handleFieldChange = useCallback((newValue: string) => {
+    // Handler for updating a field's value
+    const handleFieldChange = useCallback((key: string, newValue: string) => {
         if (!currentRecord) return;
         const newRecords = records.map((rec, rIdx) => {
             if (rIdx === currentRecordIndex) {
-                return { ...rec, [currentFieldKey]: newValue };
+                return { ...rec, [key]: newValue };
             }
             return rec;
         });
         setRecords(newRecords);
-    }, [records, currentRecordIndex, currentFieldKey, setRecords, currentRecord]);
+    }, [records, currentRecordIndex, setRecords, currentRecord]);
 
-
-    // Handlers for navigation
-    const handleNextField = useCallback(() => {
-        if (currentFieldIndex < fieldKeys.length - 1) {
-            setCurrentFieldIndex(prev => prev + 1);
-        } else {
-            // Last field of current record, try to go to next record
-            handleNextRecord();
-        }
-    }, [currentFieldIndex, fieldKeys.length, records.length]);
-
-    const handlePrevField = useCallback(() => {
-        if (currentFieldIndex > 0) {
-            setCurrentFieldIndex(prev => prev - 1);
-        } else {
-            // First field of current record, try to go to previous record
-            handlePrevRecord();
-        }
-    }, [currentFieldIndex]);
+    // Handler for adding a new field to the current record
+    const handleAddField = useCallback((key: string, value: string) => {
+        if (!currentRecord) return;
+        const newRecords = records.map((rec, rIdx) => {
+            if (rIdx === currentRecordIndex) {
+                // Ensure key doesn't already exist before adding
+                if (!(key in rec)) {
+                    return { ...rec, [key]: value };
+                }
+            }
+            return rec;
+        });
+        setRecords(newRecords);
+    }, [records, currentRecordIndex, setRecords, currentRecord]);
 
     const handleCommit = useCallback(async () => {
         if (!json_filename || records.length === 0) return;
@@ -170,7 +151,6 @@ const ValidatePage: React.FC = () => {
     const handleNextRecord = useCallback(() => {
         if (currentRecordIndex < records.length - 1) {
             setCurrentRecordIndex(prev => prev + 1);
-            setCurrentFieldIndex(0); // Reset field index for new record
             setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view for new record
         } else {
             // No more records, prompt to commit or go back to list
@@ -185,14 +165,13 @@ const ValidatePage: React.FC = () => {
     const handlePrevRecord = useCallback(() => {
         if (currentRecordIndex > 0) {
             setCurrentRecordIndex(prev => prev - 1);
-            setCurrentFieldIndex(0); // Reset field index for new record
             setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view for new record
         }
     }, [currentRecordIndex]);
 
-    const handleRevertField = useCallback(async () => {
-        if (!json_filename || !currentRecord || !currentFieldKey) return;
-        if (!window.confirm(`Revert "${currentFieldKey}" to original source?`)) return;
+    const handleRevertField = useCallback(async (keyToRevert: string) => {
+        if (!json_filename || !currentRecord || !keyToRevert) return;
+        if (!window.confirm(`Revert "${keyToRevert}" to original source?`)) return;
 
         try {
             setAutosaveStatus({ message: "Reverting field...", type: "status-progress" });
@@ -200,25 +179,27 @@ const ValidatePage: React.FC = () => {
             if (!response.ok) throw new Error('Failed to fetch source data.');
 
             const sourceData: DataRecord[] = await response.json();
-            const originalValue = sourceData[currentRecordIndex]?.[currentFieldKey];
+            // Find the original value for the specific record and key
+            const originalValue = sourceData[currentRecordIndex]?.[keyToRevert];
 
             if (originalValue !== undefined) {
                 const newRecords = records.map((rec, rIdx) => {
                     if (rIdx === currentRecordIndex) {
-                        return { ...rec, [currentFieldKey]: originalValue };
+                        return { ...rec, [keyToRevert]: originalValue };
                     }
                     return rec;
                 });
                 setRecords(newRecords);
                 setAutosaveStatus({ message: "Field Reverted ✓", type: "status-validated" });
             } else {
-                setAutosaveStatus({ message: "Original value not found for field.", type: "status-error" });
+                setAutosaveStatus({ message: `Original value not found for field "${keyToRevert}".`, type: "status-error" });
             }
         } catch (err) {
             setAutosaveStatus({ message: "Revert Failed!", type: "status-error" });
             console.error(err);
         }
-    }, [json_filename, currentRecord, currentFieldKey, currentRecordIndex, records, setRecords]);
+    }, [json_filename, currentRecord, currentRecordIndex, records, setRecords]);
+
 
     if (loading) return <div className="p-8 text-xl">Loading...</div>;
     if (error) return <div className="p-8 text-xl text-red-500">Error: {error}</div>;
@@ -270,12 +251,8 @@ const ValidatePage: React.FC = () => {
             <div className="w-1/3 max-w-md h-full flex flex-col border-l border-gray-200 bg-white">
                 <DataEntryPane
                     currentRecord={currentRecord}
-                    currentFieldKey={currentFieldKey}
-                    currentFieldValue={currentFieldValue}
-                    fieldKeys={fieldKeys}
                     onFieldChange={handleFieldChange}
-                    onNextField={handleNextField}
-                    onPrevField={handlePrevField}
+                    onAddField={handleAddField} // Pass the new handler
                     onNextRecord={handleNextRecord}
                     onPrevRecord={handlePrevRecord}
                     autosaveStatus={autosaveStatus}

@@ -57,9 +57,52 @@ const server = setupServer(
   http.get(`/api/source-data/${MOCK_FILE_NAME}`, () => {
     return HttpResponse.json(MOCK_SOURCE_DATA);
   }),
-  // Mock image requests
-  http.get('/public/images/*.jpg', () => {
-    return new HttpResponse(null, { status: 200 }); // Mock success for image loading
+  // Mock PDF requests
+  http.get('/images/*.pdf', () => {
+    // Mock a very small, valid PDF response (a 1x1 pixel image rendered as PDF)
+    // This is just enough to avoid network errors and allow pdf.js to "load" something.
+    // In a real test, you might use a tiny actual PDF file.
+    return new HttpResponse(new Uint8Array([
+      0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34, 0x0A, 0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A,
+      0x31, 0x20, 0x30, 0x20, 0x6F, 0x62, 0x6A, 0x0A, 0x3C, 0x3C, 0x2F, 0x54, 0x79, 0x70, 0x65,
+      0x20, 0x2F, 0x43, 0x61, 0x74, 0x61, 0x6C, 0x6F, 0x67, 0x0A, 0x2F, 0x50, 0x61, 0x67, 0x65,
+      0x73, 0x20, 0x32, 0x20, 0x30, 0x20, 0x52, 0x0A, 0x3E, 0x3E, 0x0A, 0x65, 0x6E, 0x64, 0x6F,
+      0x62, 0x6A, 0x0A, 0x32, 0x20, 0x30, 0x20, 0x6F, 0x62, 0x6A, 0x0A, 0x3C, 0x3C, 0x2F, 0x54,
+      0x79, 0x70, 0x65, 0x20, 0x2F, 0x50, 0x61, 0x67, 0x65, 0x73, 0x0A, 0x2F, 0x43, 0x6F, 0x75,
+      0x6E, 0x74, 0x20, 0x31, 0x0A, 0x2F, 0x4B, 0x69, 0x64, 0x73, 0x20, 0x5B, 0x33, 0x20, 0x30,
+      0x20, 0x52, 0x5D, 0x0A, 0x3E, 0x3E, 0x0A, 0x65, 0x6E, 0x64, 0x6F, 0x62, 0x6A, 0x0A, 0x33,
+      0x20, 0x30, 0x20, 0x6F, 0x62, 0x6A, 0x0A, 0x3C, 0x3C, 0x2F, 0x54, 0x79, 0x70, 0x65, 0x20,
+      0x2F, 0x50, 0x61, 0x67, 0x65, 0x0A, 0x2F, 0x50, 0x61, 0x72, 0x65, 0x6E, 0x74, 0x20, 0x32,
+      0x20, 0x30, 0x20, 0x52, 0x0A, 0x2F, 0x4D, 0x65, 0x64, 0x69, 0x61, 0x42, 0x6F, 0x78, 0x20,
+      0x5B, 0x30, 0x20, 0x30, 0x20, 0x31, 0x20, 0x31, 0x5D, 0x0A, 0x2F, 0x52, 0x65, 0x73, 0x6F,
+      0x75, 0x72, 0x63, 0x65, 0x73, 0x20, 0x3C, 0x3C, 0x3E, 0x3E, 0x0A, 0x2F, 0x43, 0x6F, 0x6E,
+      0x74, 0x65, 0x6E, 0x74, 0x73, 0x20, 0x34, 0x20, 0x30, 0x20, 0x52, 0x0A, 0x3E, 0x3E, 0x0A,
+      0x65, 0x6E, 0x64, 0x6F, 0x62, 0x6A, 0x0A, 0x34, 0x20, 0x30, 0x20, 0x6F, 0x62, 0x6A, 0x0A,
+      0x3C, 0x3C, 0x2F, 0x4C, 0x65, 0x6E, 0x67, 0x74, 0x68, 0x20, 0x30, 0x30, 0x30, 0x30, 0x30,
+      0x30, 0x30, 0x30, 0x39, 0x38, 0x3E, 0x3E, 0x0A, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6D, 0x0A,
+      0x2F, 0x58, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x20, 0x31, 0x20, 0x30, 0x20, 0x52, 0x20,
+      0x6F, 0x62, 0x6A, 0x0A, 0x65, 0x6E, 0x64, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6D, 0x0A, 0x65,
+      0x6E, 0x64, 0x6F, 0x62, 0x6A, 0x0A, 0x78, 0x72, 0x65, 0x66, 0x0A, 0x30, 0x20, 0x35, 0x0A,
+      0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x36, 0x35, 0x35, 0x33,
+      0x35, 0x20, 0x66, 0x0A, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x39, 0x20,
+      0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x6E, 0x0A, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+      0x30, 0x37, 0x34, 0x20, 0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x6E, 0x0A, 0x30, 0x30, 0x30,
+      0x30, 0x30, 0x30, 0x30, 0x31, 0x36, 0x36, 0x20, 0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x6E,
+      0x0A, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x32, 0x35, 0x32, 0x20, 0x30, 0x30, 0x30,
+      0x30, 0x30, 0x20, 0x6E, 0x0A, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x34, 0x34, 0x39,
+      0x20, 0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x6E, 0x0A, 0x74, 0x72, 0x61, 0x69, 0x6C, 0x65,
+      0x72, 0x0A, 0x3C, 0x3C, 0x2F, 0x53, 0x69, 0x7A, 0x65, 0x20, 0x35, 0x2F, 0x52, 0x6F, 0x6F,
+      0x74, 0x20, 0x31, 0x20, 0x30, 0x20, 0x52, 0x2F, 0x49, 0x6E, 0x66, 0x6F, 0x20, 0x36, 0x20,
+      0x30, 0x20, 0x52, 0x3E, 0x3E, 0x0A, 0x73, 0x74, 0x61, 0x72, 0x74, 0x78, 0x72, 0x65, 0x66,
+      0x0A, 0x35, 0x34, 0x39, 0x0A, 0x25, 0x25, 0x45, 0x4F, 0x46, 0x0A
+    ]), { headers: { 'Content-Type': 'application/pdf' } });
+  }),
+  // Mock PDF worker requests
+  http.get('/src/client/pdfjs-build/pdf.worker.min.mjs', () => {
+    // Return a dummy JS content for the worker
+    return HttpResponse.text(`self.onmessage = function(e) { console.log("Worker received:", e.data); self.postMessage({ type: "worker_ready" }); };`, {
+        headers: { 'Content-Type': 'application/javascript' }
+    });
   })
 );
 
@@ -88,7 +131,7 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-describe('ValidatePage', () => {
+describe('ValidatePage - Full List UI', () => {
     beforeEach(() => {
         mockNavigate.mockClear();
         vi.spyOn(window, 'confirm').mockReturnValue(true);
@@ -97,65 +140,71 @@ describe('ValidatePage', () => {
         Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 500 });
     });
 
-    test('renders loading state and then loads data correctly for the first field', async () => {
+    test('renders all editable fields for the current record', async () => {
         render(<TestWrapper />);
         expect(screen.getByText('Loading...')).toBeInTheDocument();
 
         await waitFor(() => {
-            expect(screen.getByText(/data field: address 1/i)).toBeInTheDocument();
+            expect(screen.getByText(/record fields/i)).toBeInTheDocument();
+            expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument();
             expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument();
+            expect(screen.getByLabelText(/company/i)).toBeInTheDocument();
+            expect(screen.getByDisplayValue('CHENAB IMPEX PVT. LTD.')).toBeInTheDocument();
+            expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+            expect(screen.getByDisplayValue('anil@chenabimpex.com')).toBeInTheDocument();
+            // Source field should NOT be editable
+            expect(screen.queryByLabelText(/source/i)).not.toBeInTheDocument();
         });
     });
 
     test('allows editing a field and updates state', async () => {
         render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
-        const input = screen.getByDisplayValue('J-1A, Ansa Industrial Estate') as HTMLTextAreaElement;
+        const input = screen.getByLabelText(/address 1/i) as HTMLTextAreaElement;
         fireEvent.change(input, { target: { value: 'Changed Address' } });
 
         expect(input.value).toBe('Changed Address');
     });
 
-    test('navigates to the next field', async () => {
+    test('allows adding a new field to the current record', async () => {
         render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
-        fireEvent.click(screen.getByRole('button', { name: /next field/i }));
+        fireEvent.change(screen.getByPlaceholderText('e.g., website_url'), { target: { value: 'website_new' } });
+        fireEvent.change(screen.getByPlaceholderText('Value for new field'), { target: { value: 'http://new.com' } });
+        fireEvent.click(screen.getByRole('button', { name: /add field/i }));
 
         await waitFor(() => {
-            expect(screen.getByText(/data field: company/i)).toBeInTheDocument();
-            expect(screen.getByDisplayValue('CHENAB IMPEX PVT. LTD.')).toBeInTheDocument();
+            expect(screen.getByLabelText(/website new/i)).toBeInTheDocument();
+            expect(screen.getByDisplayValue('http://new.com')).toBeInTheDocument();
         });
     });
 
-    test('navigates to the previous field', async () => {
-        render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument());
-
-        fireEvent.click(screen.getByRole('button', { name: /next field/i })); // Go to Company
-        await waitFor(() => expect(screen.getByText(/data field: company/i)).toBeInTheDocument());
-
-        fireEvent.click(screen.getByRole('button', { name: /prev field/i })); // Go back to Address_1
-        await waitFor(() => {
-            expect(screen.getByText(/data field: address 1/i)).toBeInTheDocument();
-            expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument();
-        });
-    });
-
-    test('navigates to the next record and resets field index', async () => {
+    test('navigates to the next record and shows its fields', async () => {
         render(<TestWrapper />);
         await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
 
-        // Navigate through all fields of the first record to reach next record
-        fireEvent.click(screen.getByRole('button', { name: /next field/i })); // company
-        fireEvent.click(screen.getByRole('button', { name: /next field/i })); // email
-        fireEvent.click(screen.getByRole('button', { name: /next field/i })); // last field, should go to next record
+        fireEvent.click(screen.getByRole('button', { name: /next record/i }));
 
         await waitFor(() => {
             expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument();
-            expect(screen.getByText(/data field: address 1/i)).toBeInTheDocument(); // Should reset to first field
             expect(screen.getByDisplayValue('123 Main St')).toBeInTheDocument();
+            expect(screen.getByDisplayValue('Another Corp')).toBeInTheDocument();
+        });
+    });
+
+    test('navigates to the previous record', async () => {
+        render(<TestWrapper />);
+        await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
+
+        fireEvent.click(screen.getByRole('button', { name: /next record/i }));
+        await waitFor(() => expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument());
+
+        fireEvent.click(screen.getByRole('button', { name: /prev record/i }));
+        await waitFor(() => {
+            expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument();
+            expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument();
         });
     });
 
@@ -165,7 +214,7 @@ describe('ValidatePage', () => {
 
         const undoButton = screen.getByRole('button', { name: /undo/i });
         const redoButton = screen.getByRole('button', { name: /redo/i });
-        const input = screen.getByDisplayValue('J-1A, Ansa Industrial Estate') as HTMLTextAreaElement;
+        const input = screen.getByLabelText(/address 1/i) as HTMLTextAreaElement;
 
         expect(undoButton).toBeDisabled();
 
@@ -188,7 +237,7 @@ describe('ValidatePage', () => {
         render(<TestWrapper />);
         await waitFor(() => expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument());
 
-        fireEvent.change(screen.getByDisplayValue('J-1A, Ansa Industrial Estate'), { target: { value: 'Changed' } });
+        fireEvent.change(screen.getByLabelText(/address 1/i), { target: { value: 'Changed' } });
 
         // Should not have saved yet
         expect(screen.queryByText('Saving...')).not.toBeInTheDocument();
@@ -219,7 +268,7 @@ describe('ValidatePage', () => {
 
     test('commits changes and navigates to the next file', async () => {
         render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
         const commitButton = screen.getByRole('button', { name: /commit & next file/i });
         fireEvent.click(commitButton);
@@ -231,12 +280,12 @@ describe('ValidatePage', () => {
 
     test('reverts a single field to original source on confirmation', async () => {
         render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
-        fireEvent.change(screen.getByDisplayValue('J-1A, Ansa Industrial Estate'), { target: { value: 'User Changed Value' } });
+        fireEvent.change(screen.getByLabelText(/address 1/i), { target: { value: 'User Changed Value' } });
         expect(screen.getByDisplayValue('User Changed Value')).toBeInTheDocument();
 
-        const revertButton = screen.getByRole('button', { name: /revert field/i });
+        const revertButton = screen.getByRole('button', { name: /revert/i, exact: false }); // "Revert" part of "Revert <Field Name>"
         fireEvent.click(revertButton);
 
         await waitFor(() => {
