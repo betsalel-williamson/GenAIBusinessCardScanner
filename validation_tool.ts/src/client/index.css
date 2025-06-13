@@ -8,31 +8,30 @@
   image overlay have been kept for convenience, adjusted for new behavior.
 */
 
-.image-display-area {
+.pdf-viewer-container {
   position: relative;
-  display: inline-block;
-  overflow: hidden;
+  display: flex; /* Use flexbox to stack pages */
+  flex-direction: column;
+  align-items: center; /* Center pages horizontally */
+  overflow: hidden; /* Important for pan/zoom */
   cursor: grab;
-  /* Allow dragging */
   user-select: none; /* Prevent text selection during drag */
   transform-origin: top left; /* Scale and translate from top-left */
   width: 100%;
   height: 100%;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  box-sizing: border-box; /* Include padding in element's total width and height */
 }
 
-.image-display-area.grabbing {
+.pdf-viewer-container.grabbing {
   cursor: grabbing;
 }
 
-.image-display-area img {
-  display: block;
-  max-width: none; /* Allow image to be larger than container when zoomed */
-  max-height: none; /* Allow image to be larger than container when zoomed */
-  width: 100%; /* Default width to fill container */
+.pdf-page-canvas {
+  display: block; /* Ensure canvases are block elements */
+  max-width: 100%; /* Ensure canvases don't overflow their parent */
   height: auto; /* Maintain aspect ratio */
-  image-rendering: -webkit-optimize-contrast; /* Better scaling for low-res images */
+  margin-bottom: 10px; /* Space between pages */
+  background-color: white; /* Background for pages */
 }
 
 
