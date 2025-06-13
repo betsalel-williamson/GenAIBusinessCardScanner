@@ -186,8 +186,8 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
     return () => window.removeEventListener('mouseup', handleMouseUpGlobal);
   }, []);
 
-  // Handle zoom/pan with mouse wheel
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+  // Handle zoom/pan with mouse wheel - now handled by native event listener
+  const handleWheel = useCallback((e: WheelEvent) => { // Changed type to native WheelEvent
     e.preventDefault(); // Prevent default browser scroll/zoom
     const currentScale = transformation.scale;
     let newScale = currentScale;
@@ -228,7 +228,20 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
       offsetX: newOffsetX,
       offsetY: newOffsetY,
     });
-  };
+  }, [transformation, onTransformationChange]); // Added dependencies
+
+  // Attach native wheel event listener with passive: false
+  useEffect(() => {
+    const viewportDiv = viewportRef.current;
+    if (viewportDiv) {
+      // Add event listener with passive: false for Safari compatibility
+      viewportDiv.addEventListener('wheel', handleWheel, { passive: false });
+      return () => {
+        viewportDiv.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, [handleWheel]); // Depend on handleWheel to re-attach if it changes
+
 
   if (loadingPdf) {
     return <div className="flex-grow flex items-center justify-center text-gray-600">Loading PDF...</div>;
@@ -246,7 +259,6 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
     <div
       ref={viewportRef} // Assign ref to the main viewport div
       className={`flex-grow overflow-hidden relative ${isDragging ? 'grabbing' : 'grab'}`} // Cursor on viewport
-      onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
