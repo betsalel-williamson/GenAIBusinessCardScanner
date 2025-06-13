@@ -306,16 +306,30 @@ export const useValidationData = (dataEntryPaneRef: React.RefObject<DataEntryPan
     // Keyboard Navigation Effect
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'Enter' || event.key === 'Escape') {
-                event.preventDefault();
-            }
+            const activeElement = document.activeElement;
+            const isInputField = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
 
-            if (event.key === 'ArrowLeft') {
-                handlePrevRecord();
-            } else if (event.key === 'ArrowRight' || event.key === 'Enter') {
-                handleNextRecord();
-            } else if (event.key === 'Escape') {
-                navigateBackToList();
+            if (isInputField) {
+                // If an input field is focused:
+                if (event.key === 'Escape') {
+                    event.preventDefault(); // Prevent default browser behavior
+                    undoRecords(); // Revert the last change to the record
+                    // Optionally, you might want to blur the field after undoing: (activeElement as HTMLElement).blur();
+                }
+                // For ArrowLeft, ArrowRight, Enter: do NOT prevent default.
+                // Let the browser handle cursor movement, new lines, etc.
+            } else {
+                // If no input field is focused (global navigation):
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault(); // Prevent default browser scroll
+                    handlePrevRecord();
+                } else if (event.key === 'ArrowRight' || event.key === 'Enter') {
+                    event.preventDefault(); // Prevent default browser scroll/submit
+                    handleNextRecord();
+                } else if (event.key === 'Escape') {
+                    event.preventDefault(); // Prevent default browser behavior
+                    navigateBackToList();
+                }
             }
         };
 
@@ -324,7 +338,7 @@ export const useValidationData = (dataEntryPaneRef: React.RefObject<DataEntryPan
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [handlePrevRecord, handleNextRecord, navigateBackToList]);
+    }, [handlePrevRecord, handleNextRecord, navigateBackToList, undoRecords]); // Add undoRecords to dependencies
 
     return {
         loading,
