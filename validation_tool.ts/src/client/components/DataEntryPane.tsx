@@ -40,6 +40,8 @@ export interface DataEntryPaneProps {
   onCommit: () => void;
   onBack: () => void;
   onRevertField: (key: string) => void;
+  // New prop to communicate focus events for field-specific undo
+  onFieldFocus: (key: string, initialValue: string) => void;
 }
 
 // Define the imperative handle for parent components
@@ -57,6 +59,7 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(({
   onCommit,
   onBack,
   onRevertField,
+  onFieldFocus, // Destructure new prop
 }, ref) => {
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldValue, setNewFieldValue] = useState('');
@@ -132,6 +135,11 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(({
   const nonEditableFields = ['source', 'date_imported', 'time_imported'];
   const editableFieldKeys = orderedKeys.filter(key => !nonEditableFields.includes(key));
 
+  // For "Add New Field" section: Filter FIELD_ORDER for suggestions
+  const suggestedNewFieldNames = FIELD_ORDER.filter(
+      (key) => !allCurrentKeys.includes(key) && !nonEditableFields.includes(key)
+  );
+
 
   return (
     <>
@@ -151,9 +159,10 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(({
               <div className="flex items-center gap-2">
                 <textarea
                   id={`field_${key}`}
-                  name={`field_${key}`}
+                  name={`field_${key}`} // Add name attribute for better identification
                   value={String(currentRecord[key] || '')}
                   onChange={(e) => onFieldChange(key, e.target.value)}
+                  onFocus={(e) => onFieldFocus(key, e.target.value)} // Report focus event
                   className="flex-grow p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[50px]"
                   rows={3}
                 />
@@ -179,11 +188,19 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(({
               <input
                 type="text"
                 id="newFieldName"
+                name="newFieldName" // Add name attribute
+                list="suggested-new-fields" // Link to datalist
                 value={newFieldName}
                 onChange={(e) => setNewFieldName(e.target.value)}
+                onFocus={(e) => onFieldFocus('newFieldName', e.target.value)} // Report focus event
                 className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., website_url"
+                placeholder="e.g., website_url or select from list"
               />
+              <datalist id="suggested-new-fields">
+                  {suggestedNewFieldNames.map((name) => (
+                      <option key={name} value={name} />
+                  ))}
+              </datalist>
             </div>
             <div>
               <label htmlFor="newFieldValue" className="block text-sm font-medium text-gray-700 mb-1">
@@ -191,8 +208,10 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(({
               </label>
               <textarea
                 id="newFieldValue"
+                name="newFieldValue" // Add name attribute
                 value={newFieldValue}
                 onChange={(e) => setNewFieldValue(e.target.value)}
+                onFocus={(e) => onFieldFocus('newFieldValue', e.target.value)} // Report focus event
                 className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[50px]"
                 rows={3}
                 placeholder="Value for new field"
