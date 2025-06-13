@@ -8,24 +8,32 @@
   image overlay have been kept for convenience, adjusted for new behavior.
 */
 
-.pdf-viewer-container {
-  position: relative;
-  display: flex; /* Use flexbox to stack pages */
-  flex-direction: column;
-  align-items: center; /* Center pages horizontally */
-  overflow: hidden; /* Important for pan/zoom */
-  cursor: grab;
-  user-select: none; /* Prevent text selection during drag */
-  transform-origin: top left; /* Scale and translate from top-left */
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box; /* Include padding in element's total width and height */
+/* The outer viewport div in ImagePane */
+/* Already has flex-grow, overflow-hidden, relative from Tailwind and React props */
+
+/* The transformed content container */
+.pdf-transformed-content {
+  position: absolute; /* Position absolutely within the relative parent viewport */
+  top: 0;
+  left: 0;
+  /* width and height are removed from inline style to allow content to define them */
+  /* min-width/height are set inline */
+  /* transform-origin, display, flex-direction, align-items, padding, box-sizing, background-color are set inline */
 }
 
-.pdf-viewer-container.grabbing {
+.pdf-transformed-content.grabbing {
   cursor: grabbing;
 }
 
+/* Container for individual canvases */
+.pages-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center individual pages within this container */
+  /* This container grows to fit all canvases */
+}
+
+/* Individual canvas for PDF pages */
 .pdf-page-canvas {
   display: block; /* Ensure canvases are block elements */
   max-width: 100%; /* Ensure canvases don't overflow their parent */

@@ -3,14 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useUndoableState } from '../hooks/useUndoableState';
 import { useDebounce } from '../hooks/useDebounce';
 import ImagePane from '../components/ImagePane';
-import DataEntryPane from '../components/DataEntryPane'; // Renamed FormPane
+import DataEntryPane from '../components/DataEntryPane';
 import type { DataRecord, AppState, TransformationState } from '../../../types/types';
 
-// Helper to get image path from record source (e.g., "file.pdf" -> "/public/images/file.jpg")
-const getImageSrcFromRecord = (record: DataRecord | undefined) => {
-    if (!record?.source) return '';
-    const baseName = record.source.split('.').slice(0, -1).join('.');
-    return `/images/${baseName}.jpg`; // Changed from /public/images/
+// Helper to get PDF path from record source (e.g., "file.pdf" -> "/images/file.pdf")
+const getPDFSrcFromRecord = (record: DataRecord | undefined) => {
+    if (!record?.source || typeof record.source !== 'string' || record.source.trim() === '') {
+        return ""; // Return empty string if source is missing, not a string, or empty
+    }
+    const baseName = record.source.split(".").slice(0, -1).join(".");
+    return `/images/${baseName}.pdf`; // Changed to .pdf
 };
 
 const ValidatePage: React.FC = () => {
@@ -222,7 +224,7 @@ const ValidatePage: React.FC = () => {
     if (error) return <div className="p-8 text-xl text-red-500">Error: {error}</div>;
     if (records.length === 0) return <div className="p-8 text-xl">No data found for {json_filename}.</div>;
 
-    const currentImageSrc = getImageSrcFromRecord(currentRecord);
+    const currentPDFSrc = getPDFSrcFromRecord(currentRecord);
 
     return (
         <div className="flex h-screen bg-gray-50">
@@ -246,12 +248,24 @@ const ValidatePage: React.FC = () => {
                         Redo
                     </button>
                 </div>
-                <ImagePane
-                    imageWrapperRef={imageWrapperRef}
-                    imageSrc={currentImageSrc}
-                    transformation={transformation}
-                    onTransformationChange={setTransformation}
-                />
+                {currentRecord && currentPDFSrc ? (
+                    <ImagePane
+                        imageWrapperRef={imageWrapperRef}
+                        pdfSrc={currentPDFSrc}
+                        transformation={transformation}
+                        onTransformationChange={setTransformation}
+                    />
+                ) : (
+                    <div className="flex-grow flex items-center justify-center bg-gray-200 text-gray-700 text-center p-4 rounded-md">
+                        {currentRecord ? (
+                            <p>No PDF 'source' field found for the current record, or it's empty.<br/>
+                            Please ensure your JSON data includes a 'source' field (e.g., "my_document.pdf").</p>
+                        ) : (
+                            <p>No record selected or data is empty. <br/>
+                            Check your JSON file in 'data_source/' for '{json_filename}'.</p>
+                        )}
+                    </div>
+                )}
             </div>
             <div className="w-1/3 max-w-md h-full flex flex-col border-l border-gray-200 bg-white">
                 <DataEntryPane

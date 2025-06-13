@@ -30,7 +30,7 @@ interface ImagePaneProps {
   pdfSrc: string;
   transformation: TransformationState;
   onTransformationChange: (newTransformation: TransformationState) => void;
-  imageWrapperRef: React.RefObject<HTMLDivElement>;
+  imageWrapperRef: React.RefObject<HTMLDivElement>; // This will now be the container for *pages*, inside the transformed div
 }
 
 const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransformationChange, imageWrapperRef }) => {
@@ -41,6 +41,9 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const pdfjsRef = useRef<PdfJs | null>(null); // Ref to hold the dynamically imported pdfjs object
+
+  // NEW ref for the TRANSFORMED content container
+  const transformedContentRef = useRef<HTMLDivElement>(null);
 
   // Dynamically import pdfjs-dist on client-side mount
   useEffect(() => {
@@ -94,12 +97,20 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
 
   // Render PDF pages to canvases
   const renderPage = useCallback(async (page: PDFPageProxy, canvas: HTMLCanvasElement) => {
-    const viewport = page.getViewport({ scale: 1.0 }); // Render at base scale
+    const renderScale = 2.0; // Render at 2x resolution for sharpness
+    const viewport = page.getViewport({ scale: renderScale });
     const context = canvas.getContext('2d');
     if (!context) return;
 
+    // Set canvas internal dimensions to the higher resolution
     canvas.height = viewport.height;
     canvas.width = viewport.width;
+
+    // Set canvas display dimensions to the original size to prevent it from appearing huge
+    // This effectively makes it a HiDPI (Retina) render
+    const baseViewport = page.getViewport({ scale: 1.0 });
+    canvas.style.width = baseViewport.width + 'px';
+    canvas.style.height = baseViewport.height + 'px';
 
     const renderContext = {
       canvasContext: context,
@@ -115,17 +126,17 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
   }, []);
 
   useEffect(() => {
-    if (!pdfDoc || !imageWrapperRef.current) return;
+    if (!pdfDoc || !imageWrapperRef.current || !transformedContentRef.current) return;
 
-    const viewer = imageWrapperRef.current;
-    viewer.innerHTML = ''; // Clear previous canvases
+    const pagesContainer = imageWrapperRef.current; // This is the div where canvases are appended
+    pagesContainer.innerHTML = ''; // Clear previous canvases
 
     const renderAllPages = async () => {
       for (let i = 1; i <= pdfDoc.numPages; i++) {
         const page = await pdfDoc.getPage(i);
         const canvas = document.createElement('canvas');
         canvas.className = 'pdf-page-canvas mb-2 border border-gray-300 shadow-sm'; // Add some styling
-        viewer.appendChild(canvas);
+        pagesContainer.appendChild(canvas); // Append canvases to imageWrapperRef
         await renderPage(page, canvas);
       }
     };
@@ -135,10 +146,14 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
 
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    setIsDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY };
-    initialTransform.current = { offsetX: transformation.offsetX, offsetY: transformation.offsetY };
-    e.preventDefault();
+    // Only start dragging if the event originated from the transformed content div itself
+    // and not from a child like a text input within a future annotation layer
+    if (e.target === transformedContentRef.current) {
+      setIsDragging(true);
+      dragStart.current = { x: e.clientX, y: e.clientY };
+      initialTransform.current = { offsetX: transformation.offsetX, offsetY: transformation.offsetY };
+      e.preventDefault();
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -173,7 +188,28 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
       newScale -= scaleAmount;
     }
     newScale = Math.max(0.1, Math.min(5.0, newScale)); // Clamp scale between 0.1 and 5.0
-    onTransformationChange({ ...transformation, scale: newScale });
+
+    // Adjust offsetX/offsetY to zoom towards mouse position
+    const contentDiv = transformedContentRef.current;
+    if (!contentDiv) return;
+
+    const rect = contentDiv.getBoundingClientRect(); // Get position relative to viewport
+    const mouseXInViewport = e.clientX - rect.left;
+    const mouseYInViewport = e.clientY - rect.top;
+
+    // Calculate mouse position relative to the *transformed* content before the new scale
+    const mouseXInContent = (mouseXInViewport - transformation.offsetX) / transformation.scale;
+    const mouseYInContent = (mouseYInViewport - transformation.offsetY) / transformation.scale;
+
+    // Calculate new offsets to keep the content under the mouse cursor stable
+    const newOffsetX = mouseXInViewport - mouseXInContent * newScale;
+    const newOffsetY = mouseYInViewport - mouseYInContent * newScale;
+
+    onTransformationChange({
+      scale: newScale,
+      offsetX: newOffsetX,
+      offsetY: newOffsetY,
+    });
   };
 
   if (loadingPdf) {
@@ -190,29 +226,36 @@ const ImagePane: React.FC<ImagePaneProps> = ({ pdfSrc, transformation, onTransfo
 
   return (
     <div
-      className="flex-grow overflow-hidden relative"
+      className="flex-grow overflow-hidden relative" // This is the VIEWPORT, handles clipping
       onWheel={handleWheel}
+      // Dragging handlers are now on this viewport div
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
     >
-        <div
-            ref={imageWrapperRef} // This div will contain the canvases
-            className={`pdf-viewer-container ${isDragging ? 'grabbing' : 'grab'}`}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+        <div // This is the TRANSFORMED CONTENT CONTAINER, its size adapts to its children
+            ref={transformedContentRef}
+            className={`pdf-transformed-content ${isDragging ? 'grabbing' : 'grab'}`}
             style={{
                 transform: `translate(${transformation.offsetX}px, ${transformation.offsetY}px) scale(${transformation.scale})`,
                 transformOrigin: '0 0', // Apply transform from top-left
-                width: '100%', // Ensure container takes full width
-                height: '100%', // Ensure container takes full height
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center', // Center pages horizontally
-                padding: '20px', // Add some padding around pages
-                boxSizing: 'border-box',
+                alignItems: 'center', // Center pages horizontally within the transformed space
+                // NO FIXED WIDTH/HEIGHT - it grows with its content
+                // Instead, ensure minimum size if content is empty or small
+                minWidth: '100%',
+                minHeight: '100%',
+                padding: '20px', // Apply padding here for spacing *around* the pages
+                boxSizing: 'content-box', // Ensure padding adds to size
+                // Set background for empty areas if content doesn't fill
+                backgroundColor: '#fff',
             }}
         >
-            {/* Canvases will be appended here by useEffect */}
+            <div ref={imageWrapperRef} className="pages-container">
+                {/* Canvases will be appended here by useEffect */}
+            </div>
         </div>
     </div>
   );
