@@ -4,14 +4,43 @@ import type { DataRecord } from '../../../types/types';
 interface DataEntryPaneProps {
   currentRecord: DataRecord | null;
   onFieldChange: (key: string, newValue: string) => void;
-  onAddField: (key: string, value: string) => void; // New prop for adding fields
+  onAddField: (key: string, value: string) => void;
   onNextRecord: () => void;
   onPrevRecord: () => void;
   autosaveStatus: { message: string, type: string };
   onCommit: () => void;
   onBack: () => void;
-  onRevertField: (key: string) => void; // Updated to revert a specific field
+  onRevertField: (key: string) => void;
 }
+
+// Define the desired order of fields
+const FIELD_ORDER = [
+  'company',
+  'website',
+  'prefix',
+  'full_name',
+  'first_name',
+  'last_name',
+  'title',
+  'address_1',
+  'address_2',
+  'address_3',
+  'city',
+  'state_or_state_code',
+  'country_or_country_code',
+  'zip_code_or_post_code',
+  'phone',
+  'extension',
+  'cell',
+  'email',
+  'retailer_type',
+  'source', // Keep source here if you want it to appear, but it will be filtered from editing
+  'date_imported',
+  'contact_type',
+  'notes',
+  'time_imported',
+  'products'
+];
 
 const DataEntryPane: React.FC<DataEntryPaneProps> = ({
   currentRecord,
@@ -52,9 +81,47 @@ const DataEntryPane: React.FC<DataEntryPaneProps> = ({
     }
   };
 
-  const sortedFieldKeys = Object.keys(currentRecord).sort();
-  // Filter out the 'source' field from being editable
-  const editableFieldKeys = sortedFieldKeys.filter(key => key !== 'source');
+  // Determine the order of fields to display
+  const allCurrentKeys = Object.keys(currentRecord);
+  const orderedKeys: string[] = [];
+  const seenKeys = new Set<string>();
+
+  // Add keys from FIELD_ORDER first
+  FIELD_ORDER.forEach(key => {
+    if (allCurrentKeys.includes(key)) {
+      orderedKeys.push(key);
+      seenKeys.add(key);
+    }
+  });
+
+  // Add any remaining keys (not in FIELD_ORDER) alphabetically
+  allCurrentKeys.forEach(key => {
+    if (!seenKeys.has(key)) {
+      orderedKeys.push(key);
+    }
+  });
+  orderedKeys.sort((a, b) => {
+    // Custom sort: items in FIELD_ORDER maintain their relative order.
+    // Items not in FIELD_ORDER are sorted alphabetically after those that are.
+    const aIndex = FIELD_ORDER.indexOf(a);
+    const bIndex = FIELD_ORDER.indexOf(b);
+
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex; // Both are in FIELD_ORDER, sort by their order
+    }
+    if (aIndex !== -1) {
+      return -1; // A is in FIELD_ORDER, B is not, so A comes first
+    }
+    if (bIndex !== -1) {
+      return 1; // B is in FIELD_ORDER, A is not, so B comes first
+    }
+    return a.localeCompare(b); // Neither are in FIELD_ORDER, sort alphabetically
+  });
+
+
+  // Filter out the 'source' (and potentially other non-editable fields if desired)
+  const nonEditableFields = ['source', 'date_imported', 'time_imported'];
+  const editableFieldKeys = orderedKeys.filter(key => !nonEditableFields.includes(key));
 
 
   return (
