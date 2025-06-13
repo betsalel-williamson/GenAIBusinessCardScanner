@@ -15,14 +15,14 @@ const MOCK_INITIAL_DATA: DataRecord[] = [
     "address_1": "J-1A, Ansa Industrial Estate",
     "company": "CHENAB IMPEX PVT. LTD.",
     "email": "anil@chenabimpex.com",
-    "notes": "Long notes to make the div scrollable.", // Added for scroll testing
+    "notes": "Long notes to make the div scrollable.",
     "source": "image-001.pdf"
   },
   {
     "address_1": "123 Main St",
     "company": "Another Corp",
     "email": "info@another.com",
-    "notes": "Even longer notes for second record.", // Added for scroll testing
+    "notes": "Even longer notes for second record.",
     "source": "image-002.pdf"
   }
 ];
@@ -114,6 +114,23 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock the DataEntryPane's scroll behavior for testing
+const mockDataEntryPaneHandle = {
+    scrollToTop: vi.fn(),
+};
+
+vi.mock('../client/components/DataEntryPane', async () => {
+    const actual = await vi.importActual('../client/components/DataEntryPane');
+    return {
+        ...actual,
+        default: React.forwardRef((props, ref) => {
+            React.useImperativeHandle(ref, () => mockDataEntryPaneHandle);
+            return React.createElement(actual.default.type, props, null); // Pass props correctly
+        }),
+    };
+});
+
+
 // Wrapper component for routing context
 const TestWrapper: React.FC = () => (
   <MemoryRouter initialEntries={[`/validate/${MOCK_FILE_NAME}`]}>
@@ -129,80 +146,73 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-describe('ValidatePage - Full List UI with Scroll', () => {
-    let dataEntryScrollTopSpy: MockInstance;
-
+describe('ValidatePage - Full List UI with Scroll and Keyboard Nav', () => {
     beforeEach(() => {
         mockNavigate.mockClear();
         vi.spyOn(window, 'confirm').mockReturnValue(true);
+        // Reset mock for DataEntryPane's scrollToTop
+        mockDataEntryPaneHandle.scrollToTop.mockClear();
         Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, value: 500 });
         Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 500 });
-
-        // Mock the scrollable div's scrollTop property
-        const mockScrollableDiv = { scrollTop: 0 };
-        dataEntryScrollTopSpy = vi.spyOn(mockScrollableDiv, 'scrollTop', 'set');
-        // When DataEntryPane's useImperativeHandle tries to set scrollableDivRef.current.scrollTop
-        // we'll intercept it.
-        vi.spyOn(React, 'useRef').mockImplementation((initialValue) => {
-            if (initialValue && initialValue.current && 'scrollToTop' in initialValue.current) {
-                // This is for the DataEntryPane ref that exposes scrollToTop
-                return {
-                    current: {
-                        scrollToTop: () => {
-                            dataEntryScrollTopSpy.mock.calls[0][1] = 0; // Simulate setting scrollTop to 0
-                        }
-                    }
-                };
-            }
-            if (initialValue && initialValue.current && 'scrollTop' in initialValue.current) {
-                 // This is for the internal scrollableDivRef in DataEntryPane
-                return { current: mockScrollableDiv };
-            }
-            return { current: initialValue };
-        });
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    test('navigates to the next record and scrolls fields to top', async () => {
+    test('navigates to the next record and scrolls fields to top on Next Record button click', async () => {
         render(<TestWrapper />);
         await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
-
-        // Simulate scrolling down the form
-        const notesInput = screen.getByLabelText(/notes/i) as HTMLTextAreaElement;
-        // In a real browser, this would change notesInput.closest('.overflow-y-auto').scrollTop
-        // For JSDOM, we just need to verify the call to scrollToTop happened.
-        // We don't need to actually set scrollTop for the test, just verify the call.
 
         fireEvent.click(screen.getByRole('button', { name: /next record/i }));
 
         await waitFor(() => {
             expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument();
-            expect(dataEntryScrollTopSpy).toHaveBeenCalledWith(0); // Assert that scrollTop was set to 0
+            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(1);
         });
     });
 
-    test('navigates to the previous record and scrolls fields to top', async () => {
+    test('navigates to the previous record and scrolls fields to top on Prev Record button click', async () => {
         render(<TestWrapper />);
         await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
 
         fireEvent.click(screen.getByRole('button', { name: /next record/i }));
         await waitFor(() => expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument());
 
-        // Simulate scrolling down the form on the second record
-        const notesInput = screen.getByLabelText(/notes/i, { selector: 'textarea' });
-
         fireEvent.click(screen.getByRole('button', { name: /prev record/i }));
 
         await waitFor(() => {
             expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument();
-            expect(dataEntryScrollTopSpy).toHaveBeenCalledWith(0); // Assert that scrollTop was set to 0
+            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(2); // One call for next, one for prev
         });
     });
 
-    // Re-include previous tests as they should still pass with the new UI structure
+    test('navigates to the next record using Right Arrow key', async () => {
+        render(<TestWrapper />);
+        await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
+
+        fireEvent.keyDown(window, { key: 'ArrowRight', code: 'ArrowRight' });
+
+        await waitFor(() => {
+            expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument();
+            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    test('navigates to the previous record using Left Arrow key', async () => {
+        render(<TestWrapper />);
+        await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
+
+        // Go to next record first
+        fireEvent.keyDown(window, { key: 'ArrowRight', code: 'ArrowRight' });
+        await waitFor(() => expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument());
+        mockDataEntryPaneHandle.scrollToTop.mockClear(); // Clear count for this specific test
+
+        // Go back to previous record
+        fireEvent.keyDown(window, { key: 'ArrowLeft', code: 'ArrowLeft' });
+
+        await waitFor(() => {
+            expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument();
+            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(1);
+        });
+    });
+
     test('renders all editable fields for the current record', async () => {
         render(<TestWrapper />);
         expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -215,8 +225,7 @@ describe('ValidatePage - Full List UI with Scroll', () => {
             expect(screen.getByDisplayValue('CHENAB IMPEX PVT. LTD.')).toBeInTheDocument();
             expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
             expect(screen.getByDisplayValue('anil@chenabimpex.com')).toBeInTheDocument();
-            expect(screen.getByLabelText(/notes/i)).toBeInTheDocument(); // Ensure notes field is present
-            // Source field should NOT be editable
+            expect(screen.getByLabelText(/notes/i)).toBeInTheDocument();
             expect(screen.queryByLabelText(/source/i)).not.toBeInTheDocument();
         });
     });

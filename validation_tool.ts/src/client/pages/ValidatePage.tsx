@@ -202,6 +202,28 @@ const ValidatePage: React.FC = () => {
     }, [json_filename, currentRecord, currentRecordIndex, records, setRecords]);
 
 
+    // Keyboard Navigation Effect
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Prevent default behavior for arrow keys to avoid browser scrolling
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.preventDefault();
+            }
+
+            if (event.key === 'ArrowLeft') {
+                handlePrevRecord();
+            } else if (event.key === 'ArrowRight') {
+                handleNextRecord();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [handlePrevRecord, handleNextRecord]); // Depend on memoized handlers
+
     if (loading) return <div className="p-8 text-xl">Loading...</div>;
     if (error) return <div className="p-8 text-xl text-red-500">Error: {error}</div>;
     if (records.length === 0) return <div className="p-8 text-xl">No data found for {json_filename}.</div>;
