@@ -110,9 +110,9 @@ vi.mock('../client/components/ImagePane', () => {
 });
 
 export const TestWrapper: React.FC = () => (
-  <MemoryRouter initialEntries={[`/validate/${MOCK_FILE_NAME}/1`]}> {/* Updated initial entry for tests */}
+  <MemoryRouter initialEntries={[`/validate/${MOCK_FILE_NAME}/1`]}> {/* Initial entry with record 1 */}
     <Routes>
-      {/* record_index is optional for tests as well now */}
+      {/* record_index is optional now */}
       <Route path="/validate/:json_filename/:record_index?" element={<ValidatePage />} />
       <Route path="/" element={<HomePage />} />
       {/* Updated route path for next file for consistency, though it won't be navigated to directly by tests here */}
@@ -132,7 +132,7 @@ export function setupValidatePageTests() {
 
   beforeEach(() => {
     mockNavigate.mockClear();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(window, 'confirm').mockReturnValue(true); // Mock window.confirm
     mockDataEntryPaneHandle.scrollToTop.mockClear();
     // JSDOM doesn't support layout, so we mock properties used for calculations
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, value: 500 });

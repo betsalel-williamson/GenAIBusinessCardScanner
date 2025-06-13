@@ -15,7 +15,8 @@ const getPDFSrcFromRecord = (record: DataRecord | undefined) => {
     return `/images/${baseName}.pdf`; // Changed to .pdf
 };
 
-const LOCAL_STORAGE_KEY_PREFIX = 'lastViewedRecord_';
+const LOCAL_STORAGE_KEY_LAST_VIEWED_PREFIX = 'lastViewedRecord_';
+const LOCAL_STORAGE_KEY_SOFT_VALIDATED_PREFIX = 'softValidatedIndices_'; // New key for soft-validated records
 
 const ValidatePage: React.FC = () => {
     // Get json_filename and record_index from path parameters
@@ -30,7 +31,10 @@ const ValidatePage: React.FC = () => {
     const [autosaveStatus, setAutosaveStatus] = useState({ message: '', type: ''});
 
     // Determine initial record index based on URL, then localStorage, then default to 0
-    const initialRecordIndexRef = useRef(0); // Using ref to hold initial value during first render cycle
+    // We'll use a ref to store this initial value, as it's computed once on mount
+    const initialRecordIndexRef = useRef(0);
+    // New state for soft-validated records within the current file
+    const [softValidatedIndices, setSoftValidatedIndices] = useState<Set<number>>(new Set());
 
     // useUndoableState manages the array of records
     const [
@@ -57,29 +61,43 @@ const ValidatePage: React.FC = () => {
     // Memoize the current record
     const currentRecord = useMemo(() => records[currentRecordIndex] || null, [records, currentRecordIndex]);
 
-    // Initial data load and initial record index determination
+    // Initial data load and initial record index/soft-validation determination
     useEffect(() => {
         if (!json_filename) return;
 
         setLoading(true);
 
-        // Determine the initial index to load
+        // 1. Determine the initial index to load
         let initialIdx = 0;
         if (record_index) {
             // URL parameter takes precedence (1-based to 0-based)
             initialIdx = Math.max(0, parseInt(record_index, 10) - 1);
         } else {
-            // Check localStorage
+            // Check localStorage for last viewed record
             try {
-                const storedIndex = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}${json_filename}`);
+                const storedIndex = localStorage.getItem(`${LOCAL_STORAGE_KEY_LAST_VIEWED_PREFIX}${json_filename}`);
                 if (storedIndex !== null) {
                     initialIdx = Math.max(0, parseInt(storedIndex, 10));
                 }
             } catch (e) {
-                console.warn("Failed to read from localStorage:", e);
+                console.warn("Failed to read last viewed record from localStorage:", e);
             }
         }
-        initialRecordIndexRef.current = initialIdx; // Store for useState initialization
+        initialRecordIndexRef.current = initialIdx; // Store for useState initialization below
+
+        // 2. Load soft-validated indices from localStorage
+        try {
+            const storedSoftValidated = localStorage.getItem(`${LOCAL_STORAGE_KEY_SOFT_VALIDATED_PREFIX}${json_filename}`);
+            if (storedSoftValidated) {
+                setSoftValidatedIndices(new Set(JSON.parse(storedSoftValidated)));
+            } else {
+                setSoftValidatedIndices(new Set()); // Initialize empty if nothing stored
+            }
+        } catch (e) {
+            console.warn("Failed to read soft-validated indices from localStorage:", e);
+            setSoftValidatedIndices(new Set());
+        }
+
 
         fetch(`/api/files/${json_filename}`)
             .then(res => {
@@ -103,15 +121,15 @@ const ValidatePage: React.FC = () => {
             .finally(() => setLoading(false));
     }, [json_filename, record_index, resetRecords]); // Only re-run when file or URL record_index changes
 
-    // Effect to synchronize currentRecordIndex state with URL and localStorage
+    // Effect to synchronize currentRecordIndex state with URL and localStorage (last viewed)
     useEffect(() => {
         if (!json_filename || records.length === 0) return; // Wait for data to load
 
-        // Update localStorage
+        // Update localStorage for last viewed record
         try {
-            localStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}${json_filename}`, currentRecordIndex.toString());
+            localStorage.setItem(`${LOCAL_STORAGE_KEY_LAST_VIEWED_PREFIX}${json_filename}`, currentRecordIndex.toString());
         } catch (e) {
-            console.warn("Failed to write to localStorage:", e);
+            console.warn("Failed to write last viewed record to localStorage:", e);
         }
 
         // Update URL path parameter (0-based internal to 1-based URL)
@@ -120,6 +138,16 @@ const ValidatePage: React.FC = () => {
             navigate(`/validate/${json_filename}/${currentRecordIndex + 1}`, { replace: true });
         }
     }, [currentRecordIndex, json_filename, record_index, navigate, records.length]);
+
+    // Effect to save soft-validated indices to localStorage whenever it changes
+    useEffect(() => {
+        if (!json_filename) return;
+        try {
+            localStorage.setItem(`${LOCAL_STORAGE_KEY_SOFT_VALIDATED_PREFIX}${json_filename}`, JSON.stringify(Array.from(softValidatedIndices)));
+        } catch (e) {
+            console.warn("Failed to write soft-validated indices to localStorage:", e);
+        }
+    }, [softValidatedIndices, json_filename]);
 
 
     const autoSave = useCallback(async (dataToSave: DataRecord[]) => {
@@ -176,6 +204,11 @@ const ValidatePage: React.FC = () => {
     }, [records, currentRecordIndex, setRecords, currentRecord]);
 
     const handleCommit = useCallback(async () => {
+        // Confirmation dialog for commit
+        if (!window.confirm("Committing will validate ALL records in this file and move it. Are you sure?")) {
+            return; // User cancelled
+        }
+
         if (!json_filename || records.length === 0) return;
 
         setAutosaveStatus({ message: "Committing...", type: "status-progress" });
@@ -189,9 +222,10 @@ const ValidatePage: React.FC = () => {
             if (!response.ok) throw new Error("Commit failed on server");
             const result = await response.json();
 
-            // Clear localStorage entry for the committed file
+            // Clear localStorage entries for the committed file
             try {
-                localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}${json_filename}`);
+                localStorage.removeItem(`${LOCAL_STORAGE_KEY_LAST_VIEWED_PREFIX}${json_filename}`);
+                localStorage.removeItem(`${LOCAL_STORAGE_KEY_SOFT_VALIDATED_PREFIX}${json_filename}`);
             } catch (e) {
                 console.warn("Failed to clear localStorage for committed file:", e);
             }
@@ -209,10 +243,14 @@ const ValidatePage: React.FC = () => {
 
     const handleNextRecord = useCallback(() => {
         if (currentRecordIndex < records.length - 1) {
+            // Mark the CURRENT record as soft-validated before moving to the next
+            setSoftValidatedIndices(prev => new Set(prev).add(currentRecordIndex));
             setCurrentRecordIndex(prev => prev + 1);
             setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view for new record
             dataEntryPaneRef.current?.scrollToTop(); // Scroll fields to top
         } else {
+            // If on the last record and hitting next, implicitly soft-validate it
+            setSoftValidatedIndices(prev => new Set(prev).add(currentRecordIndex));
             if (window.confirm("No more records. Do you want to commit changes and go back to file list?")) {
                 handleCommit();
             } else {
@@ -227,6 +265,7 @@ const ValidatePage: React.FC = () => {
             setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view for new record
             dataEntryPaneRef.current?.scrollToTop(); // Scroll fields to top
         }
+        // Do not un-mark as soft-validated when going back
     }, [currentRecordIndex]);
 
     const handleRevertField = useCallback(async (keyToRevert: string) => {
@@ -289,6 +328,8 @@ const ValidatePage: React.FC = () => {
     if (records.length === 0) return <div className="p-8 text-xl">No data found for {json_filename}.</div>;
 
     const currentPDFSrc = getPDFSrcFromRecord(currentRecord);
+    const isCurrentRecordSoftValidated = softValidatedIndices.has(currentRecordIndex);
+
 
     return (
         <div className="flex h-screen bg-gray-50">
@@ -303,6 +344,9 @@ const ValidatePage: React.FC = () => {
                     </button>
                     <span className="text-lg font-medium text-gray-700">
                         Record {currentRecordIndex + 1} / {records.length}
+                        {isCurrentRecordSoftValidated && (
+                            <span className="ml-2 text-green-500 text-base" title="Record validated by moving to next">✓</span>
+                        )}
                     </span>
                     <button
                         onClick={redoRecords}
