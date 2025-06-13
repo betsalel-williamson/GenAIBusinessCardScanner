@@ -15,9 +15,11 @@ const getPDFSrcFromRecord = (record: DataRecord | undefined) => {
     return `/images/${baseName}.pdf`; // Changed to .pdf
 };
 
+const LOCAL_STORAGE_KEY_PREFIX = 'lastViewedRecord_';
+
 const ValidatePage: React.FC = () => {
     // Get json_filename and record_index from path parameters
-    const { json_filename, record_index } = useParams<{ json_filename: string; record_index: string }>();
+    const { json_filename, record_index } = useParams<{ json_filename: string; record_index?: string }>(); // record_index is now optional
     const navigate = useNavigate();
 
     const imageWrapperRef = useRef<HTMLDivElement>(null); // Ref for the PDF canvases container
@@ -27,11 +29,8 @@ const ValidatePage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [autosaveStatus, setAutosaveStatus] = useState({ message: '', type: ''});
 
-    // Initialize currentRecordIndex from URL path parameter (1-based to 0-based)
-    const initialRecordIndex = useMemo(() => {
-        const parsedIndex = record_index ? parseInt(record_index, 10) - 1 : 0; // Convert 1-based URL to 0-based internal
-        return Math.max(0, parsedIndex); // Ensure index is not negative
-    }, [record_index]);
+    // Determine initial record index based on URL, then localStorage, then default to 0
+    const initialRecordIndexRef = useRef(0); // Using ref to hold initial value during first render cycle
 
     // useUndoableState manages the array of records
     const [
@@ -45,7 +44,8 @@ const ValidatePage: React.FC = () => {
     ] = useUndoableState<DataRecord[]>([]);
 
     // Local state for current record and image transformation
-    const [currentRecordIndex, setCurrentRecordIndex] = useState(initialRecordIndex);
+    // Initialize currentRecordIndex with the value determined from URL/localStorage on first render
+    const [currentRecordIndex, setCurrentRecordIndex] = useState(initialRecordIndexRef.current);
     const [transformation, setTransformation] = useState<TransformationState>({
         offsetX: 0,
         offsetY: 0,
@@ -57,23 +57,30 @@ const ValidatePage: React.FC = () => {
     // Memoize the current record
     const currentRecord = useMemo(() => records[currentRecordIndex] || null, [records, currentRecordIndex]);
 
-    // Effect to update the URL when currentRecordIndex changes
-    useEffect(() => {
-        // Only update URL if records have loaded and the current path's record index doesn't match
-        if (records.length > 0) {
-            const urlRecordIndex = parseInt(record_index || '1', 10); // Default to 1 if missing for comparison
-            if (currentRecordIndex + 1 !== urlRecordIndex) {
-                // Update URL path parameter (0-based internal to 1-based URL)
-                navigate(`/validate/${json_filename}/${currentRecordIndex + 1}`, { replace: true });
-            }
-        }
-    }, [currentRecordIndex, records.length, json_filename, record_index, navigate]);
-
-
-    // Initial data load
+    // Initial data load and initial record index determination
     useEffect(() => {
         if (!json_filename) return;
+
         setLoading(true);
+
+        // Determine the initial index to load
+        let initialIdx = 0;
+        if (record_index) {
+            // URL parameter takes precedence (1-based to 0-based)
+            initialIdx = Math.max(0, parseInt(record_index, 10) - 1);
+        } else {
+            // Check localStorage
+            try {
+                const storedIndex = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}${json_filename}`);
+                if (storedIndex !== null) {
+                    initialIdx = Math.max(0, parseInt(storedIndex, 10));
+                }
+            } catch (e) {
+                console.warn("Failed to read from localStorage:", e);
+            }
+        }
+        initialRecordIndexRef.current = initialIdx; // Store for useState initialization
+
         fetch(`/api/files/${json_filename}`)
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -84,14 +91,35 @@ const ValidatePage: React.FC = () => {
                     throw new Error("Invalid data format: Expected an array of records.");
                 }
                 resetRecords(initialData); // Set initial records for undo history
-                // Set currentRecordIndex, clamping to the max available index based on loaded data
-                setCurrentRecordIndex(prev => Math.min(prev, initialData.length - 1));
+
+                // Clamp the initial index to be within the bounds of loaded data
+                const finalInitialIndex = Math.min(initialIdx, initialData.length - 1);
+                setCurrentRecordIndex(finalInitialIndex); // Update the state with the determined index
+
                 setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset image view
                 setError(null);
             })
             .catch(err => setError(err.message))
             .finally(() => setLoading(false));
-    }, [json_filename, resetRecords]);
+    }, [json_filename, record_index, resetRecords]); // Only re-run when file or URL record_index changes
+
+    // Effect to synchronize currentRecordIndex state with URL and localStorage
+    useEffect(() => {
+        if (!json_filename || records.length === 0) return; // Wait for data to load
+
+        // Update localStorage
+        try {
+            localStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}${json_filename}`, currentRecordIndex.toString());
+        } catch (e) {
+            console.warn("Failed to write to localStorage:", e);
+        }
+
+        // Update URL path parameter (0-based internal to 1-based URL)
+        const urlRecordParam = parseInt(record_index || '1', 10); // Get current URL param (defaulting to 1)
+        if (currentRecordIndex + 1 !== urlRecordParam) {
+            navigate(`/validate/${json_filename}/${currentRecordIndex + 1}`, { replace: true });
+        }
+    }, [currentRecordIndex, json_filename, record_index, navigate, records.length]);
 
 
     const autoSave = useCallback(async (dataToSave: DataRecord[]) => {
@@ -160,6 +188,14 @@ const ValidatePage: React.FC = () => {
             });
             if (!response.ok) throw new Error("Commit failed on server");
             const result = await response.json();
+
+            // Clear localStorage entry for the committed file
+            try {
+                localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}${json_filename}`);
+            } catch (e) {
+                console.warn("Failed to clear localStorage for committed file:", e);
+            }
+
             if (result.nextFile) {
                 navigate(`/validate/${result.nextFile}/1`, { replace: true }); // Start next file at record 1 (URL)
             } else {

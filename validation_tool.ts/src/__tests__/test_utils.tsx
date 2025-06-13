@@ -72,8 +72,6 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    // Add useParams mock if tests rely on it, though not strictly needed if paths are fixed
-    // useParams: vi.fn(() => ({ json_filename: MOCK_FILE_NAME, record_index: '1' })),
   };
 });
 
@@ -114,9 +112,11 @@ vi.mock('../client/components/ImagePane', () => {
 export const TestWrapper: React.FC = () => (
   <MemoryRouter initialEntries={[`/validate/${MOCK_FILE_NAME}/1`]}> {/* Updated initial entry for tests */}
     <Routes>
-      <Route path="/validate/:json_filename/:record_index" element={<ValidatePage />} /> {/* Updated route path */}
+      {/* record_index is optional for tests as well now */}
+      <Route path="/validate/:json_filename/:record_index?" element={<ValidatePage />} />
       <Route path="/" element={<HomePage />} />
-      <Route path="/validate/next-file.json/1" element={<div>Next File Page</div>} /> {/* Updated route path for next file */}
+      {/* Updated route path for next file for consistency, though it won't be navigated to directly by tests here */}
+      <Route path="/validate/next-file.json/1" element={<div>Next File Page</div>} />
     </Routes>
   </MemoryRouter>
 );
@@ -124,7 +124,10 @@ export const TestWrapper: React.FC = () => (
 // Global setup/teardown for all ValidatePage-related tests
 export function setupValidatePageTests() {
   beforeAll(() => server.listen());
-  afterEach(() => server.resetHandlers());
+  afterEach(() => {
+    server.resetHandlers();
+    localStorage.clear(); // Clear localStorage between tests to prevent interference
+  });
   afterAll(() => server.close());
 
   beforeEach(() => {

@@ -7,7 +7,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/validate/:json_filename/:record_index" element={<ValidatePage />} />
+      {/* record_index is now optional for initial load, will be added by ValidatePage */}
+      <Route path="/validate/:json_filename/:record_index?" element={<ValidatePage />} />
     </Routes>
   );
 }
