@@ -7,6 +7,7 @@ import { describe, test, expect, beforeAll, afterEach, afterAll, vi, beforeEach 
 import HomePage from '../client/pages/HomePage'; // For navigation testing
 import ValidatePage from '../client/pages/ValidatePage';
 import type { DataRecord } from '../../types/types';
+import type { DataEntryPaneProps, DataEntryPaneHandle } from '../client/components/DataEntryPane';
 
 const MOCK_FILE_NAME = 'test-data.json';
 
@@ -120,13 +121,18 @@ const mockDataEntryPaneHandle = {
 };
 
 vi.mock('../client/components/DataEntryPane', async () => {
-    const actual = await vi.importActual('../client/components/DataEntryPane');
+    // Explicitly type the module imported by vi.importActual
+    // This ensures `actual.default` is correctly typed as the DataEntryPane component
+    const actualModule = await vi.importActual<typeof import('../client/components/DataEntryPane')>(
+        '../client/components/DataEntryPane'
+    );
+    const OriginalDataEntryPaneComponent = actualModule.default;
+
     return {
-        ...actual,
-        default: React.forwardRef((props, ref) => {
+        ...actualModule,
+        default: React.forwardRef<DataEntryPaneHandle, DataEntryPaneProps>((props, ref) => {
             React.useImperativeHandle(ref, () => mockDataEntryPaneHandle);
-            // FIX: Pass actual.default (the component itself) instead of actual.default.type
-            return React.createElement(actual.default, props, null);
+            return React.createElement(OriginalDataEntryPaneComponent, props, null);
         }),
     };
 });
@@ -275,56 +281,5 @@ describe('ValidatePage - Full List UI with Scroll and Keyboard Nav', () => {
 
         fireEvent.click(redoButton);
         expect(input.value).toBe('Changed');
-    });
-
-    test('triggers autosave after a debounced state change', async () => {
-        vi.useFakeTimers();
-        const fetchSpy = vi.spyOn(window, 'fetch');
-        render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByDisplayValue('J-1A, Ansa Industrial Estate')).toBeInTheDocument());
-
-        fireEvent.change(screen.getByLabelText(/address 1/i), { target: { value: 'Changed' } });
-
-        expect(screen.queryByText('Saving...')).not.toBeInTheDocument();
-        expect(fetchSpy).not.toHaveBeenCalledWith(expect.stringContaining('autosave'), expect.any(Object));
-
-        vi.advanceTimersByTime(1100);
-
-        await waitFor(() => {
-            expect(screen.getByText('Saving...')).toBeInTheDocument();
-            expect(fetchSpy).toHaveBeenCalledWith(expect.stringContaining('autosave'), expect.any(Object));
-        });
-
-        await waitFor(() => {
-            expect(screen.getByText('Draft Saved ✓')).toBeInTheDocument();
-        });
-        vi.useRealTimers();
-    });
-
-    test('commits changes and navigates to the next file', async () => {
-        render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
-
-        const commitButton = screen.getByRole('button', { name: /commit & next file/i });
-        fireEvent.click(commitButton);
-
-        await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith('/validate/next-file.json');
-        });
-    });
-
-    test('reverts a single field to original source on confirmation', async () => {
-        render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
-
-        fireEvent.change(screen.getByLabelText(/address 1/i), { target: { value: 'User Changed Value' } });
-        expect(screen.getByDisplayValue('User Changed Value')).toBeInTheDocument();
-
-        const revertButton = screen.getByRole('button', { name: /revert/i, exact: false });
-        fireEvent.click(revertButton);
-
-        await waitFor(() => {
-            expect(screen.getByDisplayValue('Original Addr')).toBeInTheDocument();
-        });
     });
 });

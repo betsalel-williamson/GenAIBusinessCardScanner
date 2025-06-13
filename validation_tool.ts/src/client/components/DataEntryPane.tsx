@@ -30,7 +30,7 @@ const FIELD_ORDER = [
   'products'
 ];
 
-interface DataEntryPaneProps {
+export interface DataEntryPaneProps {
   currentRecord: DataRecord | null;
   onFieldChange: (key: string, newValue: string) => void;
   onAddField: (key: string, value: string) => void;
