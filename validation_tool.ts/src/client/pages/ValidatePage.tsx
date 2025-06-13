@@ -205,8 +205,8 @@ const ValidatePage: React.FC = () => {
     // Keyboard Navigation Effect
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            // Prevent default behavior for arrow keys to avoid browser scrolling
-            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'Enter') {
+            // Prevent default behavior for navigation keys to avoid browser scrolling
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'Enter' || event.key === 'Escape') {
                 event.preventDefault();
             }
 
@@ -214,6 +214,8 @@ const ValidatePage: React.FC = () => {
                 handlePrevRecord();
             } else if (event.key === 'ArrowRight' || event.key === 'Enter') {
                 handleNextRecord();
+            } else if (event.key === 'Escape') {
+                navigate('/');
             }
         };
 
@@ -222,7 +224,7 @@ const ValidatePage: React.FC = () => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [handlePrevRecord, handleNextRecord]); // Depend on memoized handlers
+    }, [handlePrevRecord, handleNextRecord, navigate]); // Depend on memoized handlers, add navigate
 
     if (loading) return <div className="p-8 text-xl">Loading...</div>;
     if (error) return <div className="p-8 text-xl text-red-500">Error: {error}</div>;
