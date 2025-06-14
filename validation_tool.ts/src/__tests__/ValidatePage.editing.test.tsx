@@ -19,7 +19,8 @@ describe('ValidatePage - Editing', () => {
         render(<TestWrapper />);
         await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
-        fireEvent.change(screen.getByPlaceholderText('e.g., website_url'), { target: { value: 'website_new' } });
+        // FIX: Use a more flexible regex for placeholder text matching
+        fireEvent.change(screen.getByPlaceholderText(/website_url/i), { target: { value: 'website_new' } });
         fireEvent.change(screen.getByPlaceholderText('Value for new field'), { target: { value: 'http://new.com' } });
         fireEvent.click(screen.getByRole('button', { name: /add field/i }));
 
