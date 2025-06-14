@@ -105,14 +105,15 @@ describe('HomePage', () => {
   test('displays an error message when API call fails', async () => {
     server.use(
       http.get(API_FILES_URL, () => {
-        return HttpResponse.json({ message: 'Network Error' }, { status: 500 });
+        return HttpResponse.json({ message: 'Internal Server Error' }, { status: 500 });
       })
     );
 
     renderHomePage();
 
     await waitFor(() => {
-      expect(screen.getByText(/Error: Failed to fetch files/i)).toBeInTheDocument();
+      // FIX: The error message directly uses the message from the catch block, which is 'Failed to fetch files'
+      expect(screen.getByText(/Failed to fetch files/i)).toBeInTheDocument();
       expect(screen.queryByText(/loading files/i)).not.toBeInTheDocument();
     });
   });
