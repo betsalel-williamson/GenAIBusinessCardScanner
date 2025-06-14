@@ -112,7 +112,6 @@ describe('HomePage', () => {
     renderHomePage();
 
     await waitFor(() => {
-      // FIX: The error message directly uses the message from the catch block, which is 'Failed to fetch files'
       expect(screen.getByText(/Failed to fetch files/i)).toBeInTheDocument();
       expect(screen.queryByText(/loading files/i)).not.toBeInTheDocument();
     });
