@@ -5,21 +5,34 @@ import { setupValidatePageTests, TestWrapper } from './test_utils';
 describe('ValidatePage - Editing', () => {
     setupValidatePageTests();
 
-    test('allows editing a field and updates state', async () => {
+    test('allows editing multiple fields and updates their states', async () => {
         render(<TestWrapper />);
         await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
-        const input = screen.getByLabelText(/address 1/i) as HTMLTextAreaElement;
-        fireEvent.change(input, { target: { value: 'Changed Address' } });
+        const addressInput = screen.getByLabelText(/address 1/i) as HTMLTextAreaElement;
+        const companyInput = screen.getByLabelText(/company/i) as HTMLTextAreaElement;
+        const emailInput = screen.getByLabelText(/email/i) as HTMLTextAreaElement;
 
-        expect(input.value).toBe('Changed Address');
+        // Edit Address 1
+        fireEvent.change(addressInput, { target: { value: 'New Address Line 1' } });
+        expect(addressInput.value).toBe('New Address Line 1');
+
+        // Edit Company
+        fireEvent.change(companyInput, { target: { value: 'New Company Name Inc.' } });
+        expect(companyInput.value).toBe('New Company Name Inc.');
+
+        // Clear Email field
+        fireEvent.change(emailInput, { target: { value: '' } });
+        expect(emailInput.value).toBe('');
+
+        // Ensure other fields remain unchanged (implicit by only changing specified inputs,
+        // but can add an explicit check if needed, though usually not necessary).
     });
 
     test('allows adding a new field to the current record', async () => {
         render(<TestWrapper />);
         await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
-        // FIX: Use a more flexible regex for placeholder text matching
         fireEvent.change(screen.getByPlaceholderText(/website_url/i), { target: { value: 'website_new' } });
         fireEvent.change(screen.getByPlaceholderText('Value for new field'), { target: { value: 'http://new.com' } });
         fireEvent.click(screen.getByRole('button', { name: /add field/i }));
