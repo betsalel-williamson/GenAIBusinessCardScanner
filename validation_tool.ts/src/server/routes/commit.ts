@@ -48,7 +48,7 @@ router.patch("/:json_filename", async (req: Request, res: Response) => {
             }
         }
 
-        res.json({ status: "ok", message: "Committed successfully.", nextFile });
+        res.json({ status: "ok", message: "Committed successfully.", nextFile: nextFile });
 
     } catch (error) {
         console.error(`Error committing ${json_filename}:`, error);
