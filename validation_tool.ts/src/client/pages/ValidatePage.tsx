@@ -15,16 +15,12 @@ const ValidatePage: React.FC = () => {
         autosaveStatus,
         currentRecord, // Now represents the single record for the current file
         currentPDFSrc,
-        canUndoRecord, // Renamed from canUndoRecords
-        canRedoRecord, // Renamed from canRedoRecords
         transformation,
         setTransformation,
         handleFieldChange,
         handleAddField,
         handleRevertField,
         handleCommit, // This now implicitly handles "next record" (i.e., next file)
-        undoRecord, // Renamed from undoRecords
-        redoRecord, // Renamed from redoRecords
         navigateBackToList,
         handleFieldFocus,
         jsonFilename, // Pass filename to StatusDisplay if needed
