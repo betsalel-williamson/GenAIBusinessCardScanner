@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { describe, test, expect, vi } from 'vitest';
-import { setupValidatePageTests, TestWrapper, MOCK_FILE_NAME, MOCK_SINGLE_RECORD } from './test_utils';
+import { setupValidatePageTests, TestWrapper, MOCK_FILE_NAME, MOCK_SINGLE_RECORD, server } from './test_utils';
 import ValidatePage from '../client/pages/ValidatePage';
+import { http, HttpResponse } from 'msw';
 
 describe('ValidatePage - Rendering (Single Record Files)', () => {
     setupValidatePageTests();
@@ -32,7 +33,50 @@ describe('ValidatePage - Rendering (Single Record Files)', () => {
         });
     });
 
-    // Tests related to 'last viewed record index from localStorage' and 'record_index in URL' are removed
-    // as these concepts are no longer applicable in a single-record-per-file workflow.
-    // Each file IS a record.
+    test('displays progress bar with correct width based on global file status', async () => {
+        // Mock global API files endpoint for ValidatePage's internal fetch
+        server.use(
+            http.get('/api/files', () => {
+                return HttpResponse.json([
+                    { filename: 'file-001.json', status: 'validated' },
+                    { filename: 'file-002.json', status: 'in_progress' },
+                    { filename: 'file-003.json', status: 'source' }, // Should not be counted in progress
+                    { filename: 'file-004.json', status: 'validated' },
+                ]);
+            })
+        );
+
+        render(<TestWrapper />);
+
+        // Wait for the progress bar to appear
+        await waitFor(() => {
+            const progressBar = screen.getByRole('progressbar'); // Use semantic role for progress bar
+            expect(progressBar).toBeInTheDocument();
+            // Based on mock data: 2 validated, 1 in_progress, 1 source
+            // Total tracked = 2 (validated) + 1 (in_progress) = 3
+            // Validated = 2
+            // Percentage = (2 / 3) * 100 = 66.66... rounded to 67%
+            expect(progressBar).toHaveStyle('width: 67%');
+            expect(progressBar).toHaveClass('bg-blue-500');
+        });
+    });
+
+    test('progress bar is not shown if no in-progress or validated files exist globally', async () => {
+        // Mock global API files endpoint to return only source files
+        server.use(
+            http.get('/api/files', () => {
+                return HttpResponse.json([
+                    { filename: 'source1.json', status: 'source' },
+                    { filename: 'source2.json', status: 'source' },
+                ]);
+            })
+        );
+
+        render(<TestWrapper />);
+
+        await waitFor(() => {
+            // Ensure no progress bar element is present
+            expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+        });
+    });
 });

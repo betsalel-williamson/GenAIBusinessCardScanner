@@ -57,11 +57,13 @@ export const server = setupServer(
         "source": "image-002.pdf"
     });
   }),
-  // Mock API for HomePage's file list
+  // Mock API for HomePage's file list and ValidatePage's global status bar
   http.get('/api/files', () => {
     return HttpResponse.json([
       { filename: MOCK_FILE_NAME, status: 'source' },
       { filename: MOCK_NEXT_FILE_NAME, status: 'source' },
+      { filename: 'already_validated.json', status: 'validated' },
+      { filename: 'another_in_progress.json', status: 'in_progress' },
     ]);
   }),
 );
