@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import type { UserConfig as VitestUserConfigInterface } from "vitest/config";
+import type { ViteUserConfig as VitestUserConfigInterface } from "vitest/config";
 
 const vitestConfig: VitestUserConfigInterface = {
   test: {
@@ -8,9 +8,20 @@ const vitestConfig: VitestUserConfigInterface = {
     environment: "jsdom",
     setupFiles: ["src/__tests__/setupTests.ts"],
     coverage: {
+      thresholds: {
+        // Thresholds for all files
+        functions: 95,
+        branches: 70,
+      },
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['default', 'text', 'json', 'html'],
+      ignoreEmptyLines: true,
     },
+  },
+  esbuild: {
+    // Transpile all files with ESBuild to remove comments from code coverage.
+    // Required for `test.coverage.ignoreEmptyLines` to work:
+    include: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.ts', '**/*.tsx'],
   },
 };
 
@@ -22,7 +33,7 @@ export default defineConfig({
   // middleware mode and does not need to proxy requests. This was causing
   // the ECONNREFUSED error.
   build: {
-    minify: false,
+    minify: false, // TODO: update to true for production build
   },
   test: vitestConfig.test,
 });
