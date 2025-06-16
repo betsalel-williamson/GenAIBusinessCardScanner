@@ -24,8 +24,6 @@ async function createServer() {
   app.use(vite.middlewares);
 
   app.use(cors());
-  // Removed the { limit: '50mb' } configuration.
-  // The default limit is sufficient now that we send small PATCH deltas.
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
@@ -80,7 +78,7 @@ async function createServer() {
 }
 
 // Create data directories on startup if they don't exist
-const dataDirs = ['data_source', 'data_in_progress', 'data_validated'];
+const dataDirs = ['data_source', 'data_in_progress', 'data_validated', 'data_processed_batches'];
 Promise.all(dataDirs.map(dir => fs.mkdir(dir, { recursive: true })))
   .then(() => {
     createServer();
@@ -89,4 +87,3 @@ Promise.all(dataDirs.map(dir => fs.mkdir(dir, { recursive: true })))
     console.error("Failed to create data directories:", err);
     process.exit(1);
   });
-

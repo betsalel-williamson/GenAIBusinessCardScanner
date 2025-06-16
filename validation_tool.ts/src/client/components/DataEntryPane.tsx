@@ -34,13 +34,10 @@ export interface DataEntryPaneProps {
   currentRecord: DataRecord | null;
   onFieldChange: (key: string, newValue: string) => void;
   onAddField: (key: string, value: string) => void;
-  onNextRecord: () => void;
-  onPrevRecord: () => void;
   autosaveStatus: { message: string, type: string };
   onCommit: () => void;
   onBack: () => void;
   onRevertField: (key: string) => void;
-  // New prop to communicate focus events for field-specific undo
   onFieldFocus: (key: string, initialValue: string) => void;
 }
 
@@ -53,13 +50,11 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(({
   currentRecord,
   onFieldChange,
   onAddField,
-  onNextRecord,
-  onPrevRecord,
   autosaveStatus,
   onCommit,
   onBack,
   onRevertField,
-  onFieldFocus, // Destructure new prop
+  onFieldFocus,
 }, ref) => {
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldValue, setNewFieldValue] = useState('');
@@ -77,7 +72,7 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(({
   if (!currentRecord) {
     return (
       <div className="p-6 border-l border-gray-200 bg-white h-full flex flex-col justify-center items-center">
-        <p className="text-gray-500">No record selected.</p>
+        <p className="text-gray-500">No record selected. This file might be empty or invalid.</p>
         <button
             type="button"
             onClick={onBack}
@@ -227,21 +222,7 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(({
           </div>
         </form>
       </div>
-      <div className="p-6 border-t border-gray-200 bg-gray-50 flex flex-wrap gap-2">
-            <button
-                type="button"
-                onClick={onPrevRecord}
-                className="px-4 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-                Prev Record
-            </button>
-            <button
-                type="button"
-                onClick={onNextRecord}
-                className="px-4 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-                Next Record
-            </button>
+      <div className="p-6 border-t border-gray-200 bg-gray-50 flex flex-wrap gap-2 justify-end"> {/* Align buttons to end */}
             <button
                 type="button"
                 onClick={onCommit}

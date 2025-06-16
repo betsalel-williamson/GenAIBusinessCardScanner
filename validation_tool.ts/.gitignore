@@ -53,3 +53,6 @@ public/pdf.worker.min.js
 
 # Symlinked pdfjs-dist build directory
 src/client/pdfjs-build
+
+# Data directories (new for single piece flow)
+data_processed_batches/

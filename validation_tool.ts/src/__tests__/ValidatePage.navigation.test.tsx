@@ -1,75 +1,121 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, test, expect } from 'vitest';
-import { setupValidatePageTests, TestWrapper, mockDataEntryPaneHandle } from './test_utils';
+import { setupValidatePageTests, TestWrapper, mockNavigate, MOCK_FILE_NAME, MOCK_NEXT_FILE_NAME, server } from './test_utils';
+import { http, HttpResponse } from 'msw';
 
-describe('ValidatePage - Navigation', () => {
+describe('ValidatePage - Navigation (Single Record Files)', () => {
     setupValidatePageTests();
 
-    test('navigates to the next record and scrolls fields to top on Next Record button click', async () => {
+    test('Commit & Next File button navigates to the next file returned by API', async () => {
         render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument()); // Wait for initial record to load
 
-        fireEvent.click(screen.getByRole('button', { name: /next record/i }));
+        const commitButton = screen.getByRole('button', { name: /commit & next file/i });
+        fireEvent.click(commitButton);
 
         await waitFor(() => {
-            expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument();
-            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(1);
+            expect(mockNavigate).toHaveBeenCalledWith(`/validate/${MOCK_NEXT_FILE_NAME}`, { replace: true });
         });
     });
 
-    test('navigates to the previous record and scrolls fields to top on Prev Record button click', async () => {
+    test('Commit & Next File navigates to homepage if no next file is returned', async () => {
+        // Mock server to return no next file
+        server.use(
+            http.patch(`/api/commit/${MOCK_FILE_NAME}`, () => {
+                return HttpResponse.json({ status: 'ok', nextFile: null }); // No next file
+            })
+        );
+
         render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
-        fireEvent.click(screen.getByRole('button', { name: /next record/i }));
-        await waitFor(() => expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument());
-
-        fireEvent.click(screen.getByRole('button', { name: /prev record/i }));
+        const commitButton = screen.getByRole('button', { name: /commit & next file/i });
+        fireEvent.click(commitButton);
 
         await waitFor(() => {
-            expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument();
-            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(2); // One call for next, one for prev
+            expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
         });
     });
 
-    test('navigates to the next record using Right Arrow key', async () => {
+    test('Back to List button navigates to the homepage', async () => {
         render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
+
+        const backButton = screen.getByRole('button', { name: /back to list/i });
+        fireEvent.click(backButton);
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+        });
+    });
+
+    test('ArrowRight key triggers commit and navigates to next file', async () => {
+        render(<TestWrapper />);
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
         fireEvent.keyDown(window, { key: 'ArrowRight', code: 'ArrowRight' });
 
         await waitFor(() => {
-            expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument();
-            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(1);
+            expect(mockNavigate).toHaveBeenCalledWith(`/validate/${MOCK_NEXT_FILE_NAME}`, { replace: true });
         });
     });
 
-    test('navigates to the previous record using Left Arrow key', async () => {
+    test('Enter key triggers commit and navigates to next file (when no input is focused)', async () => {
         render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
-
-        fireEvent.keyDown(window, { key: 'ArrowRight', code: 'ArrowRight' });
-        await waitFor(() => expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument());
-        mockDataEntryPaneHandle.scrollToTop.mockClear();
-
-        fireEvent.keyDown(window, { key: 'ArrowLeft', code: 'ArrowLeft' });
-
-        await waitFor(() => {
-            expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument();
-            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(1);
-        });
-    });
-
-
-    test('navigates to the next record using Enter key', async () => {
-        render(<TestWrapper />);
-        await waitFor(() => expect(screen.getByText(/record 1 \/ 2/i)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
 
         fireEvent.keyDown(window, { key: 'Enter', code: 'Enter' });
 
         await waitFor(() => {
-            expect(screen.getByText(/record 2 \/ 2/i)).toBeInTheDocument();
-            expect(mockDataEntryPaneHandle.scrollToTop).toHaveBeenCalledTimes(1);
+            expect(mockNavigate).toHaveBeenCalledWith(`/validate/${MOCK_NEXT_FILE_NAME}`, { replace: true });
+        });
+    });
+
+    test('ArrowLeft key navigates to homepage (when no input is focused)', async () => {
+        render(<TestWrapper />);
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
+
+        fireEvent.keyDown(window, { key: 'ArrowLeft', code: 'ArrowLeft' });
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+        });
+    });
+
+    test('Escape key navigates to homepage (when no input is focused)', async () => {
+        render(<TestWrapper />);
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
+
+        fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+        });
+    });
+
+    test('Enter key inside an input field allows typing and does not trigger commit', async () => {
+        render(<TestWrapper />);
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
+
+        const input = screen.getByLabelText(/address 1/i) as HTMLTextAreaElement;
+        fireEvent.focus(input);
+        fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' }); // Only triggers blur on Ctrl/Cmd+Enter
+
+        expect(input).toHaveFocus(); // Should still be focused
+        expect(mockNavigate).not.toHaveBeenCalled(); // Should not navigate
+    });
+
+    test('Ctrl/Cmd + Enter blurs the field and does not navigate', async () => {
+        render(<TestWrapper />);
+        await waitFor(() => expect(screen.getByLabelText(/address 1/i)).toBeInTheDocument());
+
+        const input = screen.getByLabelText(/address 1/i) as HTMLTextAreaElement;
+        fireEvent.focus(input);
+        fireEvent.keyDown(input, { key: 'Enter', code: 'Enter', ctrlKey: true }); // Ctrl+Enter
+
+        await waitFor(() => {
+            expect(input).not.toHaveFocus(); // Should be blurred
+            expect(mockNavigate).not.toHaveBeenCalled(); // Should not navigate
         });
     });
 });

@@ -20,14 +20,14 @@ router.get("/", async (req: Request, res: Response) => {
     }
 });
 
-// Route to get data for a specific file
+// Route to get data for a specific file (now a single record)
 router.get("/:json_filename", async (req: Request, res: Response) => {
     try {
-        const data = await loadData(req.params.json_filename);
+        const data = await loadData(req.params.json_filename); // loadData now returns DataRecord | null
         if (!data) {
-            return res.status(404).json({ error: "File not found." });
+            return res.status(404).json({ error: "File not found or empty." });
         }
-        res.json(data);
+        res.json(data); // Send single DataRecord
     } catch (error)        {
         console.error(`Error loading data for ${req.params.json_filename}:`, error);
         res.status(500).json({ error: "Failed to load file data." });

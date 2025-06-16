@@ -1,8 +1,7 @@
 import React, { useRef } from 'react';
-import { useValidationData } from '../hooks/useValidationData'; // New import
+import { useValidationData } from '../hooks/useValidationData';
 import ImagePane from '../components/ImagePane';
 import DataEntryPane, { DataEntryPaneHandle } from '../components/DataEntryPane';
-import RecordNavigationHeader from '../components/RecordNavigationHeader';
 import StatusDisplay from '../components/StatusDisplay';
 
 
@@ -14,42 +13,36 @@ const ValidatePage: React.FC = () => {
         loading,
         error,
         autosaveStatus,
-        currentRecord,
-        currentRecordIndex,
-        totalRecords,
+        currentRecord, // Now represents the single record for the current file
         currentPDFSrc,
-        isCurrentRecordSoftValidated,
-        canUndoRecords,
-        canRedoRecords,
+        canUndoRecord, // Renamed from canUndoRecords
+        canRedoRecord, // Renamed from canRedoRecords
         transformation,
         setTransformation,
         handleFieldChange,
         handleAddField,
         handleRevertField,
-        handleNextRecord,
-        handlePrevRecord,
-        handleCommit,
-        undoRecords,
-        redoRecords,
+        handleCommit, // This now implicitly handles "next record" (i.e., next file)
+        undoRecord, // Renamed from undoRecords
+        redoRecord, // Renamed from redoRecords
         navigateBackToList,
-    } = useValidationData(dataEntryPaneRef); // Use the custom hook
+        handleFieldFocus,
+        jsonFilename, // Pass filename to StatusDisplay if needed
+    } = useValidationData(dataEntryPaneRef);
 
-    if (loading) return <StatusDisplay message="Loading..." type="loading" />;
-    if (error) return <StatusDisplay message={`Error: ${error}`} type="error" />;
-    if (totalRecords === 0) return <StatusDisplay message="No data found." type="empty" onBack={navigateBackToList} />;
+    // No longer need totalRecords or currentRecordIndex within a file
+    // No longer need isCurrentRecordSoftValidated
+
+    if (loading) return <StatusDisplay message="Loading..." type="loading" jsonFilename={jsonFilename} />;
+    if (error) return <StatusDisplay message={`Error: ${error}`} type="error" jsonFilename={jsonFilename} />;
+    // If currentRecord is null and not loading/error, it implies the file itself was empty or missing.
+    // We can also infer 'totalRecords' from whether currentRecord exists.
+    if (!currentRecord) return <StatusDisplay message="No data found." type="empty" jsonFilename={jsonFilename} onBack={navigateBackToList} />;
 
     return (
         <div className="flex h-screen bg-gray-50">
             <div className="flex-grow p-6 flex flex-col">
-                <RecordNavigationHeader
-                    currentRecordIndex={currentRecordIndex}
-                    totalRecords={totalRecords}
-                    isCurrentRecordSoftValidated={isCurrentRecordSoftValidated}
-                    onUndo={undoRecords}
-                    onRedo={redoRecords}
-                    canUndo={canUndoRecords}
-                    canRedo={canRedoRecords}
-                />
+                {/* RecordNavigationHeader removed as it's no longer relevant for single-record files */}
                 {currentRecord && currentPDFSrc ? (
                     <ImagePane
                         imageWrapperRef={imageWrapperRef}
@@ -59,8 +52,9 @@ const ValidatePage: React.FC = () => {
                     />
                 ) : (
                     <StatusDisplay
-                        message="No PDF source provided."
+                        message="No PDF source provided for this record."
                         type="no-source"
+                        jsonFilename={jsonFilename}
                         onBack={navigateBackToList}
                     />
                 )}
@@ -71,12 +65,12 @@ const ValidatePage: React.FC = () => {
                     currentRecord={currentRecord}
                     onFieldChange={handleFieldChange}
                     onAddField={handleAddField}
-                    onNextRecord={handleNextRecord}
-                    onPrevRecord={handlePrevRecord}
                     autosaveStatus={autosaveStatus}
                     onCommit={handleCommit}
                     onBack={navigateBackToList}
                     onRevertField={handleRevertField}
+                    onFieldFocus={handleFieldFocus}
+                    // onNextRecord and onPrevRecord props removed
                 />
             </div>
         </div>

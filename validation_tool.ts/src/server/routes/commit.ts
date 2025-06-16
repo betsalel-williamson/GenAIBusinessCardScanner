@@ -2,50 +2,46 @@ import { Router, Request, Response } from "express";
 import fs from 'fs/promises';
 import path from 'path';
 import {
-    applyRecordsUpdate, // Renamed/repurposed utility function
     VALIDATED_DATA_DIR,
     IN_PROGRESS_DATA_DIR,
     getJsonFiles,
     getFileStatus
-} from '../utils.js';
-import { DataRecord } from '../../../types/types'; // Import new type
+} from '../utils.js'; // applyRecordsUpdate removed
+import { DataRecord } from '../../../types/types';
 
 const router: Router = Router();
 
-// Route to commit final changes
+// Route to commit final changes for a single record file
 router.patch("/:json_filename", async (req: Request, res: Response) => {
     const { json_filename } = req.params;
     try {
-        // The frontend now sends the full updated array of records in the request body
-        const updatedRecords: DataRecord[] = req.body;
-        if (!Array.isArray(updatedRecords)) {
-            return res.status(400).json({ error: "Invalid data format: Expected an array of records in body." });
+        // The frontend now sends the full updated single record in the request body
+        const updatedRecord: DataRecord = req.body;
+        if (typeof updatedRecord !== 'object' || updatedRecord === null || Array.isArray(updatedRecord)) {
+            return res.status(400).json({ error: "Invalid data format: Expected a single record object in body." });
         }
-
-        // Apply any final server-side processing
-        const dataToSave = applyRecordsUpdate(updatedRecords);
 
         // Save to validated directory
         const validatedPath = path.join(VALIDATED_DATA_DIR, json_filename);
-        await fs.writeFile(validatedPath, JSON.stringify(dataToSave, null, 2));
+        await fs.writeFile(validatedPath, JSON.stringify(updatedRecord, null, 2));
 
         // Delete from in-progress directory
         const inProgressPath = path.join(IN_PROGRESS_DATA_DIR, json_filename);
         try {
             await fs.unlink(inProgressPath);
         } catch (e: any) {
-            if (e.code !== 'ENOENT') console.error(`Could not remove in-progress file: ${e.message}`);
+            if (e.code !== 'ENOENT') console.error(`Could not remove in-progress file ${inProgressPath}: ${e.message}`);
         }
 
-        // Find next file to validate
-        const allFiles = await getJsonFiles();
+        // Find next file to validate (which is now the next single-record JSON file)
+        const allFiles = await getJsonFiles(); // This list now contains all single-record JSON files
         const currentIndex = allFiles.indexOf(json_filename);
 
         let nextFile = null;
         if (currentIndex !== -1) {
             for (let i = currentIndex + 1; i < allFiles.length; i++) {
                 const status = await getFileStatus(allFiles[i]);
-                if (status !== 'validated') {
+                if (status !== 'validated') { // Find the first non-validated (source or in_progress) file
                     nextFile = allFiles[i];
                     break;
                 }

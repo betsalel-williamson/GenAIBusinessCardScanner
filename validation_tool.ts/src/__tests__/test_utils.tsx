@@ -1,69 +1,69 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { describe, test, expect, beforeAll, afterEach, afterAll, vi, beforeEach } from 'vitest';
-import HomePage from '../client/pages/HomePage'; // For navigation testing
+import { beforeAll, afterEach, afterAll, vi, beforeEach } from 'vitest';
+import HomePage from '../client/pages/HomePage';
 import ValidatePage from '../client/pages/ValidatePage';
 import type { DataRecord } from '../../types/types';
 import type { DataEntryPaneProps, DataEntryPaneHandle } from '../client/components/DataEntryPane';
-import type { ImagePaneProps } from '../client/components/ImagePane'; // Import ImagePaneProps type
+import type { ImagePaneProps } from '../client/components/ImagePane';
 
-export const MOCK_FILE_NAME = 'test-data.json';
+export const MOCK_FILE_NAME = 'test-data-000.json'; // Now a single record file name
+export const MOCK_NEXT_FILE_NAME = 'test-data-001.json'; // A subsequent file
 
-export const MOCK_INITIAL_DATA: DataRecord[] = [
-  {
+export const MOCK_SINGLE_RECORD: DataRecord = {
     "address_1": "J-1A, Ansa Industrial Estate",
     "company": "CHENAB IMPEX PVT. LTD.",
     "email": "anil@chenabimpex.com",
     "notes": "Long notes to make the div scrollable.",
     "source": "image-001.pdf"
-  },
-  {
-    "address_1": "123 Main St",
-    "company": "Another Corp",
-    "email": "info@another.com",
-    "notes": "Even longer notes for second record.",
-    "source": "image-002.pdf"
-  }
-];
+};
 
-export const MOCK_SOURCE_DATA: DataRecord[] = [
-    {
-        "address_1": "Original Addr",
-        "company": "Original Company",
-        "email": "original@email.com",
-        "notes": "Original notes for testing revert.",
-        "source": "image-001.pdf"
-    },
-    {
-        "address_1": "123 Main St",
-        "company": "Another Corp",
-        "email": "info@another.com",
-        "notes": "Original notes for second record.",
-        "source": "image-002.pdf"
-    }
-];
+export const MOCK_SOURCE_SINGLE_RECORD: DataRecord = {
+    "address_1": "Original Addr",
+    "company": "Original Company",
+    "email": "original@email.com",
+    "notes": "Original notes for testing revert.",
+    "source": "image-001.pdf"
+};
 
 export const server = setupServer(
   http.get(`/api/files/${MOCK_FILE_NAME}`, () => {
-    return HttpResponse.json(MOCK_INITIAL_DATA);
+    return HttpResponse.json(MOCK_SINGLE_RECORD); // Return single record
   }),
   http.patch(`/api/autosave/${MOCK_FILE_NAME}`, async ({ request }) => {
     const body = await request.json();
-    expect(Array.isArray(body)).toBe(true);
+    expect(typeof body).toBe('object'); // Expect a single record object
+    expect(Array.isArray(body)).toBe(false);
     return HttpResponse.json({ status: 'ok' });
   }),
   http.patch(`/api/commit/${MOCK_FILE_NAME}`, async ({ request }) => {
     const body = await request.json();
-    expect(Array.isArray(body)).toBe(true);
-    return HttpResponse.json({ status: 'ok', nextFile: 'next-file.json' });
+    expect(typeof body).toBe('object'); // Expect a single record object
+    expect(Array.isArray(body)).toBe(false);
+    return HttpResponse.json({ status: 'ok', nextFile: MOCK_NEXT_FILE_NAME });
   }),
   http.get(`/api/source-data/${MOCK_FILE_NAME}`, () => {
-    return HttpResponse.json(MOCK_SOURCE_DATA);
+    return HttpResponse.json(MOCK_SOURCE_SINGLE_RECORD); // Return single source record
   }),
-  // No need to mock PDF or worker requests if ImagePane is mocked
+  // Mock for the next file after commit
+  http.get(`/api/files/${MOCK_NEXT_FILE_NAME}`, () => {
+    return HttpResponse.json({ // Mock a different record for the next file
+        "address_1": "456 Oak Ave",
+        "company": "Next Corp",
+        "email": "next@corp.com",
+        "source": "image-002.pdf"
+    });
+  }),
+  // Mock API for HomePage's file list
+  http.get('/api/files', () => {
+    return HttpResponse.json([
+      { filename: MOCK_FILE_NAME, status: 'source' },
+      { filename: MOCK_NEXT_FILE_NAME, status: 'source' },
+    ]);
+  }),
 );
 
 export const mockNavigate = vi.fn();
@@ -94,12 +94,10 @@ vi.mock('../client/components/DataEntryPane', async () => {
     };
 });
 
-// NEW MOCK: Mock ImagePane to prevent PDF.js issues in JSDOM
+// Mock ImagePane to prevent PDF.js issues in JSDOM
 vi.mock('../client/components/ImagePane', () => {
     return {
         default: React.forwardRef<HTMLDivElement, ImagePaneProps>(({ pdfSrc }, ref) => {
-            // A simple mock for the ImagePane component
-            // It displays the PDF source for debugging in tests, but doesn't actually render PDF.
             return (
                 <div ref={ref} data-testid="mock-image-pane" style={{ width: '100%', height: '300px', background: '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                     Mock PDF Viewer: {pdfSrc || 'No PDF'}
@@ -109,14 +107,13 @@ vi.mock('../client/components/ImagePane', () => {
     };
 });
 
+// TestWrapper now only navigates to a filename, not an index
 export const TestWrapper: React.FC = () => (
-  <MemoryRouter initialEntries={[`/validate/${MOCK_FILE_NAME}/1`]}> {/* Initial entry with record 1 */}
+  <MemoryRouter initialEntries={[`/validate/${MOCK_FILE_NAME}`]}>
     <Routes>
-      {/* record_index is optional now */}
-      <Route path="/validate/:json_filename/:record_index?" element={<ValidatePage />} />
+      <Route path="/validate/:json_filename" element={<ValidatePage />} />
       <Route path="/" element={<HomePage />} />
-      {/* Updated route path for next file for consistency, though it won't be navigated to directly by tests here */}
-      <Route path="/validate/next-file.json/1" element={<div>Next File Page</div>} />
+      <Route path="/validate/:json_filename" element={<div>Next File Page: {MOCK_NEXT_FILE_NAME}</div>} />
     </Routes>
   </MemoryRouter>
 );
