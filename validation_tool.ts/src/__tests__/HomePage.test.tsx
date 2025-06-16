@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
@@ -38,12 +38,13 @@ describe('HomePage', () => {
     expect(screen.getByText(/loading files/i)).toBeInTheDocument();
   });
 
-  test('renders file list with validated and in_progress statuses', async () => {
+  test('renders file list with active work files by default (in_progress and source)', async () => {
     server.use(
       http.get(API_FILES_URL, () => {
         return HttpResponse.json([
-          { filename: 'test1.json', status: 'validated' },
-          { filename: 'test2.json', status: 'in_progress' },
+          { filename: 'validated_file.json', status: 'validated' },
+          { filename: 'in_progress_file.json', status: 'in_progress' },
+          { filename: 'source_file.json', status: 'source' },
         ]);
       })
     );
@@ -51,25 +52,55 @@ describe('HomePage', () => {
     renderHomePage();
 
     await waitFor(() => {
-      // Check for validated file
-      const file1Link = screen.getByRole('link', { name: 'test1.json' });
-      expect(file1Link).toBeInTheDocument();
-      expect(file1Link).toHaveAttribute('href', '/validate/test1.json');
-      expect(screen.getByText('Validated ✓')).toBeInTheDocument();
-
-      // Check for in_progress file
-      const file2Link = screen.getByRole('link', { name: 'test2.json' });
-      expect(file2Link).toBeInTheDocument();
-      expect(file2Link).toHaveAttribute('href', '/validate/test2.json');
+      // Check for in_progress file (should be visible)
+      expect(screen.getByRole('link', { name: 'in_progress_file.json' })).toBeInTheDocument();
       expect(screen.getByText('In Progress...')).toBeInTheDocument();
+
+      // Check for source file (should be visible)
+      expect(screen.getByText('source_file.json')).toBeInTheDocument();
+      expect(screen.getByText('Ready for Ingestion')).toBeInTheDocument();
+
+      // Check for validated file (should NOT be visible by default)
+      expect(screen.queryByRole('link', { name: 'validated_file.json' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Validated ✓')).not.toBeInTheDocument();
     });
   });
 
-  test('renders file list with source status (no status text shown)', async () => {
+  test('can switch filter to show all files including validated', async () => {
     server.use(
       http.get(API_FILES_URL, () => {
         return HttpResponse.json([
-          { filename: 'new_file.json', status: 'source' },
+          { filename: 'validated_file.json', status: 'validated' },
+          { filename: 'in_progress_file.json', status: 'in_progress' },
+          { filename: 'source_file.json', status: 'source' },
+        ]);
+      })
+    );
+
+    renderHomePage();
+
+    // Wait for initial load and verify default filter hides validated
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: 'validated_file.json' })).not.toBeInTheDocument();
+    });
+
+    // Change filter to 'All Files'
+    const filterSelect = screen.getByLabelText(/show:/i);
+    fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+    // Wait for validated file to appear
+    await waitFor(() => {
+      const validatedFileLink = screen.getByRole('link', { name: 'validated_file.json' });
+      expect(validatedFileLink).toBeInTheDocument();
+      expect(screen.getByText('Validated ✓')).toBeInTheDocument();
+    });
+  });
+
+  test('displays "No active work files" message when no in-progress or source files with default filter', async () => {
+    server.use(
+      http.get(API_FILES_URL, () => {
+        return HttpResponse.json([
+          { filename: 'validated_file.json', status: 'validated' },
         ]);
       })
     );
@@ -77,17 +108,13 @@ describe('HomePage', () => {
     renderHomePage();
 
     await waitFor(() => {
-      const newFileLink = screen.getByRole('link', { name: 'new_file.json' });
-      expect(newFileLink).toBeInTheDocument();
-      expect(newFileLink).toHaveAttribute('href', '/validate/new_file.json');
-      // For 'source' status, the statusText is an empty string, so we expect it NOT to be in the document.
-      expect(screen.queryByText(/source/i)).not.toBeInTheDocument();
-      expect(screen.queryByText('Validated ✓')).not.toBeInTheDocument();
-      expect(screen.queryByText('In Progress...')).not.toBeInTheDocument();
+      expect(screen.getByText(/No active work files/i)).toBeInTheDocument();
+      expect(screen.queryByText(/loading files/i)).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'validated_file.json' })).not.toBeInTheDocument();
     });
   });
 
-  test('displays "No JSON files found" when API returns an empty array', async () => {
+  test('displays "No JSON files found" when API returns an empty array with default filter', async () => {
     server.use(
       http.get(API_FILES_URL, () => {
         return HttpResponse.json([]);
@@ -97,10 +124,11 @@ describe('HomePage', () => {
     renderHomePage();
 
     await waitFor(() => {
-      expect(screen.getByText(/No JSON files found/i)).toBeInTheDocument();
+      expect(screen.getByText(/No active work files/i)).toBeInTheDocument();
       expect(screen.queryByText(/loading files/i)).not.toBeInTheDocument();
     });
   });
+
 
   test('displays an error message when API call fails', async () => {
     server.use(
