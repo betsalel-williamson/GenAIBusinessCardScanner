@@ -42,6 +42,10 @@ models:
         description: "The fax number, if explicitly labeled."
       - name: email
         description: "The primary email address found on the card."
+      - name: email_2
+        description: "The secondary email address found on the card."
+      - name: lang
+        description: "Comma separated list of languages for the card."
       - name: retailer_type
         description: "Inferred type of business (e.g., Retail Store, Groomer, Manufacturer)."
       - name: contact_type

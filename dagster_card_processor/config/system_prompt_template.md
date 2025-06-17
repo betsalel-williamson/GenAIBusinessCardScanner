@@ -6,6 +6,8 @@ You will be given a single business card file, which may have multiple pages but
 
 The structure of the JSON object must conform to the `BusinessCard` definition in the provided schema. Omit any keys from the object that have no data.
 
+It is possible that a single card has information for multiple companies, in that case, ensure that there is two or more entries, one per company.
+
 ## 2. Field-by-Field Extraction & Generation Instructions
 
 Extract the data for the following fields based on their descriptions:
