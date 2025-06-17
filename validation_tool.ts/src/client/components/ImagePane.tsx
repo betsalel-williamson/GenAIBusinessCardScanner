@@ -1,9 +1,9 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import type { TransformationState } from "../../../types/types";
-import {
-  PDFDocumentLoadingTask,
+import type {
   PDFDocumentProxy,
   PDFPageProxy,
+  PDFDocumentLoadingTask,
 } from "pdfjs-dist";
 // Do NOT import pdfjs-dist directly here to prevent it from running on the server during SSR.
 // It will be dynamically imported inside useEffect.
@@ -14,8 +14,6 @@ export interface ImagePaneProps {
   onTransformationChange: (newTransformation: TransformationState) => void;
   imageWrapperRef: React.RefObject<HTMLDivElement>; // This is the container for *pages*, inside the transformed div
 }
-
-// Define types for pdfjs-dist dynamically
 
 interface PdfJs {
   GlobalWorkerOptions: {
@@ -37,9 +35,10 @@ const ImagePane: React.FC<ImagePaneProps> = ({
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
-  const pdfjsRef = useRef<PdfJs | null>(null); // Ref to hold the dynamically imported pdfjs object
+  const pdfjsRef = useRef<PdfJs | null>(null);
+  const [pdfjsLoaded, setPdfjsLoaded] = useState(false); // State to track if PDF.js is loaded
 
-  const viewportRef = useRef<HTMLDivElement>(null); // Ref for the main viewport div
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   // Dynamically import pdfjs-dist on client-side mount
   useEffect(() => {
@@ -47,8 +46,8 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       import("pdfjs-dist")
         .then((module) => {
           pdfjsRef.current = module;
-          // Set the worker source to the symlinked path in src/client
           pdfjsRef.current.GlobalWorkerOptions.workerSrc = `/src/client/pdfjs-build/pdf.worker.min.mjs`;
+          setPdfjsLoaded(true); // Signal that PDF.js is ready
         })
         .catch((err) => {
           console.error("Failed to load pdfjs-dist:", err);
@@ -59,43 +58,52 @@ const ImagePane: React.FC<ImagePaneProps> = ({
 
   // Load PDF document and calculate initial zoom
   useEffect(() => {
-    if (!pdfSrc || !pdfjsRef.current) {
+    // This cleanup function is designed to run for the *previous* `pdfDoc`
+    // instance when `pdfSrc` changes. It correctly uses a stale closure.
+    const currentPdfDoc = pdfDoc;
+    const cleanup = () => {
+      if (currentPdfDoc) {
+        currentPdfDoc.destroy();
+      }
+    };
+
+    if (!pdfSrc || !pdfjsLoaded) {
       setPdfDoc(null);
       setPdfError(null);
-      return;
+      return cleanup;
     }
+
+    const pdfjs = pdfjsRef.current;
+    if (!pdfjs) return cleanup;
 
     setLoadingPdf(true);
     setPdfError(null);
 
-    const loadingTask = pdfjsRef.current.getDocument(pdfSrc);
+    const loadingTask = pdfjs.getDocument(pdfSrc);
     loadingTask.promise.then(
       async (pdf) => {
         setPdfDoc(pdf);
         setLoadingPdf(false);
 
-        // --- Auto-zoom to fit width ---
+        // Auto-zoom to fit width
         if (viewportRef.current && pdf.numPages > 0) {
-          const paddingHorizontal = 40; // Corresponds to the 20px padding on left/right in css
+          const paddingHorizontal = 40;
           const availableWidth =
             viewportRef.current.clientWidth - paddingHorizontal;
 
           const firstPage = await pdf.getPage(1);
-          const pageViewport = firstPage.getViewport({ scale: 1.0 }); // Get natural size at 1x
+          const pageViewport = firstPage.getViewport({ scale: 1.0 });
           const pageNaturalWidth = pageViewport.width;
 
           const fitToWidthScale = availableWidth / pageNaturalWidth;
-          // Apply this new scale and reset offsets
           onTransformationChange({
             offsetX: 0,
             offsetY: 0,
             scale: fitToWidthScale,
           });
         } else {
-          // If no viewport or pages, just reset
           onTransformationChange({ offsetX: 0, offsetY: 0, scale: 1.0 });
         }
-        // --- End auto-zoom ---
       },
       (reason) => {
         console.error("Error loading PDF:", reason);
@@ -104,12 +112,9 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       },
     );
 
-    return () => {
-      if (pdfDoc) {
-        pdfDoc.destroy();
-      }
-    };
-  }, [pdfSrc, onTransformationChange, pdfjsRef.current]);
+    return cleanup;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pdfSrc, onTransformationChange, pdfjsLoaded]);
 
   // Render PDF pages to canvases
   const renderPage = useCallback(
@@ -119,15 +124,11 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       const context = canvas.getContext("2d");
       if (!context) return;
 
-      // Set canvas internal dimensions to the higher resolution
       canvas.height = viewport.height;
       canvas.width = viewport.width;
 
-      // Set canvas display dimensions to fill 100% of its parent's width,
-      // and let height adjust proportionally.
-      // The actual zoom will be handled by the outer `transformation.scale`.
       canvas.style.width = "100%";
-      canvas.style.height = "auto"; // Maintain aspect ratio
+      canvas.style.height = "auto";
 
       const renderContext = {
         canvasContext: context,
@@ -137,7 +138,9 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       try {
         await page.render(renderContext).promise;
       } catch (error) {
-        console.error("Error rendering page:", error);
+        if ((error as Error).name !== "RenderingCancelledException") {
+          console.error("Error rendering page:", error);
+        }
       }
     },
     [],
@@ -147,7 +150,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
     if (!pdfDoc || !imageWrapperRef.current) return;
 
     const pagesContainer = imageWrapperRef.current;
-    pagesContainer.innerHTML = "";
+    pagesContainer.innerHTML = ""; // Clear previous pages
 
     const renderAllPages = async () => {
       for (let i = 1; i <= pdfDoc.numPages; i++) {
@@ -194,27 +197,21 @@ const ImagePane: React.FC<ImagePaneProps> = ({
     return () => window.removeEventListener("mouseup", handleMouseUpGlobal);
   }, []);
 
-  // Handle zoom/pan with mouse wheel - now handled by native event listener
   const handleWheel = useCallback(
     (e: WheelEvent) => {
-      // Changed type to native WheelEvent
-      e.preventDefault(); // Prevent default browser scroll/zoom
+      e.preventDefault();
       const currentScale = transformation.scale;
       let newScale = currentScale;
       let newOffsetX = transformation.offsetX;
       let newOffsetY = transformation.offsetY;
 
       if (e.ctrlKey) {
-        // Interpret Ctrl + Scroll as Zoom (like many trackpads)
         const scaleAmount = 0.1;
-        if (e.deltaY < 0) {
-          // Zoom in
-          newScale += scaleAmount;
-        } else {
-          // Zoom out
-          newScale -= scaleAmount;
-        }
-        newScale = Math.max(0.1, Math.min(5.0, newScale)); // Clamp scale
+        newScale =
+          e.deltaY < 0
+            ? currentScale + scaleAmount
+            : currentScale - scaleAmount;
+        newScale = Math.max(0.1, Math.min(5.0, newScale));
 
         const viewportDiv = viewportRef.current;
         if (!viewportDiv) return;
@@ -231,8 +228,6 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         newOffsetX = mouseXInViewport - mouseXInContent * newScale;
         newOffsetY = mouseYInViewport - mouseYInContent * newScale;
       } else {
-        // Regular scroll for Panning
-        // Scale delta by 1/currentScale to make panning feel consistent at different zoom levels
         const panSpeed = 1 / currentScale;
         newOffsetX = transformation.offsetX - e.deltaX * panSpeed;
         newOffsetY = transformation.offsetY - e.deltaY * panSpeed;
@@ -245,19 +240,17 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       });
     },
     [transformation, onTransformationChange],
-  ); // Added dependencies
+  );
 
-  // Attach native wheel event listener with passive: false
   useEffect(() => {
     const viewportDiv = viewportRef.current;
     if (viewportDiv) {
-      // Add event listener with passive: false for Safari compatibility
       viewportDiv.addEventListener("wheel", handleWheel, { passive: false });
       return () => {
         viewportDiv.removeEventListener("wheel", handleWheel);
       };
     }
-  }, [handleWheel]); // Depend on handleWheel to re-attach if it changes
+  }, [handleWheel]);
 
   if (loadingPdf) {
     return (
@@ -285,14 +278,14 @@ const ImagePane: React.FC<ImagePaneProps> = ({
 
   return (
     <div
-      ref={viewportRef} // Assign ref to the main viewport div
-      className={`flex-grow overflow-hidden relative ${isDragging ? "grabbing" : "grab"}`} // Cursor on viewport
+      ref={viewportRef}
+      className={`flex-grow overflow-hidden relative ${isDragging ? "grabbing" : "grab"}`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <div // This is the TRANSFORMED CONTENT CONTAINER
+      <div
         className="pdf-transformed-content"
         style={{
           transform: `translate(${transformation.offsetX}px, ${transformation.offsetY}px) scale(${transformation.scale})`,
@@ -302,7 +295,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
           alignItems: "center",
           minWidth: "100%",
           minHeight: "100%",
-          padding: "20px", // Apply padding here for spacing around the pages
+          padding: "20px",
           boxSizing: "content-box",
           backgroundColor: "#fff",
         }}
