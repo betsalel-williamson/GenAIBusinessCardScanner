@@ -2,53 +2,59 @@ import { Router, Request, Response } from "express";
 import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import {
-  SOURCE_DATA_DIR,
-  IN_PROGRESS_DATA_DIR,
-  PROCESSED_BATCH_DATA_DIR,
-  loadData,
-} from "../utils.js";
+import db from "../db.js";
+import { SOURCE_DATA_DIR, PROCESSED_BATCH_DATA_DIR } from "../utils.js";
+import { DataRecord } from "../../../types/types";
 
 const router: Router = Router();
 
-// Route to ingest a multi-record JSON file from data_source
+// Route to ingest a multi-record JSON file from data_source into the database
 router.post("/:json_filename", async (req: Request, res: Response) => {
   const { json_filename } = req.params;
   const sourceFilePath = path.join(SOURCE_DATA_DIR, json_filename);
 
   try {
-    // Load the original multi-record file
-    const recordsToIngest = await loadData(json_filename);
+    const fileContent = await fs.readFile(sourceFilePath, "utf-8");
+    const recordsToIngest: DataRecord[] = JSON.parse(fileContent);
 
-    if (!recordsToIngest || !Array.isArray(recordsToIngest)) {
+    if (!Array.isArray(recordsToIngest)) {
       return res.status(400).json({
-        error: `File '${json_filename}' not found or is not a valid array of records in source directory.`,
+        error: `File '${json_filename}' is not a valid array of records.`,
       });
     }
 
     const newFileNames: string[] = [];
     const baseName = path.basename(json_filename, ".json");
 
+    await db.exec("BEGIN TRANSACTION");
+
     for (let i = 0; i < recordsToIngest.length; i++) {
       const record = recordsToIngest[i];
       const recordId = uuidv4();
-      // Add record_id to the record data itself
-      record.record_id = recordId;
+      record.record_id = recordId; // Add unique ID to the record itself
 
-      // New filename: originalBatchName_index_uuid.json
       const newFilename = `${baseName}_${i}_${recordId}.json`;
-      const savePath = path.join(IN_PROGRESS_DATA_DIR, newFilename);
+      const recordJson = JSON.stringify(record, null, 2);
 
-      await fs.writeFile(savePath, JSON.stringify(record, null, 2));
+      await db.run(
+        "INSERT INTO records (filename, status, data, source_data) VALUES (?, ?, ?, ?)",
+        newFilename,
+        "source",
+        recordJson, // Current data
+        recordJson, // Original source data for revert
+      );
+
       newFileNames.push(newFilename);
     }
+
+    await db.exec("COMMIT");
 
     // Move the original batch file to the processed_batches directory
     const processedBatchFilePath = path.join(
       PROCESSED_BATCH_DATA_DIR,
       json_filename,
     );
-    await fs.mkdir(PROCESSED_BATCH_DATA_DIR, { recursive: true }); // Ensure target dir exists
+    await fs.mkdir(PROCESSED_BATCH_DATA_DIR, { recursive: true });
     await fs.rename(sourceFilePath, processedBatchFilePath);
 
     res.json({
@@ -57,6 +63,7 @@ router.post("/:json_filename", async (req: Request, res: Response) => {
       newFiles: newFileNames,
     });
   } catch (error) {
+    await db.exec("ROLLBACK");
     console.error(`Error ingesting file ${json_filename}:`, error);
     res.status(500).json({
       error: `Failed to ingest file '${json_filename}'. Reason: ${error instanceof Error ? error.message : "Unknown error"}`,

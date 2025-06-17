@@ -1,7 +1,5 @@
 import { Router, Request, Response } from "express";
-import fs from "fs/promises";
-import path from "path";
-import { IN_PROGRESS_DATA_DIR } from "../utils.js"; // applyRecordsUpdate removed
+import db from "../db.js";
 import { DataRecord } from "../../../types/types";
 
 const router: Router = Router();
@@ -10,7 +8,6 @@ const router: Router = Router();
 router.patch("/:json_filename", async (req: Request, res: Response) => {
   const { json_filename } = req.params;
   try {
-    // The frontend now sends the full updated single record in the request body
     const updatedRecord: DataRecord = req.body;
     if (
       typeof updatedRecord !== "object" ||
@@ -22,8 +19,18 @@ router.patch("/:json_filename", async (req: Request, res: Response) => {
       });
     }
 
-    const savePath = path.join(IN_PROGRESS_DATA_DIR, json_filename);
-    await fs.writeFile(savePath, JSON.stringify(updatedRecord, null, 2)); // Save the single record
+    const result = await db.run(
+      "UPDATE records SET data = ?, status = 'in_progress' WHERE filename = ?",
+      JSON.stringify(updatedRecord, null, 2),
+      json_filename,
+    );
+
+    if (result.changes === 0) {
+      return res
+        .status(404)
+        .json({ error: `Record '${json_filename}' not found.` });
+    }
+
     res.json({ status: "ok", message: "Draft saved." });
   } catch (error) {
     console.error(`Error autosaving ${json_filename}:`, error);

@@ -37,7 +37,6 @@ describe("ValidatePage - Rendering (Single Record Files)", () => {
 
       // Confirm that both panes are loaded by checking elements from each
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument(); // From DataEntryPane
-      // RecordNavigationHeader is removed, so no 'Record X / Y' text expected
       expect(screen.queryByLabelText(/source/i)).not.toBeInTheDocument(); // Source field should NOT be editable in DataEntryPane
     });
   });
@@ -47,10 +46,10 @@ describe("ValidatePage - Rendering (Single Record Files)", () => {
     server.use(
       http.get("/api/files", () => {
         return HttpResponse.json([
-          { filename: "file-001.json", status: "validated" },
-          { filename: "file-002.json", status: "in_progress" },
-          { filename: "file-003.json", status: "source" }, // Should not be counted in progress
-          { filename: "file-004.json", status: "validated" },
+          { filename: "file-001.json", status: "validated", type: "record" },
+          { filename: "file-002.json", status: "in_progress", type: "record" },
+          { filename: "file-003.json", status: "source", type: "batch" }, // This is a batch, should NOT be counted.
+          { filename: "file-004.json", status: "validated", type: "record" },
         ]);
       }),
     );
@@ -59,24 +58,23 @@ describe("ValidatePage - Rendering (Single Record Files)", () => {
 
     // Wait for the progress bar to appear
     await waitFor(() => {
-      const progressBar = screen.getByRole("progressbar"); // Use semantic role for progress bar
+      const progressBar = screen.getByRole("progressbar");
       expect(progressBar).toBeInTheDocument();
-      // Based on mock data: 2 validated, 1 in_progress, 1 source
-      // Total tracked = 2 (validated) + 1 (in_progress) = 3
-      // Validated = 2
+      // Based on mock data: 3 records total. 2 are validated.
       // Percentage = (2 / 3) * 100 = 66.66... rounded to 67%
-      expect(progressBar).toHaveStyle("width: 67%");
-      expect(progressBar).toHaveClass("bg-blue-500");
+      const innerBar = progressBar.querySelector("div");
+      expect(innerBar).toHaveStyle("width: 67%");
+      expect(innerBar).toHaveClass("bg-blue-500");
     });
   });
 
   test("progress bar is not shown if no in-progress or validated files exist globally", async () => {
-    // Mock global API files endpoint to return only source files
+    // Mock global API files endpoint to return only source batch files
     server.use(
       http.get("/api/files", () => {
         return HttpResponse.json([
-          { filename: "source1.json", status: "source" },
-          { filename: "source2.json", status: "source" },
+          { filename: "source1.json", status: "source", type: "batch" },
+          { filename: "source2.json", status: "source", type: "batch" },
         ]);
       }),
     );
@@ -84,7 +82,7 @@ describe("ValidatePage - Rendering (Single Record Files)", () => {
     render(<TestWrapper />);
 
     await waitFor(() => {
-      // Ensure no progress bar element is present
+      // Ensure no progress bar element is present because there are no "records"
       expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     });
   });

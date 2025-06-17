@@ -38,6 +38,8 @@ data_in_progress/
 data_validated/
 data_source/
 public/images/
+data_migrated/
+app_data.db
 
 # Tests
 /coverage

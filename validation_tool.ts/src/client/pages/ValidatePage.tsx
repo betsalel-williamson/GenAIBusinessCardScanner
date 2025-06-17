@@ -5,19 +5,14 @@ import DataEntryPane, {
   DataEntryPaneHandle,
 } from "../components/DataEntryPane";
 import StatusDisplay from "../components/StatusDisplay";
-
-interface FileStatus {
-  // Define FileStatus interface locally for ValidatePage's global file fetch
-  filename: string;
-  status: "validated" | "in_progress" | "source";
-}
+import { FileInfo } from "../../../types/types";
 
 const ValidatePage: React.FC = () => {
   const imageWrapperRef = useRef<HTMLDivElement>(null);
   const dataEntryPaneRef = useRef<DataEntryPaneHandle>(null);
 
   // State for global file progress bar
-  const [globalFiles, setGlobalFiles] = useState<FileStatus[]>([]);
+  const [globalFiles, setGlobalFiles] = useState<FileInfo[]>([]);
   const [globalLoading, setGlobalLoading] = useState(true);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
@@ -28,7 +23,7 @@ const ValidatePage: React.FC = () => {
       try {
         const response = await fetch("/api/files");
         if (!response.ok) throw new Error("Failed to fetch global file list");
-        const data: FileStatus[] = await response.json();
+        const data: FileInfo[] = await response.json();
         setGlobalFiles(data);
       } catch (err) {
         setGlobalError(
@@ -86,13 +81,13 @@ const ValidatePage: React.FC = () => {
       />
     );
 
-  // Calculations for the progress bar
-  const totalTrackedRecords = globalFiles.filter(
-    (f) => f.status === "in_progress" || f.status === "validated",
-  ).length;
-  const validatedRecords = globalFiles.filter(
+  // Calculations for the progress bar, only considering records, not batches
+  const recordsOnly = globalFiles.filter((f) => f.type === "record");
+  const totalTrackedRecords = recordsOnly.length;
+  const validatedRecords = recordsOnly.filter(
     (f) => f.status === "validated",
   ).length;
+
   const progressPercentage =
     totalTrackedRecords > 0
       ? Math.round((validatedRecords / totalTrackedRecords) * 100)
@@ -134,7 +129,13 @@ const ValidatePage: React.FC = () => {
       </div>
       {/* Progress Bar (only show if there are tracked records) */}
       {!globalLoading && !globalError && totalTrackedRecords > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 h-1.5 bg-gray-200 z-50">
+        <div
+          role="progressbar"
+          aria-valuenow={progressPercentage}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          className="fixed bottom-0 left-0 right-0 h-1.5 bg-gray-200 z-50"
+        >
           <div
             className="h-full bg-blue-500 transition-all duration-500 ease-out"
             style={{ width: `${progressPercentage}%` }}

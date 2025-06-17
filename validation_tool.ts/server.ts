@@ -6,6 +6,7 @@ import compression from "compression";
 import cors from "cors";
 import { createServer as createViteServer } from "vite";
 import apiRouter from "./src/server/api";
+import { initDb } from "./src/server/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -91,18 +92,14 @@ async function createServer() {
   });
 }
 
-// Create data directories on startup if they don't exist
-const dataDirs = [
-  "data_source",
-  "data_in_progress",
-  "data_validated",
-  "data_processed_batches",
-];
+// Create data directories for ingestion pipeline
+const dataDirs = ["data_source", "data_processed_batches"];
 Promise.all(dataDirs.map((dir) => fs.mkdir(dir, { recursive: true })))
+  .then(() => initDb()) // Initialize the database
   .then(() => {
     createServer();
   })
   .catch((err) => {
-    console.error("Failed to create data directories:", err);
+    console.error("Failed to initialize server:", err);
     process.exit(1);
   });

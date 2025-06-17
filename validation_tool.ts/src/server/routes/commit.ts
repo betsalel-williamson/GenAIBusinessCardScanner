@@ -1,12 +1,5 @@
 import { Router, Request, Response } from "express";
-import fs from "fs/promises";
-import path from "path";
-import {
-  VALIDATED_DATA_DIR,
-  IN_PROGRESS_DATA_DIR,
-  getJsonFiles,
-  getFileStatus,
-} from "../utils.js"; // applyRecordsUpdate removed
+import db from "../db.js";
 import { DataRecord } from "../../../types/types";
 
 const router: Router = Router();
@@ -15,7 +8,6 @@ const router: Router = Router();
 router.patch("/:json_filename", async (req: Request, res: Response) => {
   const { json_filename } = req.params;
   try {
-    // The frontend now sends the full updated single record in the request body
     const updatedRecord: DataRecord = req.body;
     if (
       typeof updatedRecord !== "object" ||
@@ -27,41 +19,28 @@ router.patch("/:json_filename", async (req: Request, res: Response) => {
       });
     }
 
-    // Save to validated directory
-    const validatedPath = path.join(VALIDATED_DATA_DIR, json_filename);
-    await fs.writeFile(validatedPath, JSON.stringify(updatedRecord, null, 2));
+    // Update record to validated
+    const updateResult = await db.run(
+      "UPDATE records SET data = ?, status = 'validated' WHERE filename = ?",
+      JSON.stringify(updatedRecord, null, 2),
+      json_filename,
+    );
 
-    // Delete from in-progress directory
-    const inProgressPath = path.join(IN_PROGRESS_DATA_DIR, json_filename);
-    try {
-      await fs.unlink(inProgressPath);
-    } catch (e: any) {
-      if (e.code !== "ENOENT")
-        console.error(
-          `Could not remove in-progress file ${inProgressPath}: ${e.message}`,
-        );
+    if (updateResult.changes === 0) {
+      return res
+        .status(404)
+        .json({ error: `Record '${json_filename}' not found.` });
     }
 
-    // Find next file to validate (which is now the next single-record JSON file)
-    const allFiles = await getJsonFiles(); // This list now contains all single-record JSON files
-    const currentIndex = allFiles.indexOf(json_filename);
-
-    let nextFile = null;
-    if (currentIndex !== -1) {
-      for (let i = currentIndex + 1; i < allFiles.length; i++) {
-        const status = await getFileStatus(allFiles[i]);
-        if (status !== "validated") {
-          // Find the first non-validated (source or in_progress) file
-          nextFile = allFiles[i];
-          break;
-        }
-      }
-    }
+    // Find next file to validate
+    const nextFileResult = await db.get<{ filename: string }>(
+      "SELECT filename FROM records WHERE status != 'validated' ORDER BY filename LIMIT 1",
+    );
 
     res.json({
       status: "ok",
       message: "Committed successfully.",
-      nextFile: nextFile,
+      nextFile: nextFileResult?.filename || null,
     });
   } catch (error) {
     console.error(`Error committing ${json_filename}:`, error);

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-interface FileStatus {
+interface FileInfo {
   filename: string;
   status: "validated" | "in_progress" | "source";
+  type: "record" | "batch";
 }
 
 const statusStyles = {
@@ -25,12 +26,12 @@ type FilterStatus =
   | "source_only";
 
 const HomePage: React.FC = () => {
-  const [files, setFiles] = useState<FileStatus[]>([]);
+  const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [ingestingFile, setIngestingFile] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] =
-    useState<FilterStatus>("active_work_only"); // Default filter
+    useState<FilterStatus>("active_work_only");
 
   const fetchFiles = async () => {
     try {
@@ -39,7 +40,7 @@ const HomePage: React.FC = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch files");
       }
-      const data: FileStatus[] = await response.json();
+      const data: FileInfo[] = await response.json();
       setFiles(data);
       setError(null);
     } catch (err) {
@@ -56,11 +57,7 @@ const HomePage: React.FC = () => {
   }, []);
 
   const handleIngest = async (filename: string) => {
-    if (
-      !window.confirm(
-        `Ingest all records from "${filename}" and prepare them for validation? The original file will be moved.`,
-      )
-    ) {
+    if (!window.confirm(`Ingest all records from batch file "${filename}"?`)) {
       return;
     }
     setIngestingFile(filename);
@@ -72,16 +69,12 @@ const HomePage: React.FC = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to ingest file");
       }
-      alert(`Successfully ingested '${filename}'.`);
-      await fetchFiles(); // Refresh file list after ingestion
+      const result = await response.json();
+      alert(result.message || `Successfully ingested '${filename}'.`);
+      await fetchFiles();
     } catch (err) {
       alert(
-        `Ingestion failed for '${filename}': ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
-      setError(
-        err instanceof Error
-          ? err.message
-          : "An unknown error occurred during ingestion",
+        `Ingestion failed: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
     } finally {
       setIngestingFile(null);
@@ -89,30 +82,27 @@ const HomePage: React.FC = () => {
   };
 
   const filteredFiles = files.filter((file) => {
-    if (filterStatus === "all") {
-      return true;
-    } else if (filterStatus === "active_work_only") {
-      return file.status === "source" || file.status === "in_progress";
-    } else if (filterStatus === "in_progress_only") {
+    if (filterStatus === "all") return true;
+    if (filterStatus === "active_work_only") return file.status !== "validated";
+    if (filterStatus === "in_progress_only")
       return file.status === "in_progress";
-    } else if (filterStatus === "source_only") {
-      return file.status === "source";
-    }
-    return true; // Should not be reached
+    if (filterStatus === "source_only")
+      return file.status === "source" && file.type === "batch";
+    return true;
   });
 
   const getEmptyMessage = () => {
     switch (filterStatus) {
       case "all":
-        return "No JSON files found in any data directory. Place multi-record JSON files in 'data_source/' to begin.";
+        return "No files found. Place batch JSON files in 'data_source/' to begin.";
       case "active_work_only":
-        return "No active work files (in progress or ready for ingestion) found. All files might be validated, or there are no source files.";
+        return "No active work found. All files may be validated, or you need to ingest a new batch.";
       case "in_progress_only":
         return "No files currently in progress.";
       case "source_only":
-        return "No new source files found ready for ingestion.";
+        return "No new batch files found to ingest.";
       default:
-        return "No files found based on current filter.";
+        return "No files found for the current filter.";
     }
   };
 
@@ -123,7 +113,7 @@ const HomePage: React.FC = () => {
           Transcription Validation
         </h1>
         <p className="text-gray-600 mb-4">
-          Select a file to validate or ingest new batch files.
+          Select a record to validate or a batch file to ingest.
         </p>
 
         <div className="mb-6 flex items-center gap-4">
@@ -136,12 +126,10 @@ const HomePage: React.FC = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
           >
-            <option value="active_work_only">
-              Active Work (In Progress / Source)
-            </option>
+            <option value="active_work_only">Active Work</option>
             <option value="all">All Files</option>
             <option value="in_progress_only">In Progress Only</option>
-            <option value="source_only">Source Only (Needs Ingestion)</option>
+            <option value="source_only">Needs Ingestion</option>
           </select>
         </div>
 
@@ -160,16 +148,17 @@ const HomePage: React.FC = () => {
                       {file.filename}
                     </span>
                     <span className={`text-sm ${statusStyles[file.status]}`}>
-                      {statusText[file.status]}
+                      {file.type === "batch"
+                        ? "Batch File (Needs Ingestion)"
+                        : statusText[file.status]}
                     </span>
                     {ingestingFile === file.filename && (
                       <span className="ml-2 text-blue-500 text-sm">
-                        {" "}
                         (Ingesting...)
                       </span>
                     )}
                   </div>
-                  {file.status === "source" ? (
+                  {file.type === "batch" ? (
                     <button
                       onClick={() => handleIngest(file.filename)}
                       disabled={!!ingestingFile}

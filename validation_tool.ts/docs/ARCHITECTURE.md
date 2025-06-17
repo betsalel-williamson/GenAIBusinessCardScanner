@@ -11,149 +11,44 @@ The application employs a **Client-Server-Side Rendered (SSR) architecture** bui
 ### 1. Server-Side (Node.js/Express with Vite)
 
 - **`server.ts`**: The core Express server. It integrates Vite in `middlewareMode` for SSR during development and serves pre-built client assets in production.
+- **Database (`src/server/db.ts`)**: A **SQLite database** (`app_data.db`) serves as the central store for all individual validation records. It replaces the previous file-based system for `in_progress` and `validated` data.
 - **API Endpoints (`src/server/api.ts` and sub-routes)**:
-  - `/api/files`: Lists all available JSON files and their current status (source, in-progress, validated).
-  - `/api/files/:filename`: Serves the current data for a specific JSON file, prioritizing in-progress changes.
-  - `/api/source-data/:filename`: Provides the original, untouched data for a specific JSON file from the `data_source` directory, primarily used for field-level revert functionality.
-  - `/api/autosave/:filename` (PATCH): Receives the full updated array of records from the client and saves it to the `data_in_progress` directory.
-  - `/api/commit/:filename` (PATCH): Receives the full updated array, saves it to the `data_validated` directory, deletes the in-progress version, and identifies the next file for validation.
-- **Static File Serving**: Serves static assets, including PDF images. Notably, the `/images` route is configured to serve PDFs from a `dagster_card_processor/cards_to_process` directory, suggesting integration with an external data processing pipeline.
-- **Data Directories (`data_source`, `data_in_progress`, `data_validated`)**: These directories on the server define the lifecycle of data files. They are automatically created on server startup if they don't exist.
+  - `/api/files`: Lists all available work, distinguishing between "batch" files (from `data_source/` that need ingestion) and "record" files (from the database that need validation).
+  - `/api/files/:filename`: Serves the current data for a specific record from the database.
+  - `/api/source-data/:filename`: Provides the original, untouched data for a specific record from the database's `source_data` column, used for the field-level revert feature.
+  - `/api/autosave/:filename` (PATCH): Receives an updated record and updates its `data` and `status` in the database.
+  - `/api/commit/:filename` (PATCH): Receives a finalized record, updates its status to 'validated' in the database, and identifies the next record for validation.
+  - `/api/ingest/:filename` (POST): Reads a batch file from `data_source/`, splits it into individual records, and inserts each one into the database.
+- **Static File Serving**: Serves static assets, including PDF images from `dagster_card_processor/cards_to_process/`.
 
 ### 2. Client-Side (React/TypeScript with Vite)
 
 - **React App (`src/client/App.tsx`)**: The main React application defines the client-side routes using `react-router-dom`.
 - **SSR Entry Points (`src/client/entry-client.tsx`, `src/client/entry-server.tsx`)**: Handle hydration on the client and server-side rendering respectively.
 - **Pages**:
-  - `HomePage.tsx`: Displays a list of JSON files with their status and provides links to the `ValidatePage`.
+  - `HomePage.tsx`: Displays a list of batch files and individual records, providing actions to "Ingest" or "Validate".
   - `ValidatePage.tsx`: The primary validation interface, composing the `ImagePane` and `DataEntryPane`.
 - **Components**:
-  - `ImagePane.tsx`: Renders PDF documents using `pdfjs-dist` (dynamically imported to support SSR). It provides features like panning and zooming the PDF.
-  - `DataEntryPane.tsx`: Displays editable fields for the current data record. It supports adding new fields, reverting fields to their original source, and includes navigation controls.
-  - `RecordNavigationHeader.tsx`: Displays record progression and provides Undo/Redo buttons.
-  - `StatusDisplay.tsx`: A generic component for showing loading, error, or empty states.
+  - `ImagePane.tsx`: Renders PDF documents using `pdfjs-dist`.
+  - `DataEntryPane.tsx`: Displays editable fields for the current data record.
 - **Custom Hooks (`src/client/hooks/`)**:
-  - `useValidationData.ts`: **The central state management and logic hub for `ValidatePage`.** It handles data fetching, autosaving (using `useDebounce`), undo/redo (using `useUndoableState`), record navigation, keyboard shortcuts, and persistence of user progress in `localStorage`.
-  - `useUndoableState.ts`: A generic hook for managing state with undo/redo capabilities.
-  - `useDebounce.ts`: A generic hook for debouncing values, used to limit autosave frequency.
-- **Styling**: Uses Tailwind CSS for rapid UI development and utility-first styling. Some custom CSS is used for the PDF viewer's complex rendering requirements.
-
-## Key Features and Functionality
-
-- **Modern Technology Stack**: Built with React 18, TypeScript, Vite, Express, Tailwind CSS.
-- **Server-Side Rendering (SSR)**: Improves initial page load times and SEO.
-- **Data Lifecycle Management**: Clear separation of data into `data_source`, `data_in_progress`, and `data_validated` directories.
-- **Intuitive Validation UI**: Side-by-side display of PDF documents and their corresponding editable JSON data.
-- **Real-time Autosave**: Automatically saves changes to `data_in_progress` with a 1-second debounce, providing a robust backup mechanism.
-- **Comprehensive Undo/Redo**: Track and revert/reapply changes to data records within the current file session.
-- **Field-Level Revert**: Revert individual fields to their original value as found in the `data_source` file.
-- **Dynamic Field Addition**: Users can add new custom key-value pairs to records.
-- **PDF Interaction**: Pan and zoom capabilities for the displayed PDF document. PDFs automatically zoom to fit width on load.
-- **Efficient Navigation**:
-  - "Next Record" and "Prev Record" buttons.
-  - Keyboard shortcuts: `ArrowRight` (Next), `ArrowLeft` (Previous), `Enter` (Next).
-  - Global Undo/Redo: `Ctrl/Cmd + Z` (Undo), `Ctrl/Cmd + Y` or `Ctrl/Cmd + Shift + Z` (Redo).
-  - Field-specific interaction: `Escape` (revert field to its state when focused and blur), `Ctrl/Cmd + Enter` (blur field without reverting).
-  - `Escape` from global context navigates back to the file list.
-- **Commit Workflow**: A "Commit & Next File" button finalizes the validation for a file, moving it to `data_validated` and automatically navigating to the next unvalidated file (if any).
-- **Progress Persistence**: The last viewed record index and "soft-validated" records within a file are saved to `localStorage` for continuity across sessions.
-- **Robust Testing**: Utilizes Vitest, React Testing Library, and Mock Service Worker (MSW) for comprehensive unit and integration testing.
-
-## Project Structure & Important Files
-
-```bash
-.
-├── .github/                       # GitHub Actions CI/CD workflows
-│   └── workflows/
-│       └── nodejs.yml             # CI pipeline for testing and building
-├── .gitignore                     # Files/directories to ignore in Git
-├── .nvmrc                         # Specifies Node.js version 20
-├── .prettierignore                # Files to ignore for Prettier formatting
-├── README.md                      # Project description and quick start guide
-├── index.html                     # Main HTML file, client-side entry point, SSR target
-├── postcss.config.cjs             # PostCSS configuration (Tailwind, Autoprefixer)
-├── public/                        # Static assets served directly
-│   ├── about.txt                  # Font licensing info
-│   └── pdf.worker.min.js          # PDF.js worker (copied/symlinked)
-├── server.ts                      # Main Express server for API and SSR
-├── src/
-│   ├── __tests__/                 # Unit and integration tests
-│   │   ├── HomePage.test.tsx
-│   │   ├── ValidatePage.data_operations.test.tsx
-│   │   ├── ValidatePage.editing.test.tsx
-│   │   ├── ValidatePage.navigation.test.tsx
-│   │   ├── ValidatePage.rendering.test.tsx
-│   │   ├── setupTests.ts
-│   │   └── test_utils.tsx         # Mocking and helper utilities for tests
-│   ├── client/                    # React client-side application
-│   │   ├── App.tsx                # React Router setup
-│   │   ├── Context.tsx            # Example React Context (currently unused)
-│   │   ├── components/            # Reusable React components
-│   │   │   ├── DataEntryPane.tsx    # Editable data fields and controls
-│   │   │   ├── Footer.tsx
-│   │   │   ├── ImagePane.tsx        # PDF viewer with pan/zoom
-│   │   │   ├── RecordNavigationHeader.tsx # Record index and undo/redo buttons
-│   │   │   └── StatusDisplay.tsx    # Generic status messages
-│   │   ├── entry-client.tsx       # Client-side React hydration entry
-│   │   ├── entry-server.tsx       # Server-side React rendering entry
-│   │   ├── hooks/                 # Custom React hooks for logic reuse
-│   │   │   ├── useDebounce.ts
-│   │   │   ├── useUndoableState.ts
-│   │   │   └── useValidationData.ts # **Main logic hook for ValidatePage**
-│   │   ├── index.css              # Global styles (Tailwind + custom PDF styles)
-│   │   └── pages/                 # React page components
-│   │       ├── HomePage.tsx       # File listing page
-│   │       └── ValidatePage.tsx   # Main validation UI
-│   └── server/                    # Node.js server-side logic
-│       ├── api.ts                 # Express router combining API sub-routes
-│       ├── routes/                # Specific API route handlers
-│       │   ├── autosave.ts
-│       │   ├── commit.ts
-│       │   ├── files.ts
-│       │   └── sourceData.ts
-│       └── utils.ts               # Server-side utilities (file system, data paths)
-├── tailwind.config.cjs            # Tailwind CSS configuration
-├── tsconfig.json                  # TypeScript configuration for client/server
-├── types/                         # Global TypeScript type definitions
-│   └── types.d.ts                 # Shared interfaces (DataRecord, TransformationState)
-└── vite.config.ts                 # Vite build and Vitest test configuration
-```
+  - `useValidationData.ts`: The central state management and logic hub for `ValidatePage`, handling data fetching, autosaving, undo/redo, and keyboard shortcuts.
 
 ## Data Management and Workflow
 
-The system uses three core directories for data management:
+The system uses a hybrid approach of a database and specific directories for a clear data lifecycle:
 
-1. **`data_source/`**: Contains the original, untouched JSON files that need validation. These are read-only from the application's perspective, serving as the ground truth for "revert" operations.
-2. **`data_in_progress/`**: When a file from `data_source` is opened for editing, any changes are automatically saved here via the autosave mechanism. This allows users to pick up where they left off if they close the browser or the server restarts.
-3. **`data_validated/`**: Once a file's data is fully validated and the user clicks "Commit & Next File", the final JSON data is moved to this directory. The corresponding file is then removed from `data_in_progress`.
+1.  **`data_source/` (Directory)**: Contains original, multi-record JSON **batch files** that need to be processed. This is the starting point of the ingestion pipeline.
+2.  **SQLite Database (`app_data.db`)**: The core of the new architecture. It contains a `records` table where each row represents a single record to be validated. A record has a `status` of `'source'`, `'in_progress'`, or `'validated'`.
+3.  **`data_processed_batches/` (Directory)**: After a batch file from `data_source/` is successfully ingested into the database, it is moved here for archival purposes.
 
-This workflow ensures data integrity, allows for partial work saving, and provides a clear separation of validated vs. unvalidated data.
+**Workflow:**
 
-## Contributing
+1.  A user places a batch JSON file into `data_source/`.
+2.  On the `HomePage`, the file appears with an "Ingest" button.
+3.  The user clicks "Ingest". The server reads the batch file, creates a new entry in the SQLite `records` table for each item in the batch, and moves the original file to `data_processed_batches/`.
+4.  The individual records now appear on the `HomePage` with a "Validate" button.
+5.  A user clicks "Validate" to open `ValidatePage`. All changes are autosaved to the database, updating the record's `data` and setting its `status` to `'in_progress'`.
+6.  When the user clicks "Commit & Next File", the record's status is updated to `'validated'` in the database.
 
-To contribute to this project, follow these steps:
-
-1. **Setup Development Environment**:
-
-   - Ensure Node.js 20 (or higher, as specified in `.nvmrc`) is installed. `nvm use` will apply the correct version if you use nvm.
-   - Install pnpm: `npm install -g pnpm`
-   - Install dependencies: `pnpm install`
-
-2. **Run Development Servers**:
-
-   - To run the full SSR development server: `pnpm dev:server` (This will typically open on `http://localhost:7456`).
-   - To run only the client-side Vite development server (useful for UI-only development, without full SSR and API integration): `pnpm dev:client`
-
-3. **Building and Serving Production Assets**:
-
-   - Build the client and server bundles: `pnpm build` (output goes to `dist/`)
-   - Serve the production build (runs the compiled Node.js server): `pnpm serve`
-
-4. **Testing**:
-
-   - Run all tests: `pnpm test`
-   - Run tests in watch mode: `pnpm test --watch`
-   - Type checking: `pnpm typecheck`
-
-5. **Code Style**:
-   - The project uses Prettier and ESLint. Ensure your code conforms to the established style by running `pnpm lint` and `pnpm format`. Most IDEs can integrate these tools.
+This workflow ensures data integrity, transactional ingestion, and a clear separation between raw data batches and active validation work.

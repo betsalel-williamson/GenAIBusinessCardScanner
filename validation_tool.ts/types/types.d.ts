@@ -1,17 +1,22 @@
 export interface DataRecord {
-  [key: string]: string | number | boolean | undefined; // Represents a single contact/entry, allow undefined for new fields
-  source?: string; // e.g., "06032025_006.pdf" - used to link to image
-  record_id?: string; // New: Unique identifier for this specific record (card)
+  [key: string]: string | number | boolean | undefined;
+  source?: string;
+  record_id?: string;
 }
 
-// Global state for the entire validation process for a file
+// Represents a file in the system, could be a batch or a single record
+export interface FileInfo {
+  filename: string;
+  status: "validated" | "in_progress" | "source";
+  type: "record" | "batch";
+}
+
 export interface AppState {
-  records: DataRecord[]; // All records in the current JSON file
-  currentRecordIndex: number; // Index of the currently active record
-  currentFieldIndex: number; // Index of the currently active field within the current record
+  records: DataRecord[];
+  currentRecordIndex: number;
+  currentFieldIndex: number;
 }
 
-// Simple transformation state for basic image viewing
 export interface TransformationState {
   offsetX: number;
   offsetY: number;

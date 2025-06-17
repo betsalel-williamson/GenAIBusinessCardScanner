@@ -1,5 +1,11 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -8,10 +14,8 @@ import { describe, test, expect, beforeAll, afterEach, afterAll } from "vitest";
 
 const API_FILES_URL = "/api/files";
 
-// Setup MSW server to mock API requests
 const server = setupServer();
 
-// Wrapper component to provide MemoryRouter for HomePage
 const renderHomePage = () => {
   render(
     <MemoryRouter>
@@ -20,31 +24,41 @@ const renderHomePage = () => {
   );
 };
 
-beforeAll(() => server.listen()); // Start the mock server before all tests
-afterEach(() => server.resetHandlers()); // Reset handlers after each test to ensure isolation
-afterAll(() => server.close()); // Close the server after all tests are done
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 describe("HomePage", () => {
   test("displays loading message initially", () => {
-    // We don't mock the response immediately to simulate a delay
     server.use(
       http.get(API_FILES_URL, async () => {
-        await new Promise((resolve) => setTimeout(resolve, 50)); // Simulate network delay
+        await new Promise((resolve) => setTimeout(resolve, 50));
         return HttpResponse.json([]);
       }),
     );
-
     renderHomePage();
     expect(screen.getByText(/loading files/i)).toBeInTheDocument();
   });
 
-  test("renders file list with active work files by default (in_progress and source)", async () => {
+  test("renders records and batches correctly", async () => {
     server.use(
       http.get(API_FILES_URL, () => {
         return HttpResponse.json([
-          { filename: "validated_file.json", status: "validated" },
-          { filename: "in_progress_file.json", status: "in_progress" },
-          { filename: "source_file.json", status: "source" },
+          {
+            filename: "validated_record.json",
+            status: "validated",
+            type: "record",
+          },
+          {
+            filename: "in_progress_record.json",
+            status: "in_progress",
+            type: "record",
+          },
+          {
+            filename: "source_batch.json",
+            status: "source",
+            type: "batch",
+          },
         ]);
       }),
     );
@@ -52,21 +66,34 @@ describe("HomePage", () => {
     renderHomePage();
 
     await waitFor(() => {
-      // Check for in_progress file (should be visible)
+      // Check for in_progress record
+      const inProgressItem = screen
+        .getByText("in_progress_record.json")
+        .closest("li");
+      expect(inProgressItem).toBeInTheDocument();
       expect(
-        screen.getByRole("link", { name: "in_progress_file.json" }),
+        within(inProgressItem!).getByText("In Progress..."),
       ).toBeInTheDocument();
-      expect(screen.getByText("In Progress...")).toBeInTheDocument();
-
-      // Check for source file (should be visible)
-      expect(screen.getByText("source_file.json")).toBeInTheDocument();
-      expect(screen.getByText("Ready for Ingestion")).toBeInTheDocument();
-
-      // Check for validated file (should NOT be visible by default)
       expect(
-        screen.queryByRole("link", { name: "validated_file.json" }),
+        within(inProgressItem!).getByRole("link", { name: "Validate" }),
+      ).toBeInTheDocument();
+
+      // Check for source batch file
+      const sourceBatchItem = screen
+        .getByText("source_batch.json")
+        .closest("li");
+      expect(sourceBatchItem).toBeInTheDocument();
+      expect(
+        within(sourceBatchItem!).getByText(/Batch File \(Needs Ingestion\)/),
+      ).toBeInTheDocument();
+      expect(
+        within(sourceBatchItem!).getByRole("button", { name: "Ingest" }),
+      ).toBeInTheDocument();
+
+      // Validated file should be hidden by default filter
+      expect(
+        screen.queryByText("validated_record.json"),
       ).not.toBeInTheDocument();
-      expect(screen.queryByText("Validated ✓")).not.toBeInTheDocument();
     });
   });
 
@@ -74,41 +101,48 @@ describe("HomePage", () => {
     server.use(
       http.get(API_FILES_URL, () => {
         return HttpResponse.json([
-          { filename: "validated_file.json", status: "validated" },
-          { filename: "in_progress_file.json", status: "in_progress" },
-          { filename: "source_file.json", status: "source" },
+          {
+            filename: "validated_record.json",
+            status: "validated",
+            type: "record",
+          },
         ]);
       }),
     );
 
     renderHomePage();
-
-    // Wait for initial load and verify default filter hides validated
     await waitFor(() => {
       expect(
-        screen.queryByRole("link", { name: "validated_file.json" }),
+        screen.queryByText("validated_record.json"),
       ).not.toBeInTheDocument();
     });
 
-    // Change filter to 'All Files'
     const filterSelect = screen.getByLabelText(/show:/i);
     fireEvent.change(filterSelect, { target: { value: "all" } });
 
-    // Wait for validated file to appear
     await waitFor(() => {
-      const validatedFileLink = screen.getByRole("link", {
-        name: "validated_file.json",
-      });
-      expect(validatedFileLink).toBeInTheDocument();
-      expect(screen.getByText("Validated ✓")).toBeInTheDocument();
+      const validatedItem = screen
+        .getByText("validated_record.json")
+        .closest("li");
+      expect(validatedItem).toBeInTheDocument();
+      expect(
+        within(validatedItem!).getByText("Validated ✓"),
+      ).toBeInTheDocument();
+      expect(
+        within(validatedItem!).getByRole("link", { name: "Validate" }),
+      ).toBeInTheDocument();
     });
   });
 
-  test('displays "No active work files" message when no in-progress or source files with default filter', async () => {
+  test("displays correct empty message when no active work is available", async () => {
     server.use(
       http.get(API_FILES_URL, () => {
         return HttpResponse.json([
-          { filename: "validated_file.json", status: "validated" },
+          {
+            filename: "validated_record.json",
+            status: "validated",
+            type: "record",
+          },
         ]);
       }),
     );
@@ -116,26 +150,24 @@ describe("HomePage", () => {
     renderHomePage();
 
     await waitFor(() => {
-      expect(screen.getByText(/No active work files/i)).toBeInTheDocument();
-      expect(screen.queryByText(/loading files/i)).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("link", { name: "validated_file.json" }),
-      ).not.toBeInTheDocument();
+        screen.getByText(
+          "No active work found. All files may be validated, or you need to ingest a new batch.",
+        ),
+      ).toBeInTheDocument();
     });
   });
 
-  test('displays "No JSON files found" when API returns an empty array with default filter', async () => {
-    server.use(
-      http.get(API_FILES_URL, () => {
-        return HttpResponse.json([]);
-      }),
-    );
-
+  test("displays correct empty message when API returns an empty array", async () => {
+    server.use(http.get(API_FILES_URL, () => HttpResponse.json([])));
     renderHomePage();
 
     await waitFor(() => {
-      expect(screen.getByText(/No active work files/i)).toBeInTheDocument();
-      expect(screen.queryByText(/loading files/i)).not.toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "No active work found. All files may be validated, or you need to ingest a new batch.",
+        ),
+      ).toBeInTheDocument();
     });
   });
 
@@ -148,12 +180,10 @@ describe("HomePage", () => {
         );
       }),
     );
-
     renderHomePage();
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to fetch files/i)).toBeInTheDocument();
-      expect(screen.queryByText(/loading files/i)).not.toBeInTheDocument();
     });
   });
 });

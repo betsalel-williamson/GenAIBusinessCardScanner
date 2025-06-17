@@ -101,7 +101,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         console.error("Error loading PDF:", reason);
         setPdfError(`Failed to load PDF: ${reason.message || reason}`);
         setLoadingPdf(false);
-      }
+      },
     );
 
     return () => {
@@ -140,7 +140,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         console.error("Error rendering page:", error);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -244,7 +244,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         offsetY: newOffsetY,
       });
     },
-    [transformation, onTransformationChange]
+    [transformation, onTransformationChange],
   ); // Added dependencies
 
   // Attach native wheel event listener with passive: false
