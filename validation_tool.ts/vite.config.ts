@@ -13,15 +13,15 @@ const vitestConfig: VitestUserConfigInterface = {
         functions: 95,
         branches: 70,
       },
-      provider: 'v8',
-      reporter: ['default', 'text', 'json', 'html'],
+      provider: "v8",
+      reporter: ["default", "text", "json", "html"],
       ignoreEmptyLines: true,
     },
   },
   esbuild: {
     // Transpile all files with ESBuild to remove comments from code coverage.
     // Required for `test.coverage.ignoreEmptyLines` to work:
-    include: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.ts', '**/*.tsx'],
+    include: ["**/*.js", "**/*.jsx", "**/*.mjs", "**/*.ts", "**/*.tsx"],
   },
 };
 

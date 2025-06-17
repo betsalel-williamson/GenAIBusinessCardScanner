@@ -7,7 +7,7 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "esModuleInterop": true,
-    "jsx": "react",
+    "jsx": "react"
   },
   "include": ["vite.config.ts", "server.ts", "src/server"]
 }

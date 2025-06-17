@@ -32,20 +32,34 @@ async function createServer() {
 
   if (isProd) {
     app.use(compression());
-    app.use(express.static(path.resolve(__dirname, "dist/client"), { index: false }));
+    app.use(
+      express.static(path.resolve(__dirname, "dist/client"), { index: false }),
+    );
   }
 
   // Serve static images from public directory
   app.use("/public", express.static(path.resolve(__dirname, "public")));
-  app.use("/images", express.static(path.resolve(__dirname, "..", "dagster_card_processor", "cards_to_process")));
+  app.use(
+    "/images",
+    express.static(
+      path.resolve(
+        __dirname,
+        "..",
+        "dagster_card_processor",
+        "cards_to_process",
+      ),
+    ),
+  );
 
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
       const template = await fs.readFile(
-        isProd ? path.resolve(__dirname, "dist/client/index.html") : path.resolve(__dirname, "index.html"),
-        "utf-8"
+        isProd
+          ? path.resolve(__dirname, "dist/client/index.html")
+          : path.resolve(__dirname, "index.html"),
+        "utf-8",
       );
 
       const transformedTemplate = await vite.transformIndexHtml(url, template);
@@ -53,7 +67,7 @@ async function createServer() {
       const { render } = await vite.ssrLoadModule(
         isProd
           ? "/dist/server/entry-server.js"
-          : "/src/client/entry-server.tsx"
+          : "/src/client/entry-server.tsx",
       );
 
       const appHtml = await render(url);
@@ -78,12 +92,17 @@ async function createServer() {
 }
 
 // Create data directories on startup if they don't exist
-const dataDirs = ['data_source', 'data_in_progress', 'data_validated', 'data_processed_batches'];
-Promise.all(dataDirs.map(dir => fs.mkdir(dir, { recursive: true })))
+const dataDirs = [
+  "data_source",
+  "data_in_progress",
+  "data_validated",
+  "data_processed_batches",
+];
+Promise.all(dataDirs.map((dir) => fs.mkdir(dir, { recursive: true })))
   .then(() => {
     createServer();
   })
-  .catch(err => {
+  .catch((err) => {
     console.error("Failed to create data directories:", err);
     process.exit(1);
   });

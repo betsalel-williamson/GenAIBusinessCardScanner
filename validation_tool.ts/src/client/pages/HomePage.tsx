@@ -18,14 +18,19 @@ const statusText = {
   source: "Ready for Ingestion",
 };
 
-type FilterStatus = 'all' | 'active_work_only' | 'in_progress_only' | 'source_only';
+type FilterStatus =
+  | "all"
+  | "active_work_only"
+  | "in_progress_only"
+  | "source_only";
 
 const HomePage: React.FC = () => {
   const [files, setFiles] = useState<FileStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [ingestingFile, setIngestingFile] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('active_work_only'); // Default filter
+  const [filterStatus, setFilterStatus] =
+    useState<FilterStatus>("active_work_only"); // Default filter
 
   const fetchFiles = async () => {
     try {
@@ -38,7 +43,9 @@ const HomePage: React.FC = () => {
       setFiles(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred",
+      );
     } finally {
       setLoading(false);
     }
@@ -49,13 +56,17 @@ const HomePage: React.FC = () => {
   }, []);
 
   const handleIngest = async (filename: string) => {
-    if (!window.confirm(`Ingest all records from "${filename}" and prepare them for validation? The original file will be moved.`)) {
-        return;
+    if (
+      !window.confirm(
+        `Ingest all records from "${filename}" and prepare them for validation? The original file will be moved.`,
+      )
+    ) {
+      return;
     }
     setIngestingFile(filename);
     try {
       const response = await fetch(`/api/ingest/${filename}`, {
-        method: 'POST',
+        method: "POST",
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -64,35 +75,41 @@ const HomePage: React.FC = () => {
       alert(`Successfully ingested '${filename}'.`);
       await fetchFiles(); // Refresh file list after ingestion
     } catch (err) {
-      alert(`Ingestion failed for '${filename}': ${err instanceof Error ? err.message : "Unknown error"}`);
-      setError(err instanceof Error ? err.message : "An unknown error occurred during ingestion");
+      alert(
+        `Ingestion failed for '${filename}': ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An unknown error occurred during ingestion",
+      );
     } finally {
       setIngestingFile(null);
     }
   };
 
-  const filteredFiles = files.filter(file => {
-    if (filterStatus === 'all') {
+  const filteredFiles = files.filter((file) => {
+    if (filterStatus === "all") {
       return true;
-    } else if (filterStatus === 'active_work_only') {
-      return file.status === 'source' || file.status === 'in_progress';
-    } else if (filterStatus === 'in_progress_only') {
-      return file.status === 'in_progress';
-    } else if (filterStatus === 'source_only') {
-      return file.status === 'source';
+    } else if (filterStatus === "active_work_only") {
+      return file.status === "source" || file.status === "in_progress";
+    } else if (filterStatus === "in_progress_only") {
+      return file.status === "in_progress";
+    } else if (filterStatus === "source_only") {
+      return file.status === "source";
     }
     return true; // Should not be reached
   });
 
   const getEmptyMessage = () => {
     switch (filterStatus) {
-      case 'all':
+      case "all":
         return "No JSON files found in any data directory. Place multi-record JSON files in 'data_source/' to begin.";
-      case 'active_work_only':
+      case "active_work_only":
         return "No active work files (in progress or ready for ingestion) found. All files might be validated, or there are no source files.";
-      case 'in_progress_only':
+      case "in_progress_only":
         return "No files currently in progress.";
-      case 'source_only':
+      case "source_only":
         return "No new source files found ready for ingestion.";
       default:
         return "No files found based on current filter.";
@@ -110,20 +127,23 @@ const HomePage: React.FC = () => {
         </p>
 
         <div className="mb-6 flex items-center gap-4">
-            <label htmlFor="file-filter" className="text-gray-700 font-medium">Show:</label>
-            <select
-                id="file-filter"
-                className="block w-auto py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-            >
-                <option value="active_work_only">Active Work (In Progress / Source)</option>
-                <option value="all">All Files</option>
-                <option value="in_progress_only">In Progress Only</option>
-                <option value="source_only">Source Only (Needs Ingestion)</option>
-            </select>
+          <label htmlFor="file-filter" className="text-gray-700 font-medium">
+            Show:
+          </label>
+          <select
+            id="file-filter"
+            className="block w-auto py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
+          >
+            <option value="active_work_only">
+              Active Work (In Progress / Source)
+            </option>
+            <option value="all">All Files</option>
+            <option value="in_progress_only">In Progress Only</option>
+            <option value="source_only">Source Only (Needs Ingestion)</option>
+          </select>
         </div>
-
 
         {loading && <p>Loading files...</p>}
         {error && <p className="text-red-500">{error}</p>}
@@ -131,38 +151,44 @@ const HomePage: React.FC = () => {
           <ul className="divide-y divide-gray-200">
             {filteredFiles.length > 0 ? (
               filteredFiles.map((file) => (
-                <li key={file.filename} className="py-4 flex justify-between items-center">
+                <li
+                  key={file.filename}
+                  className="py-4 flex justify-between items-center"
+                >
                   <div className="flex-grow">
-                      <span className="text-lg text-gray-800 font-medium mr-2">{file.filename}</span>
-                      <span className={`text-sm ${statusStyles[file.status]}`}>
-                        {statusText[file.status]}
+                    <span className="text-lg text-gray-800 font-medium mr-2">
+                      {file.filename}
+                    </span>
+                    <span className={`text-sm ${statusStyles[file.status]}`}>
+                      {statusText[file.status]}
+                    </span>
+                    {ingestingFile === file.filename && (
+                      <span className="ml-2 text-blue-500 text-sm">
+                        {" "}
+                        (Ingesting...)
                       </span>
-                      {ingestingFile === file.filename && (
-                          <span className="ml-2 text-blue-500 text-sm"> (Ingesting...)</span>
-                      )}
+                    )}
                   </div>
-                  {file.status === 'source' ? (
-                      <button
-                          onClick={() => handleIngest(file.filename)}
-                          disabled={!!ingestingFile}
-                          className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed"
-                      >
-                          Ingest
-                      </button>
+                  {file.status === "source" ? (
+                    <button
+                      onClick={() => handleIngest(file.filename)}
+                      disabled={!!ingestingFile}
+                      className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed"
+                    >
+                      Ingest
+                    </button>
                   ) : (
-                      <Link
-                          to={`/validate/${file.filename}`}
-                          className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                      >
-                          Validate
-                      </Link>
+                    <Link
+                      to={`/validate/${file.filename}`}
+                      className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    >
+                      Validate
+                    </Link>
                   )}
                 </li>
               ))
             ) : (
-              <li className="py-4 text-gray-500">
-                {getEmptyMessage()}
-              </li>
+              <li className="py-4 text-gray-500">{getEmptyMessage()}</li>
             )}
           </ul>
         )}

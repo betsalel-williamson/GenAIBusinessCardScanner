@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 export const useUndoableState = <T>(initialState: T) => {
   const [history, setHistory] = useState<T[]>([initialState]);
@@ -6,22 +6,25 @@ export const useUndoableState = <T>(initialState: T) => {
 
   const state = history[currentIndex];
 
-  const setState = useCallback((newState: T, fromInitial?: boolean) => {
-    if (JSON.stringify(newState) === JSON.stringify(state) && !fromInitial) {
-      return;
-    }
+  const setState = useCallback(
+    (newState: T, fromInitial?: boolean) => {
+      if (JSON.stringify(newState) === JSON.stringify(state) && !fromInitial) {
+        return;
+      }
 
-    if (fromInitial) {
+      if (fromInitial) {
         setHistory([newState]);
         setCurrentIndex(0);
         return;
-    }
+      }
 
-    const newHistory = history.slice(0, currentIndex + 1);
-    newHistory.push(newState);
-    setHistory(newHistory);
-    setCurrentIndex(newHistory.length - 1);
-  }, [history, currentIndex, state]);
+      const newHistory = history.slice(0, currentIndex + 1);
+      newHistory.push(newState);
+      setHistory(newHistory);
+      setCurrentIndex(newHistory.length - 1);
+    },
+    [history, currentIndex, state],
+  );
 
   const undo = useCallback(() => {
     if (currentIndex > 0) {

@@ -10,54 +10,54 @@ The application employs a **Client-Server-Side Rendered (SSR) architecture** bui
 
 ### 1. Server-Side (Node.js/Express with Vite)
 
-* **`server.ts`**: The core Express server. It integrates Vite in `middlewareMode` for SSR during development and serves pre-built client assets in production.
-* **API Endpoints (`src/server/api.ts` and sub-routes)**:
-  * `/api/files`: Lists all available JSON files and their current status (source, in-progress, validated).
-  * `/api/files/:filename`: Serves the current data for a specific JSON file, prioritizing in-progress changes.
-  * `/api/source-data/:filename`: Provides the original, untouched data for a specific JSON file from the `data_source` directory, primarily used for field-level revert functionality.
-  * `/api/autosave/:filename` (PATCH): Receives the full updated array of records from the client and saves it to the `data_in_progress` directory.
-  * `/api/commit/:filename` (PATCH): Receives the full updated array, saves it to the `data_validated` directory, deletes the in-progress version, and identifies the next file for validation.
-* **Static File Serving**: Serves static assets, including PDF images. Notably, the `/images` route is configured to serve PDFs from a `dagster_card_processor/cards_to_process` directory, suggesting integration with an external data processing pipeline.
-* **Data Directories (`data_source`, `data_in_progress`, `data_validated`)**: These directories on the server define the lifecycle of data files. They are automatically created on server startup if they don't exist.
+- **`server.ts`**: The core Express server. It integrates Vite in `middlewareMode` for SSR during development and serves pre-built client assets in production.
+- **API Endpoints (`src/server/api.ts` and sub-routes)**:
+  - `/api/files`: Lists all available JSON files and their current status (source, in-progress, validated).
+  - `/api/files/:filename`: Serves the current data for a specific JSON file, prioritizing in-progress changes.
+  - `/api/source-data/:filename`: Provides the original, untouched data for a specific JSON file from the `data_source` directory, primarily used for field-level revert functionality.
+  - `/api/autosave/:filename` (PATCH): Receives the full updated array of records from the client and saves it to the `data_in_progress` directory.
+  - `/api/commit/:filename` (PATCH): Receives the full updated array, saves it to the `data_validated` directory, deletes the in-progress version, and identifies the next file for validation.
+- **Static File Serving**: Serves static assets, including PDF images. Notably, the `/images` route is configured to serve PDFs from a `dagster_card_processor/cards_to_process` directory, suggesting integration with an external data processing pipeline.
+- **Data Directories (`data_source`, `data_in_progress`, `data_validated`)**: These directories on the server define the lifecycle of data files. They are automatically created on server startup if they don't exist.
 
 ### 2. Client-Side (React/TypeScript with Vite)
 
-* **React App (`src/client/App.tsx`)**: The main React application defines the client-side routes using `react-router-dom`.
-* **SSR Entry Points (`src/client/entry-client.tsx`, `src/client/entry-server.tsx`)**: Handle hydration on the client and server-side rendering respectively.
-* **Pages**:
-  * `HomePage.tsx`: Displays a list of JSON files with their status and provides links to the `ValidatePage`.
-  * `ValidatePage.tsx`: The primary validation interface, composing the `ImagePane` and `DataEntryPane`.
-* **Components**:
-  * `ImagePane.tsx`: Renders PDF documents using `pdfjs-dist` (dynamically imported to support SSR). It provides features like panning and zooming the PDF.
-  * `DataEntryPane.tsx`: Displays editable fields for the current data record. It supports adding new fields, reverting fields to their original source, and includes navigation controls.
-  * `RecordNavigationHeader.tsx`: Displays record progression and provides Undo/Redo buttons.
-  * `StatusDisplay.tsx`: A generic component for showing loading, error, or empty states.
-* **Custom Hooks (`src/client/hooks/`)**:
-  * `useValidationData.ts`: **The central state management and logic hub for `ValidatePage`.** It handles data fetching, autosaving (using `useDebounce`), undo/redo (using `useUndoableState`), record navigation, keyboard shortcuts, and persistence of user progress in `localStorage`.
-  * `useUndoableState.ts`: A generic hook for managing state with undo/redo capabilities.
-  * `useDebounce.ts`: A generic hook for debouncing values, used to limit autosave frequency.
-* **Styling**: Uses Tailwind CSS for rapid UI development and utility-first styling. Some custom CSS is used for the PDF viewer's complex rendering requirements.
+- **React App (`src/client/App.tsx`)**: The main React application defines the client-side routes using `react-router-dom`.
+- **SSR Entry Points (`src/client/entry-client.tsx`, `src/client/entry-server.tsx`)**: Handle hydration on the client and server-side rendering respectively.
+- **Pages**:
+  - `HomePage.tsx`: Displays a list of JSON files with their status and provides links to the `ValidatePage`.
+  - `ValidatePage.tsx`: The primary validation interface, composing the `ImagePane` and `DataEntryPane`.
+- **Components**:
+  - `ImagePane.tsx`: Renders PDF documents using `pdfjs-dist` (dynamically imported to support SSR). It provides features like panning and zooming the PDF.
+  - `DataEntryPane.tsx`: Displays editable fields for the current data record. It supports adding new fields, reverting fields to their original source, and includes navigation controls.
+  - `RecordNavigationHeader.tsx`: Displays record progression and provides Undo/Redo buttons.
+  - `StatusDisplay.tsx`: A generic component for showing loading, error, or empty states.
+- **Custom Hooks (`src/client/hooks/`)**:
+  - `useValidationData.ts`: **The central state management and logic hub for `ValidatePage`.** It handles data fetching, autosaving (using `useDebounce`), undo/redo (using `useUndoableState`), record navigation, keyboard shortcuts, and persistence of user progress in `localStorage`.
+  - `useUndoableState.ts`: A generic hook for managing state with undo/redo capabilities.
+  - `useDebounce.ts`: A generic hook for debouncing values, used to limit autosave frequency.
+- **Styling**: Uses Tailwind CSS for rapid UI development and utility-first styling. Some custom CSS is used for the PDF viewer's complex rendering requirements.
 
 ## Key Features and Functionality
 
-* **Modern Technology Stack**: Built with React 18, TypeScript, Vite, Express, Tailwind CSS.
-* **Server-Side Rendering (SSR)**: Improves initial page load times and SEO.
-* **Data Lifecycle Management**: Clear separation of data into `data_source`, `data_in_progress`, and `data_validated` directories.
-* **Intuitive Validation UI**: Side-by-side display of PDF documents and their corresponding editable JSON data.
-* **Real-time Autosave**: Automatically saves changes to `data_in_progress` with a 1-second debounce, providing a robust backup mechanism.
-* **Comprehensive Undo/Redo**: Track and revert/reapply changes to data records within the current file session.
-* **Field-Level Revert**: Revert individual fields to their original value as found in the `data_source` file.
-* **Dynamic Field Addition**: Users can add new custom key-value pairs to records.
-* **PDF Interaction**: Pan and zoom capabilities for the displayed PDF document. PDFs automatically zoom to fit width on load.
-* **Efficient Navigation**:
-  * "Next Record" and "Prev Record" buttons.
-  * Keyboard shortcuts: `ArrowRight` (Next), `ArrowLeft` (Previous), `Enter` (Next).
-  * Global Undo/Redo: `Ctrl/Cmd + Z` (Undo), `Ctrl/Cmd + Y` or `Ctrl/Cmd + Shift + Z` (Redo).
-  * Field-specific interaction: `Escape` (revert field to its state when focused and blur), `Ctrl/Cmd + Enter` (blur field without reverting).
-  * `Escape` from global context navigates back to the file list.
-* **Commit Workflow**: A "Commit & Next File" button finalizes the validation for a file, moving it to `data_validated` and automatically navigating to the next unvalidated file (if any).
-* **Progress Persistence**: The last viewed record index and "soft-validated" records within a file are saved to `localStorage` for continuity across sessions.
-* **Robust Testing**: Utilizes Vitest, React Testing Library, and Mock Service Worker (MSW) for comprehensive unit and integration testing.
+- **Modern Technology Stack**: Built with React 18, TypeScript, Vite, Express, Tailwind CSS.
+- **Server-Side Rendering (SSR)**: Improves initial page load times and SEO.
+- **Data Lifecycle Management**: Clear separation of data into `data_source`, `data_in_progress`, and `data_validated` directories.
+- **Intuitive Validation UI**: Side-by-side display of PDF documents and their corresponding editable JSON data.
+- **Real-time Autosave**: Automatically saves changes to `data_in_progress` with a 1-second debounce, providing a robust backup mechanism.
+- **Comprehensive Undo/Redo**: Track and revert/reapply changes to data records within the current file session.
+- **Field-Level Revert**: Revert individual fields to their original value as found in the `data_source` file.
+- **Dynamic Field Addition**: Users can add new custom key-value pairs to records.
+- **PDF Interaction**: Pan and zoom capabilities for the displayed PDF document. PDFs automatically zoom to fit width on load.
+- **Efficient Navigation**:
+  - "Next Record" and "Prev Record" buttons.
+  - Keyboard shortcuts: `ArrowRight` (Next), `ArrowLeft` (Previous), `Enter` (Next).
+  - Global Undo/Redo: `Ctrl/Cmd + Z` (Undo), `Ctrl/Cmd + Y` or `Ctrl/Cmd + Shift + Z` (Redo).
+  - Field-specific interaction: `Escape` (revert field to its state when focused and blur), `Ctrl/Cmd + Enter` (blur field without reverting).
+  - `Escape` from global context navigates back to the file list.
+- **Commit Workflow**: A "Commit & Next File" button finalizes the validation for a file, moving it to `data_validated` and automatically navigating to the next unvalidated file (if any).
+- **Progress Persistence**: The last viewed record index and "soft-validated" records within a file are saved to `localStorage` for continuity across sessions.
+- **Robust Testing**: Utilizes Vitest, React Testing Library, and Mock Service Worker (MSW) for comprehensive unit and integration testing.
 
 ## Project Structure & Important Files
 
@@ -134,22 +134,26 @@ This workflow ensures data integrity, allows for partial work saving, and provid
 To contribute to this project, follow these steps:
 
 1. **Setup Development Environment**:
-    * Ensure Node.js 20 (or higher, as specified in `.nvmrc`) is installed. `nvm use` will apply the correct version if you use nvm.
-    * Install pnpm: `npm install -g pnpm`
-    * Install dependencies: `pnpm install`
+
+   - Ensure Node.js 20 (or higher, as specified in `.nvmrc`) is installed. `nvm use` will apply the correct version if you use nvm.
+   - Install pnpm: `npm install -g pnpm`
+   - Install dependencies: `pnpm install`
 
 2. **Run Development Servers**:
-    * To run the full SSR development server: `pnpm dev:server` (This will typically open on `http://localhost:7456`).
-    * To run only the client-side Vite development server (useful for UI-only development, without full SSR and API integration): `pnpm dev:client`
+
+   - To run the full SSR development server: `pnpm dev:server` (This will typically open on `http://localhost:7456`).
+   - To run only the client-side Vite development server (useful for UI-only development, without full SSR and API integration): `pnpm dev:client`
 
 3. **Building and Serving Production Assets**:
-    * Build the client and server bundles: `pnpm build` (output goes to `dist/`)
-    * Serve the production build (runs the compiled Node.js server): `pnpm serve`
+
+   - Build the client and server bundles: `pnpm build` (output goes to `dist/`)
+   - Serve the production build (runs the compiled Node.js server): `pnpm serve`
 
 4. **Testing**:
-    * Run all tests: `pnpm test`
-    * Run tests in watch mode: `pnpm test --watch`
-    * Type checking: `pnpm typecheck`
+
+   - Run all tests: `pnpm test`
+   - Run tests in watch mode: `pnpm test --watch`
+   - Type checking: `pnpm typecheck`
 
 5. **Code Style**:
-    * The project uses Prettier and ESLint. Ensure your code conforms to the established style by running `pnpm lint` and `pnpm format`. Most IDEs can integrate these tools.
+   - The project uses Prettier and ESLint. Ensure your code conforms to the established style by running `pnpm lint` and `pnpm format`. Most IDEs can integrate these tools.
