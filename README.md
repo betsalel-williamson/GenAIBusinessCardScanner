@@ -1,8 +1,8 @@
-# BusinessCardGenAI
+# GenAIBusinessCardScanner
 
 ## Overview
 
-BusinessCardGenAI is a project leveraging Dagster and dbt to extract information from business cards in PDF format. It processes these PDFs, uses a Generative AI model (Google Gemini) to interpret the card data, and structures this information into a CSV file suitable for import into other systems.
+GenAIBusinessCardScanner is a project leveraging Dagster and dbt to extract information from business cards in PDF format. It processes these PDFs, uses a Generative AI model (Google Gemini) to interpret the card data, and structures this information into a CSV file suitable for import into other systems.
 
 Key features:
 
@@ -25,7 +25,7 @@ Key features:
 
     ```bash
     git clone <repository-url>
-    cd BusinessCardGenAI
+    cd GenAIBusinessCardScanner
     ```
 
 2. **Set up Python Virtual Environment:**
