@@ -38,17 +38,17 @@ The application employs a **Client-Server-Side Rendered (SSR) architecture** bui
 
 The system uses a hybrid approach of a database and specific directories for a clear data lifecycle:
 
-1.  **`data_source/` (Directory)**: Contains original, multi-record JSON **batch files** that need to be processed. This is the starting point of the ingestion pipeline.
-2.  **SQLite Database (`app_data.db`)**: The core of the new architecture. It contains a `records` table where each row represents a single record to be validated. A record has a `status` of `'source'`, `'in_progress'`, or `'validated'`.
-3.  **`data_processed_batches/` (Directory)**: After a batch file from `data_source/` is successfully ingested into the database, it is moved here for archival purposes.
+1. **`data_source/` (Directory)**: Contains original, multi-record JSON **batch files** that need to be processed. This is the starting point of the ingestion pipeline.
+2. **SQLite Database (`app_data.db`)**: The core of the new architecture. It contains a `records` table where each row represents a single record to be validated. A record has a `status` of `'source'`, `'in_progress'`, or `'validated'`.
+3. **`data_processed_batches/` (Directory)**: After a batch file from `data_source/` is successfully ingested into the database, it is moved here for archival purposes.
 
 **Workflow:**
 
-1.  A user places a batch JSON file into `data_source/`.
-2.  On the `HomePage`, the file appears with an "Ingest" button.
-3.  The user clicks "Ingest". The server reads the batch file, creates a new entry in the SQLite `records` table for each item in the batch, and moves the original file to `data_processed_batches/`.
-4.  The individual records now appear on the `HomePage` with a "Validate" button.
-5.  A user clicks "Validate" to open `ValidatePage`. All changes are autosaved to the database, updating the record's `data` and setting its `status` to `'in_progress'`.
-6.  When the user clicks "Commit & Next File", the record's status is updated to `'validated'` in the database.
+1. A user places a batch JSON file into `data_source/`.
+2. On the `HomePage`, the file appears with an "Ingest" button.
+3. The user clicks "Ingest". The server reads the batch file, creates a new entry in the SQLite `records` table for each item in the batch, and moves the original file to `data_processed_batches/`.
+4. The individual records now appear on the `HomePage` with a "Validate" button.
+5. A user clicks "Validate" to open `ValidatePage`. All changes are autosaved to the database, updating the record's `data` and setting its `status` to `'in_progress'`.
+6. When the user clicks "Commit & Next File", the record's status is updated to `'validated'` in the database.
 
 This workflow ensures data integrity, transactional ingestion, and a clear separation between raw data batches and active validation work.
