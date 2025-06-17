@@ -1,35 +1,28 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import type { TransformationState } from "../../../types/types";
+import {
+  PDFDocumentLoadingTask,
+  PDFDocumentProxy,
+  PDFPageProxy,
+} from "pdfjs-dist";
 // Do NOT import pdfjs-dist directly here to prevent it from running on the server during SSR.
 // It will be dynamically imported inside useEffect.
-
-// Define types for pdfjs-dist dynamically
-interface PdfJsGlobalWorkerOptions {
-  workerSrc: string;
-}
-
-interface PdfJs {
-  GlobalWorkerOptions: PdfJsGlobalWorkerOptions;
-  getDocument: (src: string) => { promise: Promise<any> };
-  version: string;
-}
-
-interface PDFDocumentProxy {
-  numPages: number;
-  getPage: (pageNumber: number) => Promise<PDFPageProxy>;
-  destroy: () => void;
-}
-
-interface PDFPageProxy {
-  getViewport: (options: { scale: number }) => any;
-  render: (context: any) => { promise: Promise<void> };
-}
 
 export interface ImagePaneProps {
   pdfSrc: string;
   transformation: TransformationState;
   onTransformationChange: (newTransformation: TransformationState) => void;
   imageWrapperRef: React.RefObject<HTMLDivElement>; // This is the container for *pages*, inside the transformed div
+}
+
+// Define types for pdfjs-dist dynamically
+
+interface PdfJs {
+  GlobalWorkerOptions: {
+    workerSrc: string;
+  };
+  getDocument: (src: string) => PDFDocumentLoadingTask;
+  version: string;
 }
 
 const ImagePane: React.FC<ImagePaneProps> = ({
@@ -108,7 +101,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         console.error("Error loading PDF:", reason);
         setPdfError(`Failed to load PDF: ${reason.message || reason}`);
         setLoadingPdf(false);
-      },
+      }
     );
 
     return () => {
@@ -147,7 +140,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         console.error("Error rendering page:", error);
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -251,7 +244,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         offsetY: newOffsetY,
       });
     },
-    [transformation, onTransformationChange],
+    [transformation, onTransformationChange]
   ); // Added dependencies
 
   // Attach native wheel event listener with passive: false
