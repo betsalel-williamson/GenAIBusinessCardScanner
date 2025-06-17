@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useUndoableState } from "./useUndoableState";
 import { useDebounce } from "./useDebounce";
 import type { DataRecord, TransformationState } from "../../../types/types";
-import type { DataEntryPaneHandle } from "../components/DataEntryPane";
 
 // Helper to get PDF path from record source (e.g., "file.pdf" -> "/images/file.pdf")
 const getPDFSrcFromRecord = (record: DataRecord | null) => {
