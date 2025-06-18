@@ -58,16 +58,20 @@ jobs:
       - name: DBT | Seed sample data for CI
         working-directory: ./dagster_card_processor
         continue-on-error: true
-        run: dbt seed --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
+        run: |
+          dbt seed --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
 
       - name: DBT | Build from seeded data
         working-directory: ./dagster_card_processor
         continue-on-error: true
-        run: dbt build --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
+        run: |
+          dbt build --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
 
       - name: Python | Lint with flake8
         working-directory: ./dagster_card_processor
-        run: flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Python | Test with pytest
         continue-on-error: true
