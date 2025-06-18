@@ -22,3 +22,17 @@ export interface TransformationState {
   offsetY: number;
   scale: number;
 }
+
+// NEW: Type for individual file upload results from the API
+export interface UploadResult {
+  originalName: string;
+  status: "success" | "skipped" | "error";
+  reason?: string;
+  newName?: string;
+}
+
+// NEW: Type for the entire upload API response payload
+export interface UploadApiResponse {
+  message: string;
+  results: UploadResult[];
+}

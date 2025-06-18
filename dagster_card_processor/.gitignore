@@ -18,3 +18,4 @@ dbt_project/*.csv
 
 #
 .env
+*.log

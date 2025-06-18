@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import FileUpload from "../components/FileUpload";
 
 interface FileInfo {
   filename: string;
@@ -33,7 +34,7 @@ const HomePage: React.FC = () => {
   const [filterStatus, setFilterStatus] =
     useState<FilterStatus>("active_work_only");
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/files");
@@ -50,11 +51,11 @@ const HomePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchFiles();
-  }, []);
+  }, [fetchFiles]);
 
   const handleIngest = async (filename: string) => {
     if (!window.confirm(`Ingest all records from batch file "${filename}"?`)) {
@@ -113,8 +114,11 @@ const HomePage: React.FC = () => {
           Transcription Validation
         </h1>
         <p className="text-gray-600 mb-4">
-          Select a record to validate or a batch file to ingest.
+          Upload new business cards, ingest a batch file, or select a record to
+          validate.
         </p>
+
+        <FileUpload onUploadComplete={fetchFiles} />
 
         <div className="mb-6 flex items-center gap-4">
           <label htmlFor="file-filter" className="text-gray-700 font-medium">

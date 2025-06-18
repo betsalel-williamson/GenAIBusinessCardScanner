@@ -11,12 +11,10 @@ const ValidatePage: React.FC = () => {
   const imageWrapperRef = useRef<HTMLDivElement>(null);
   const dataEntryPaneRef = useRef<DataEntryPaneHandle>(null);
 
-  // State for global file progress bar
   const [globalFiles, setGlobalFiles] = useState<FileInfo[]>([]);
   const [globalLoading, setGlobalLoading] = useState(true);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
-  // Fetch global file list for progress bar
   useEffect(() => {
     const fetchGlobalFiles = async () => {
       setGlobalLoading(true);
@@ -36,14 +34,14 @@ const ValidatePage: React.FC = () => {
       }
     };
     fetchGlobalFiles();
-  }, []); // Empty dependency array means it runs once on mount
+  }, []);
 
   const {
     loading,
     error,
     autosaveStatus,
     currentRecord,
-    currentPDFSrc,
+    currentFileSrc, // Updated prop name from the hook
     transformation,
     setTransformation,
     handleFieldChange,
@@ -81,7 +79,6 @@ const ValidatePage: React.FC = () => {
       />
     );
 
-  // Calculations for the progress bar, only considering records, not batches
   const recordsOnly = globalFiles.filter((f) => f.type === "record");
   const totalTrackedRecords = recordsOnly.length;
   const validatedRecords = recordsOnly.filter(
@@ -95,19 +92,17 @@ const ValidatePage: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 pb-2">
-      {" "}
-      {/* Added pb-2 for progress bar clearance */}
       <div className="flex-grow p-6 flex flex-col">
-        {currentRecord && currentPDFSrc ? (
+        {currentRecord && currentFileSrc ? (
           <ImagePane
             imageWrapperRef={imageWrapperRef}
-            pdfSrc={currentPDFSrc}
+            pdfSrc={currentFileSrc} // Pass the correct source
             transformation={transformation}
             onTransformationChange={setTransformation}
           />
         ) : (
           <StatusDisplay
-            message="No PDF source provided for this record."
+            message="No source file provided for this record."
             type="no-source"
             jsonFilename={jsonFilename}
             onBack={navigateBackToList}
@@ -127,7 +122,6 @@ const ValidatePage: React.FC = () => {
           onFieldFocus={handleFieldFocus}
         />
       </div>
-      {/* Progress Bar (only show if there are tracked records) */}
       {!globalLoading && !globalError && totalTrackedRecords > 0 && (
         <div
           role="progressbar"

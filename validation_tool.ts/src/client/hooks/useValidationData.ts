@@ -4,45 +4,43 @@ import { useUndoableState } from "./useUndoableState";
 import { useDebounce } from "./useDebounce";
 import type { DataRecord, TransformationState } from "../../../types/types";
 
-// Helper to get PDF path from record source (e.g., "file.pdf" -> "/images/file.pdf")
-const getPDFSrcFromRecord = (record: DataRecord | null) => {
+// Helper to get PDF/Image path from record source.
+const getSourceFileSrcFromRecord = (record: DataRecord | null): string => {
   if (
     !record?.source ||
     typeof record.source !== "string" ||
     record.source.trim() === ""
   ) {
-    return ""; // Return empty string if source is missing, not a string, or empty
+    return "";
   }
-  const baseName = record.source.split(".").slice(0, -1).join(".");
-  // Encode the basename to handle spaces and other special characters in filenames
-  return `/images/${encodeURIComponent(baseName)}.pdf`;
+  // The `source` field now contains the full filename (e.g., hash.pdf, hash.png)
+  // We just need to encode it for the URL.
+  return `/images/${encodeURIComponent(record.source)}`;
 };
-
-// Local storage keys are removed as per-record indexing is no longer needed
 
 interface UseValidationDataHook {
   loading: boolean;
   error: string | null;
   autosaveStatus: { message: string; type: string };
-  currentRecord: DataRecord | null; // Now the single record for the current file
-  currentPDFSrc: string;
-  canUndoRecord: boolean; // Renamed from canUndoRecords
-  canRedoRecord: boolean; // Renamed from canRedoRecords
+  currentRecord: DataRecord | null;
+  currentFileSrc: string; // Renamed for clarity (can be PDF or image)
+  canUndoRecord: boolean;
+  canRedoRecord: boolean;
   transformation: TransformationState;
   setTransformation: (newState: TransformationState) => void;
   handleFieldChange: (key: string, newValue: string) => void;
   handleAddField: (key: string, value: string) => void;
   handleRevertField: (key: string) => Promise<void>;
-  handleCommit: () => Promise<void>; // Commit and advance to next file
-  undoRecord: () => void; // Renamed from undoRecords
-  redoRecord: () => void; // Renamed from redoRecords
+  handleCommit: () => Promise<void>;
+  undoRecord: () => void;
+  redoRecord: () => void;
   navigateBackToList: () => void;
   handleFieldFocus: (key: string, initialValue: string) => void;
-  jsonFilename: string; // Expose jsonFilename for StatusDisplay
+  jsonFilename: string;
 }
 
 export const useValidationData = (): UseValidationDataHook => {
-  const { json_filename } = useParams<{ json_filename: string }>(); // record_index removed
+  const { json_filename } = useParams<{ json_filename: string }>();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -52,31 +50,27 @@ export const useValidationData = (): UseValidationDataHook => {
     type: "",
   });
 
-  // Store info about the currently focused field for Escape/Ctrl+Enter behavior
   const [focusedFieldInfo, setFocusedFieldInfo] = useState<{
     key: string;
     initialValue: string;
   } | null>(null);
 
-  // Use useUndoableState for the *single* DataRecord
   const [
-    recordData, // Now holds the single DataRecord object
+    recordData,
     setRecordData,
-    undoRecord, // Renamed from undoRecords
-    redoRecord, // Renamed from redoRecords
-    resetRecord, // Renamed from resetRecords
-    canUndoRecord, // Renamed from canUndoRecords
-    canRedoRecord, // Renamed from canRedoRecords
+    undoRecord,
+    redoRecord,
+    resetRecord,
+    canUndoRecord,
+    canRedoRecord,
   ] = useUndoableState<DataRecord | null>(null);
 
-  // currentRecord is just recordData
   const currentRecord = recordData;
-  const currentPDFSrc = useMemo(
-    () => getPDFSrcFromRecord(currentRecord),
+  const currentFileSrc = useMemo(
+    () => getSourceFileSrcFromRecord(currentRecord),
     [currentRecord],
   );
 
-  // Transformation state for PDF viewer, resets on file change
   const [transformation, setTransformation] = useState<TransformationState>({
     offsetX: 0,
     offsetY: 0,
@@ -85,7 +79,6 @@ export const useValidationData = (): UseValidationDataHook => {
 
   const debouncedRecordData = useDebounce(recordData, 1000);
 
-  // Initial data load for the single record file
   useEffect(() => {
     if (!json_filename) {
       setError("No filename provided.");
@@ -95,7 +88,7 @@ export const useValidationData = (): UseValidationDataHook => {
 
     setLoading(true);
     setError(null);
-    resetRecord(null); // Clear previous record data before fetching new one
+    resetRecord(null);
 
     fetch(`/api/files/${json_filename}`)
       .then((res) => {
@@ -103,9 +96,6 @@ export const useValidationData = (): UseValidationDataHook => {
         return res.json();
       })
       .then((data: DataRecord) => {
-        // Expect a single DataRecord
-        // Ensure the fetched data is a plain object, not an array.
-        // If the backend was still returning an array for some reason, take the first one.
         if (Array.isArray(data)) {
           if (data.length > 0) {
             console.warn(
@@ -122,26 +112,21 @@ export const useValidationData = (): UseValidationDataHook => {
             "Invalid data format: Expected a single record object.",
           );
         }
-
-        setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 }); // Reset PDF view for new record
+        setTransformation({ offsetX: 0, offsetY: 0, scale: 1.0 });
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-
-    // No localStorage for lastViewedRecord or softValidatedIndices in single-record flow
   }, [json_filename, resetRecord]);
 
   const autoSave = useCallback(
     async (dataToSave: DataRecord) => {
       if (!json_filename) return;
-
       setAutosaveStatus({ message: "Saving...", type: "status-progress" });
-
       try {
         const response = await fetch(`/api/autosave/${json_filename}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataToSave), // Send the single record
+          body: JSON.stringify(dataToSave),
         });
         if (!response.ok) throw new Error("Autosave failed on server");
         setAutosaveStatus({
@@ -156,19 +141,16 @@ export const useValidationData = (): UseValidationDataHook => {
     [json_filename],
   );
 
-  // Autosave effect (triggered by debouncedRecordData)
   useEffect(() => {
-    // Only autosave if there's actual record data and it has changed (canUndoRecord implies change from initial)
     if (debouncedRecordData && canUndoRecord) {
       autoSave(debouncedRecordData);
     }
   }, [debouncedRecordData, autoSave, canUndoRecord]);
 
-  // Handlers for DataEntryPane
   const handleFieldChange = useCallback(
     (key: string, newValue: string) => {
       if (!currentRecord) return;
-      setRecordData({ ...currentRecord, [key]: newValue }); // Update the single record
+      setRecordData({ ...currentRecord, [key]: newValue });
     },
     [currentRecord, setRecordData],
   );
@@ -177,7 +159,6 @@ export const useValidationData = (): UseValidationDataHook => {
     (key: string, value: string) => {
       if (!currentRecord) return;
       if (!(key in currentRecord)) {
-        // Only add if field doesn't exist
         setRecordData({ ...currentRecord, [key]: value });
       }
     },
@@ -198,7 +179,7 @@ export const useValidationData = (): UseValidationDataHook => {
         const response = await fetch(`/api/source-data/${json_filename}`);
         if (!response.ok) throw new Error("Failed to fetch source data.");
 
-        const sourceData: DataRecord = await response.json(); // Expect single DataRecord
+        const sourceData: DataRecord = await response.json();
         const originalValue = sourceData[keyToRevert];
 
         if (originalValue !== undefined) {
@@ -242,12 +223,10 @@ export const useValidationData = (): UseValidationDataHook => {
       const response = await fetch(`/api/commit/${json_filename}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(currentRecord), // Send the single record
+        body: JSON.stringify(currentRecord),
       });
       if (!response.ok) throw new Error("Commit failed on server");
       const result = await response.json();
-
-      // No localStorage items to clear related to record index/soft validation
 
       if (result.nextFile) {
         navigate(`/validate/${result.nextFile}`, { replace: true });
@@ -265,12 +244,10 @@ export const useValidationData = (): UseValidationDataHook => {
     navigate("/", { replace: true });
   }, [navigate]);
 
-  // Handler for when a field gains focus (used by DataEntryPane)
   const handleFieldFocus = useCallback((key: string, initialValue: string) => {
     setFocusedFieldInfo({ key, initialValue });
   }, []);
 
-  // Keyboard Navigation Effect
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const activeElement = document.activeElement;
@@ -278,12 +255,10 @@ export const useValidationData = (): UseValidationDataHook => {
         activeElement instanceof HTMLInputElement ||
         activeElement instanceof HTMLTextAreaElement;
 
-      // Global Undo/Redo (Ctrl/Cmd + Z/Y or Shift+Z) - always works
       if ((event.metaKey || event.ctrlKey) && event.key === "z") {
         if (canUndoRecord) {
-          // Check against renamed state
-          event.preventDefault(); // Prevent browser undo
-          undoRecord(); // Use renamed function
+          event.preventDefault();
+          undoRecord();
         }
         return;
       }
@@ -292,15 +267,13 @@ export const useValidationData = (): UseValidationDataHook => {
         (event.key === "y" || (event.shiftKey && event.key === "Z"))
       ) {
         if (canRedoRecord) {
-          // Check against renamed state
-          event.preventDefault(); // Prevent browser redo
-          redoRecord(); // Use renamed function
+          event.preventDefault();
+          redoRecord();
         }
         return;
       }
 
       if (isInputField) {
-        // Field-specific Escape behavior
         if (event.key === "Escape") {
           event.preventDefault();
           if (
@@ -313,39 +286,32 @@ export const useValidationData = (): UseValidationDataHook => {
               focusedFieldInfo.initialValue,
             );
           }
-          (activeElement as HTMLElement).blur(); // Blur the field
-          setFocusedFieldInfo(null); // Clear focused field info
+          (activeElement as HTMLElement).blur();
+          setFocusedFieldInfo(null);
           return;
         }
-        // Ctrl/Cmd + Enter to accept change and blur field
         if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
           event.preventDefault();
-          (activeElement as HTMLElement).blur(); // Blur the field
-          setFocusedFieldInfo(null); // Clear focused field info
+          (activeElement as HTMLElement).blur();
+          setFocusedFieldInfo(null);
           return;
         }
-        // For ArrowLeft, ArrowRight, Enter (without modifier):
-        // Do NOT preventDefault() to allow native text input behavior (cursor movement, new lines).
-        return; // Consume event, no global navigation
+        return;
       }
 
-      // Global navigation when no input field is focused
       if (event.key === "ArrowRight" || event.key === "Enter") {
         event.preventDefault();
-        handleCommit(); // Commit current record and move to next file
+        handleCommit();
       } else if (event.key === "ArrowLeft" || event.key === "Escape") {
         event.preventDefault();
-        navigateBackToList(); // Navigate back to the file list
+        navigateBackToList();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
-    handleCommit, // Now responsible for advancing
+    handleCommit,
     navigateBackToList,
     undoRecord,
     redoRecord,
@@ -360,7 +326,7 @@ export const useValidationData = (): UseValidationDataHook => {
     error,
     autosaveStatus,
     currentRecord,
-    currentPDFSrc,
+    currentFileSrc,
     canUndoRecord,
     canRedoRecord,
     transformation,
@@ -373,6 +339,6 @@ export const useValidationData = (): UseValidationDataHook => {
     redoRecord,
     navigateBackToList,
     handleFieldFocus,
-    jsonFilename: json_filename || "", // Expose filename
+    jsonFilename: json_filename || "",
   };
 };

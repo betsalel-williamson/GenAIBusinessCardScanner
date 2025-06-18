@@ -5,14 +5,12 @@ import type {
   PDFPageProxy,
   PDFDocumentLoadingTask,
 } from "pdfjs-dist";
-// Do NOT import pdfjs-dist directly here to prevent it from running on the server during SSR.
-// It will be dynamically imported inside useEffect.
 
 export interface ImagePaneProps {
-  pdfSrc: string;
+  pdfSrc: string; // Keep name for now, but it handles images too
   transformation: TransformationState;
   onTransformationChange: (newTransformation: TransformationState) => void;
-  imageWrapperRef: React.RefObject<HTMLDivElement>; // This is the container for *pages*, inside the transformed div
+  imageWrapperRef: React.RefObject<HTMLDivElement>;
 }
 
 interface PdfJs {
@@ -29,6 +27,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
   onTransformationChange,
   imageWrapperRef,
 }) => {
+  const isPdf = pdfSrc.toLowerCase().endsWith(".pdf");
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const initialTransform = useRef({ offsetX: 0, offsetY: 0 });
@@ -36,30 +35,26 @@ const ImagePane: React.FC<ImagePaneProps> = ({
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const pdfjsRef = useRef<PdfJs | null>(null);
-  const [pdfjsLoaded, setPdfjsLoaded] = useState(false); // State to track if PDF.js is loaded
+  const [pdfjsLoaded, setPdfjsLoaded] = useState(false);
 
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  // Dynamically import pdfjs-dist on client-side mount
   useEffect(() => {
-    if (typeof window !== "undefined" && !pdfjsRef.current) {
+    if (isPdf && typeof window !== "undefined" && !pdfjsRef.current) {
       import("pdfjs-dist")
         .then((module) => {
           pdfjsRef.current = module;
           pdfjsRef.current.GlobalWorkerOptions.workerSrc = `/src/client/pdfjs-build/pdf.worker.min.mjs`;
-          setPdfjsLoaded(true); // Signal that PDF.js is ready
+          setPdfjsLoaded(true);
         })
         .catch((err) => {
           console.error("Failed to load pdfjs-dist:", err);
           setPdfError("Failed to initialize PDF viewer.");
         });
     }
-  }, []);
+  }, [isPdf]);
 
-  // Load PDF document and calculate initial zoom
   useEffect(() => {
-    // This cleanup function is designed to run for the *previous* `pdfDoc`
-    // instance when `pdfSrc` changes. It correctly uses a stale closure.
     const currentPdfDoc = pdfDoc;
     const cleanup = () => {
       if (currentPdfDoc) {
@@ -67,7 +62,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       }
     };
 
-    if (!pdfSrc || !pdfjsLoaded) {
+    if (!isPdf || !pdfSrc || !pdfjsLoaded) {
       setPdfDoc(null);
       setPdfError(null);
       return cleanup;
@@ -84,17 +79,13 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       async (pdf) => {
         setPdfDoc(pdf);
         setLoadingPdf(false);
-
-        // Auto-zoom to fit width
         if (viewportRef.current && pdf.numPages > 0) {
           const paddingHorizontal = 40;
           const availableWidth =
             viewportRef.current.clientWidth - paddingHorizontal;
-
           const firstPage = await pdf.getPage(1);
           const pageViewport = firstPage.getViewport({ scale: 1.0 });
           const pageNaturalWidth = pageViewport.width;
-
           const fitToWidthScale = availableWidth / pageNaturalWidth;
           onTransformationChange({
             offsetX: 0,
@@ -114,19 +105,17 @@ const ImagePane: React.FC<ImagePaneProps> = ({
 
     return cleanup;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pdfSrc, onTransformationChange, pdfjsLoaded]);
+  }, [pdfSrc, onTransformationChange, pdfjsLoaded, isPdf]);
 
-  // Render PDF pages to canvases
   const renderPage = useCallback(
     async (page: PDFPageProxy, canvas: HTMLCanvasElement) => {
-      const renderScale = 2.0; // Render at 2x resolution for sharpness
+      const renderScale = 2.0;
       const viewport = page.getViewport({ scale: renderScale });
       const context = canvas.getContext("2d");
       if (!context) return;
 
       canvas.height = viewport.height;
       canvas.width = viewport.width;
-
       canvas.style.width = "100%";
       canvas.style.height = "auto";
 
@@ -148,10 +137,8 @@ const ImagePane: React.FC<ImagePaneProps> = ({
 
   useEffect(() => {
     if (!pdfDoc || !imageWrapperRef.current) return;
-
     const pagesContainer = imageWrapperRef.current;
-    pagesContainer.innerHTML = ""; // Clear previous pages
-
+    pagesContainer.innerHTML = "";
     const renderAllPages = async () => {
       for (let i = 1; i <= pdfDoc.numPages; i++) {
         const page = await pdfDoc.getPage(i);
@@ -162,7 +149,6 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         await renderPage(page, canvas);
       }
     };
-
     renderAllPages();
   }, [pdfDoc, renderPage, imageWrapperRef]);
 
@@ -187,9 +173,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
     });
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  const handleMouseUp = () => setIsDragging(false);
 
   useEffect(() => {
     const handleMouseUpGlobal = () => setIsDragging(false);
@@ -212,19 +196,15 @@ const ImagePane: React.FC<ImagePaneProps> = ({
             ? currentScale + scaleAmount
             : currentScale - scaleAmount;
         newScale = Math.max(0.1, Math.min(5.0, newScale));
-
         const viewportDiv = viewportRef.current;
         if (!viewportDiv) return;
-
         const rect = viewportDiv.getBoundingClientRect();
         const mouseXInViewport = e.clientX - rect.left;
         const mouseYInViewport = e.clientY - rect.top;
-
         const mouseXInContent =
           (mouseXInViewport - transformation.offsetX) / currentScale;
         const mouseYInContent =
           (mouseYInViewport - transformation.offsetY) / currentScale;
-
         newOffsetX = mouseXInViewport - mouseXInContent * newScale;
         newOffsetY = mouseYInViewport - mouseYInContent * newScale;
       } else {
@@ -232,7 +212,6 @@ const ImagePane: React.FC<ImagePaneProps> = ({
         newOffsetX = transformation.offsetX - e.deltaX * panSpeed;
         newOffsetY = transformation.offsetY - e.deltaY * panSpeed;
       }
-
       onTransformationChange({
         scale: newScale,
         offsetX: newOffsetX,
@@ -252,34 +231,40 @@ const ImagePane: React.FC<ImagePaneProps> = ({
     }
   }, [handleWheel]);
 
-  if (loadingPdf) {
-    return (
-      <div className="flex-grow flex items-center justify-center text-gray-600">
-        Loading PDF...
-      </div>
-    );
-  }
-
-  if (pdfError) {
-    return (
-      <div className="flex-grow flex items-center justify-center text-red-500">
-        Error: {pdfError}
-      </div>
-    );
-  }
-
   if (!pdfSrc) {
     return (
       <div className="flex-grow flex items-center justify-center text-gray-500">
-        No PDF source provided for this record.
+        No source file provided for this record.
       </div>
     );
   }
+
+  // --- Main Rendering Logic ---
+
+  const renderContent = () => {
+    if (isPdf) {
+      if (loadingPdf)
+        return <div className="text-gray-600">Loading PDF...</div>;
+      if (pdfError)
+        return <div className="text-red-500">Error: {pdfError}</div>;
+      // PDF canvases will be appended here by useEffect
+      return <div ref={imageWrapperRef} className="pages-container"></div>;
+    } else {
+      // It's an image
+      return (
+        <img
+          src={pdfSrc}
+          alt="Source Document"
+          className="max-w-full max-h-full object-contain"
+        />
+      );
+    }
+  };
 
   return (
     <div
       ref={viewportRef}
-      className={`flex-grow overflow-hidden relative ${isDragging ? "grabbing" : "grab"}`}
+      className={`flex-grow overflow-hidden relative ${isDragging ? "grabbing" : "grab"} flex items-center justify-center`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -293,16 +278,11 @@ const ImagePane: React.FC<ImagePaneProps> = ({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          minWidth: "100%",
-          minHeight: "100%",
           padding: "20px",
           boxSizing: "content-box",
-          backgroundColor: "#fff",
         }}
       >
-        <div ref={imageWrapperRef} className="pages-container">
-          {/* Canvases will be appended here by useEffect */}
-        </div>
+        {renderContent()}
       </div>
     </div>
   );
