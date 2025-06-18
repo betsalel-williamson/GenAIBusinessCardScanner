@@ -78,5 +78,4 @@ jobs:
         with:
           name: Test Results
           path: "dagster_card_processor/pytest-report.xml, validation_tool.ts/junit.xml"
-          reporter: "pytest, java-junit"
           fail-on-error: true
