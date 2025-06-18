@@ -1,0 +1,2 @@
+company,website,prefix,full_name,first_name,last_name,title,address_1,address_2,address_3,city,state_or_state_code,country_or_country_code,zip_code_or_post_code,phone,extension,cell,email,retailer_type,source,date_imported,contact_type,notes,time_imported,products
+"Test Company Inc.","https://example.com","Mr.","John Doe","John","Doe","Tester","123 Test St",,"","Testville","TS","Testland","12345","555-1234",,"555-5678","test@example.com","Retailer","sample.pdf","2024-01-01","B2B","Some notes.","12:00:00Z","Test Product"
