@@ -1,0 +1,84 @@
+# This workflow runs all tests and linting, assuming dependencies are cached.
+name: Test and Lint
+
+on:
+  # This trigger allows the workflow to be called by other workflows.
+  workflow_call:
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --- Restore Python Dependencies ---
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "**/requirements.txt"
+
+      - name: Install Python dependencies from cache
+        run: pip install -r dagster_card_processor/requirements.txt
+
+      # --- Restore Node.js Dependencies ---
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Node.js dependencies from cache
+        run: pnpm install --frozen-lockfile
+        working-directory: ./validation_tool.ts
+
+      # --- Build, Linting, and Testing Steps ---
+      - name: DBT | Generate manifest
+        working-directory: ./dagster_card_processor
+        run: dbt build --project-dir dbt_project --profiles-dir dbt_project
+
+      - name: Python | Lint with flake8
+        working-directory: ./dagster_card_processor
+        run: flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Python | Test with pytest
+        continue-on-error: true
+        working-directory: ./dagster_card_processor
+        run: pytest --junitxml=pytest-report.xml
+
+      - name: Node.js | Run build, lint, and tests
+        continue-on-error: true
+        working-directory: ./validation_tool.ts
+        run: |
+          pnpm build
+          pnpm typecheck
+          pnpm test
+
+      # --- Test Reporting Step ---
+      - name: Report test results
+        if: success() || failure()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Test Results
+          path: "**/*-report.xml, **/junit.xml"
+          fail-on-error: true

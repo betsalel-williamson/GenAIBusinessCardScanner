@@ -1,3 +1,4 @@
+# This is the main workflow that orchestrates the reusable workflows.
 name: Monorepo CI
 
 on:
@@ -6,143 +7,17 @@ on:
   pull_request:
     branches: ["main"]
 
-permissions:
-  contents: read
-  checks: write
-  pull-requests: write
-
 jobs:
-  # JOB 1: Install all dependencies and save them to the cache.
-  # This job should always succeed unless a dependency is unreachable.
-  install-dependencies:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  # This job calls the installation workflow.
+  install:
+    uses: ./.github/workflows/reusable-install.yml
 
-      # --- Python Setup & Caching ---
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Configure and cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          # Key includes the hash of requirements.txt. A new key is generated if the file changes.
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Python | Install dependencies
-        run: pip install -r dagster_card_processor/requirements.txt
-
-      # --- Node.js Setup & Caching ---
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8
-
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Configure and cache pnpm
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          # Key includes the hash of the lockfile. A new key is generated if the file changes.
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Node.js | Install dependencies
-        run: pnpm install
-        working-directory: ./validation_tool.ts
-
-  # JOB 2: Run all tests and linting.
-  # This job ONLY runs after 'install-dependencies' is successful.
-  test-and-lint:
-    runs-on: ubuntu-latest
-    # This is the key dependency link.
-    needs: install-dependencies
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # --- Restore Python Dependencies ---
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Restore pip cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install dependencies from cache
-        run: pip install -r dagster_card_processor/requirements.txt
-
-      # --- Restore Node.js Dependencies ---
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8
-
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Restore pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies from cache
-        run: pnpm install
-        working-directory: ./validation_tool.ts
-
-      # --- Build, Linting, and Testing Steps ---
-      - name: DBT | Generate manifest
-        working-directory: ./dagster_card_processor
-        run: dbt build --project-dir dbt_project --profiles-dir dbt_project
-
-      - name: Python | Lint with flake8
-        working-directory: ./dagster_card_processor
-        run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-      - name: Python | Test with pytest
-        id: python-tests
-        working-directory: ./dagster_card_processor
-        continue-on-error: true
-        run: pytest --junitxml=pytest-report.xml
-
-      - name: Node.js | Run build, lint, and tests
-        id: node-tests
-        working-directory: ./validation_tool.ts
-        continue-on-error: true
-        run: |
-          pnpm build
-          pnpm typecheck
-          pnpm test
-
-      # --- Test Reporting Step ---
-      - name: Report test results
-        if: success() || failure()
-        uses: dorny/test-reporter@v1
-        with:
-          name: Test Results
-          path: "**/*-report.xml, **/junit.xml"
-          fail-on-error: true
+  # This job calls the testing workflow and depends on the install job completing successfully.
+  test:
+    needs: install
+    # Permissions are granted here and inherited by the reusable workflow.
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    uses: ./.github/workflows/reusable-test.yml
