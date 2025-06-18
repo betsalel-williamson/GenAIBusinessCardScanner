@@ -1,147 +1,70 @@
-# GenAIBusinessCardScanner
+# [GenAI Business Card Scanner](https://github.com/betsalel-williamson/GenAIBusinessCardScanner)
+
+<p align="center">
+  A complete system for extracting structured data from business card PDFs using AI and validating it with a human-in-the-loop web interface.
+</p>
+
+<p align="center">
+    <a href="https://github.com/betsalel-williamson/GenAIBusinessCardScanner/blob/main/LICENSE">
+        <img alt="License" src="https://img.shields.io/github/license/betsalel-williamson/GenAIBusinessCardScanner?style=flat-square&color=blue">
+    </a>
+    <a href="https://github.com/betsalel-williamson/GenAIBusinessCardScanner/actions/workflows/nodejs.yml">
+        <img alt="CI Status" src="https://github.com/betsalel-williamson/GenAIBusinessCardScanner/actions/workflows/nodejs.yml/badge.svg">
+    </a>
+    <img alt="Language" src="https://img.shields.io/github/languages/count/betsalel-williamson/GenAIBusinessCardScanner?style=flat-square">
+    <img alt="Language" src="https://img.shields.io/github/languages/top/betsalel-williamson/GenAIBusinessCardScanner?style=flat-square">
+</p>
 
 ## Overview
 
-GenAIBusinessCardScanner is a project leveraging Dagster and dbt to extract information from business cards in PDF format. It processes these PDFs, uses a Generative AI model (Google Gemini) to interpret the card data, and structures this information into a CSV file suitable for import into other systems.
+This project provides a comprehensive, two-part system for processing business cards:
 
-Key features:
+1. **Data Processing Pipeline (`dagster_card_processor`):** A Python-based pipeline using Dagster, dbt, and the Google Gemini API to automatically extract and structure information from PDF files.
+2. **Validation UI (`validation_tool.ts`):** A Node.js and React application that provides a web interface for a human to efficiently review, correct, and validate the AI-extracted data.
 
-- PDF parsing for business card images.
-- Data extraction and structuring using Google Gemini API.
-- Data transformation and modeling with dbt.
-- Orchestration and monitoring with Dagster.
-- Outputs clean, structured data in CSV format.
+### Core Workflow
+
+The system is designed for a sequential workflow:
+
+```text
+PDFs -> [ 1. Dagster Pipeline ] -> results.json -> [ 2. Validation UI ] -> Validated DB
+```
 
 ## Prerequisites
 
-- Python 3.8+
-- A Google Gemini API Key. You can obtain one from [Google AI Studio](https://aistudio.google.com/apikey).
-- `dbt` command-line tool installed (covered in setup).
-- `duckdb` CLI (for manual data export, optional if data is consumed directly from the database).
+- Python 3.12
+- Node.js v20+
+- `pnpm` (run `npm install -g pnpm`)
+- A Google Gemini API Key from [Google AI Studio](https://aistudio.google.com/apikey).
 
-## Setup and Installation
+## Getting Started
 
-1. **Clone the Repository (if you haven't already):**
+This project is a monorepo containing two separate applications. Please follow the setup instructions in each application's respective `README.md` file.
 
-    ```bash
-    git clone <repository-url>
-    cd GenAIBusinessCardScanner
-    ```
+1. **Set up the Data Processing Pipeline:**
+    - [**`./dagster_card_processor/README.md`**](./dagster_card_processor/README.md)
 
-2. **Set up Python Virtual Environment:**
-    It's highly recommended to use a virtual environment.
+2. **Set up the Validation UI:**
+    - [**`./validation_tool.ts/README.md`**](./validation_tool.ts/README.md)
 
-    ```bash
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install --upgrade pip
-    ```
+## Usage
 
-    *Tip: For improved IDE support (e.g., VS Code), set your Python interpreter to `.venv/bin/python`.*
+After completing the setup for both applications, follow this workflow:
 
-3. **Configure Environment Variables:**
-    The application requires your Google Gemini API key. Create a `.env` file in the `dagster_card_processor/` directory:
+1. **Run the Pipeline:** Add your business card PDFs to `dagster_card_processor/cards_to_process/` and run the Dagster pipeline as described in its README. This will produce a `results.json` file in `dagster_card_processor/output/`.
+
+2. **Prepare for Validation:** Copy the output file into the validation tool's ingestion directory:
 
     ```bash
-    # In dagster_card_processor/.env
-    GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
+    cp dagster_card_processor/output/results.json validation_tool.ts/data_source/
     ```
 
-4. **Install Python Dependencies:**
-    Navigate to the Dagster project directory and install the required packages.
+3. **Validate Data:** Start the validation UI server. In the web interface, ingest the `results.json` file and proceed to validate each record.
 
-    ```bash
-    cd dagster_card_processor
-    pip install -r requirements.txt
-    ```
+## Contributing
 
-5. **Initialize dbt Project:**
-    The dbt project (located in `dagster_card_processor/dbt_project/`) needs to be built. This compiles models, runs tests, and generates the `manifest.json` used by Dagster.
+Contributions are welcome. Please refer to the issues tab for areas where you can help.
 
-    Ensure you are in the `dagster_card_processor/` directory. This command assumes your `profiles.yml` for dbt is located within the `dbt_project/` subdirectory (i.e., at `dagster_card_processor/dbt_project/profiles.yml`).
+## License
 
-    ```bash
-    # Ensure current directory is dagster_card_processor/
-    dbt build --project-dir dbt_project --profiles-dir dbt_project
-    ```
-
-    *Note: If your `profiles.yml` is located elsewhere (e.g., `~/.dbt/profiles.yml`), dbt might pick it up automatically, or you might need to adjust the `--profiles-dir` argument or use the `DBT_PROFILES_DIR` environment variable.*
-
-## Running the Project
-
-1. **Prepare PDF Files:**
-    - Place all PDF business card files into the `dagster_card_processor/cards_to_process/` directory.
-    - Each PDF file should represent a single business card (multiple pages per card are acceptable).
-    - Ensure each PDF file has a unique name.
-
-2. **Launch Dagster Webserver:**
-    From the `dagster_card_processor/` directory, start the Dagster webserver/UI:
-
-    ```bash
-    dagster dev
-    ```
-
-    The Dagster UI will typically be available at `http://localhost:3000`.
-
-3. **Enable the Sensor in Dagster:**
-    - Open the Dagster UI in your browser.
-    - Navigate to the "Sensors" tab.
-    - Locate the sensor responsible for detecting new PDF files and enable it.
-    - The system will then begin to process files from the `cards_to_process/` directory in batches.
-    - *Note: If you are using a free tier of the Gemini API, the project includes logic to respect rate limits, which may result in slower processing.*
-
-## Exporting Processed Data
-
-After the Dagster pipeline has processed the business cards and the dbt models have run, the structured data will reside in the DuckDB database (typically located at `dagster_card_processor/dbt_project/*.duckdb`).
-
-To export this data to a CSV file:
-
-1. **Open the DuckDB CLI:**
-    Navigate to the `dagster_card_processor/` directory (or adjust the path to `*.duckdb` accordingly) and run:
-
-    ```bash
-    duckdb dbt_project/*.duckdb
-    ```
-
-2. **Execute the COPY Command:**
-    In the DuckDB prompt, run the following SQL query. This will create an `output.csv` file in the directory from which you launched the `duckdb` CLI (likely `dagster_card_processor/`).
-
-```SQL
-COPY (
-  SELECT
-    company,
-    website,
-    prefix,
-    full_name,
-    first_name,
-    last_name,
-    title,
-    address_1,
-    address_2,
-    address_3,
-    city,
-    state_or_state_code,
-    country_or_country_code,
-    zip_code_or_post_code,
-    phone,
-    extension,
-    cell,
-    email,
-    retailer_type,
-    source,
-    date_imported,
-    contact_type,
-    notes,
-    time_imported,
-    products
-  FROM stg_cards_data
-) TO 'output.csv' (HEADER, DELIMITER ',');
-```
-
-## Project Structure
-
-- `dagster_card_processor/`: Main app directory
-  - `dagster_card_processor/`: Contains the core Dagster application code, assets, jobs, and sensors.
-  - `cards_to_process/`: Directory where input PDF files should be placed.
-  - `dbt_project/`: Contains the dbt models, seeds, and configurations.
-  - `.env`: (You create this) For storing environment variables like API keys.
+This project is licensed under the [MIT License](./LICENSE).
