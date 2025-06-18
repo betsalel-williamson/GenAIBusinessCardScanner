@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: ["main"]
 
-# Add permissions required for the test reporter to post check runs and PR comments.
 permissions:
   contents: read
   checks: write
@@ -25,7 +24,8 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache-dependency-path: "dagster_card_processor/requirements.txt"
+          # Use a more robust wildcard path for monorepo compatibility
+          cache-dependency-path: "**/requirements.txt"
 
       - name: Python | Install dependencies
         run: |
@@ -43,7 +43,8 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-          cache-dependency-path: "validation_tool.ts/pnpm-lock.yaml"
+          # Use a more robust wildcard path for monorepo compatibility
+          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: Node.js | Install dependencies
         run: pnpm install
@@ -60,7 +61,8 @@ jobs:
         id: python-tests
         working-directory: ./dagster_card_processor
         continue-on-error: true
-        run: pytest --junitxml=pytest-report.xml
+        # The test command now correctly points to the new tests directory
+        run: pytest dagster_card_processor/tests/ --junitxml=pytest-report.xml
 
       - name: Node.js | Run build, lint, and tests
         id: node-tests
@@ -77,5 +79,6 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Test Results
-          path: "dagster_card_processor/pytest-report.xml, validation_tool.ts/junit.xml"
+          # Using wildcards for path is more resilient
+          path: "**/*-report.xml, **/junit.xml"
           fail-on-error: true

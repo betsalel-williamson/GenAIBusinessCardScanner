@@ -17,7 +17,6 @@ class GeminiResource(ConfigurableResource):
     _log = get_dagster_logger()
 
     def _generate_prompt_from_schema(self, schema: dict) -> str:
-
         with open(self.prompt_template_path, 'r') as f:
             template = f.read()
 
@@ -31,8 +30,9 @@ class GeminiResource(ConfigurableResource):
         return template.replace("{{FIELD_DEFINITIONS}}", field_text)
 
     def _convert_json_schema_to_gemini_schema(self, json_dict: dict) -> genai_protos.Schema:
+        if not json_dict:
+            return None
 
-        if not json_dict: return None
         type_map = {
             "STRING": genai_protos.Type.STRING, "NUMBER": genai_protos.Type.NUMBER,
             "INTEGER": genai_protos.Type.INTEGER, "BOOLEAN": genai_protos.Type.BOOLEAN,
@@ -40,12 +40,20 @@ class GeminiResource(ConfigurableResource):
         }
         json_type_str = json_dict.get("type", "").upper()
         gemini_type = type_map.get(json_type_str)
-        if not gemini_type: raise ValueError(f"Unsupported JSON schema type: {json_dict.get('type')}")
-        kwargs = {"type": gemini_type, "description": json_dict.get("description"), "format": json_dict.get("format")}
+        if not gemini_type:
+            raise ValueError(f"Unsupported JSON schema type: {json_dict.get('type')}")
+
+        kwargs = {
+            "type": gemini_type,
+            "description": json_dict.get("description"),
+            "format": json_dict.get("format")
+        }
         if gemini_type == genai_protos.Type.OBJECT and "properties" in json_dict:
-            kwargs["properties"] = {k: self._convert_json_schema_to_gemini_schema(v) for k, v in json_dict["properties"].items()}
+            props = {k: self._convert_json_schema_to_gemini_schema(v) for k, v in json_dict["properties"].items()}
+            kwargs["properties"] = props
         if gemini_type == genai_protos.Type.ARRAY and "items" in json_dict:
             kwargs["items"] = self._convert_json_schema_to_gemini_schema(json_dict["items"])
+
         final_kwargs = {k: v for k, v in kwargs.items() if v is not None}
         return genai_protos.Schema(**final_kwargs)
 
@@ -54,7 +62,6 @@ class GeminiResource(ConfigurableResource):
         self._model = genai.GenerativeModel(self.model_name)
         context.log.info(f"Gemini resource configured to use model: {self.model_name}")
 
-    # Revert to a single-file processing method
     def process_single_pdf(self, pdf_path: str, schema: dict) -> dict:
         pdf_filename = os.path.basename(pdf_path)
         system_prompt = self._generate_prompt_from_schema(schema)
@@ -80,11 +87,8 @@ class GeminiResource(ConfigurableResource):
                 generation_config=generation_config
             )
             return json.loads(response.text)
-
         except google_exceptions.ResourceExhausted as e:
-            # The API is telling us we're rate-limited.
-            # We can inspect the error for a suggested delay.
-            retry_delay = 60  # Default to 60 seconds if not found
+            retry_delay = 60
             if e.retry and e.retry.delay:
                 retry_delay = e.retry.delay.total_seconds()
 
@@ -92,11 +96,8 @@ class GeminiResource(ConfigurableResource):
                 f"Rate limit exceeded for {pdf_filename}. The API suggested a delay of "
                 f"{retry_delay} seconds. Waiting and then requesting a retry from Dagster."
             )
-            # Wait for the suggested amount of time
             time.sleep(retry_delay)
-            # Raise Dagster's special exception to trigger a retry for this step
             raise RetryRequested(max_retries=5)
-
         except json.JSONDecodeError:
             self._log.error(f"Failed to decode JSON for file {pdf_filename}.")
             self._log.error(f"Problematic API Response Text:\n---\n{response.text}\n---")

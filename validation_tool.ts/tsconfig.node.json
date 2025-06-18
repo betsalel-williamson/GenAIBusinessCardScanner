@@ -1,14 +1,10 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "es2017",
     "composite": true,
-    "skipLibCheck": true,
     "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "jsx": "react"
+    "moduleResolution": "Node",
+    "types": ["node"]
   },
   "include": ["vite.config.ts", "server.ts", "src/server"]
 }

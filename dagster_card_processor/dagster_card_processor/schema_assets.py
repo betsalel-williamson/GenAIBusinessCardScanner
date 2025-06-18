@@ -3,9 +3,11 @@ import json
 from dagster import asset, AssetExecutionContext, Config, AssetKey
 from .project import business_card_project
 
+
 class AssetConfig(Config):
     output_dir: str = os.getenv("OUTPUT_DIR", "output")
     system_injected_prefix: str = os.getenv("SYSTEM_INJECTED_PREFIX", "[SYSTEM-INJECTED]")
+
 
 @asset(deps=[AssetKey(["staging", "stg_cards_data"])])
 def response_schema_json(context: AssetExecutionContext, config: AssetConfig) -> dict:

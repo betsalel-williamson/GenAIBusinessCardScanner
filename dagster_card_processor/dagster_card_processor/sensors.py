@@ -3,6 +3,7 @@ import json
 from dagster import sensor, SensorEvaluationContext, SensorResult, RunRequest
 from .partitions import pdf_partitions
 
+
 @sensor(job_name="process_all_assets")
 def pdf_files_sensor(context: SensorEvaluationContext):
     """

@@ -3,10 +3,11 @@ import json
 from datetime import datetime, timezone
 from urllib.parse import quote
 from dagster import asset, AssetExecutionContext, MetadataValue
-from .config import FileConfig # <-- Import the shared config
-from .partitions import pdf_partitions # <-- Import from the new location
+from .config import FileConfig  #  <-- Import the shared config
+from .partitions import pdf_partitions  #  <-- Import from the new location
 from .resources import GeminiResource
 from .schema_assets import response_schema_json
+
 
 @asset(
     partitions_def=pdf_partitions,
