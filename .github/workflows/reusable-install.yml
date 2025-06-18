@@ -17,8 +17,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: "**/requirements.txt"
+
+      - name: Configure and cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          # The `key` is for an exact match.
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          # The `restore-keys` provide a fallback to the most recent cache from any branch.
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Python | Install dependencies
         run: pip install -r dagster_card_processor/requirements.txt
@@ -44,7 +52,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          # The `key` is for an exact match.
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          # The `restore-keys` provide a fallback to the most recent cache from any branch.
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
