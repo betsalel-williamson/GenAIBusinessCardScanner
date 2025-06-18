@@ -17,6 +17,11 @@ const vitestConfig: VitestUserConfigInterface = {
       reporter: ["default", "text", "json", "html"],
       ignoreEmptyLines: true,
     },
+    // Add JUnit reporter for GitHub Actions test summary
+    reporters: ['default', 'junit'],
+    outputFile: {
+      junit: 'junit.xml',
+    },
   },
   esbuild: {
     // Transpile all files with ESBuild to remove comments from code coverage.
