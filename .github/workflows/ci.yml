@@ -12,27 +12,33 @@ permissions:
   pull-requests: write
 
 jobs:
-  test-and-lint:
+  # JOB 1: Install all dependencies and save them to the cache.
+  # This job should always succeed unless a dependency is unreachable.
+  install-dependencies:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- Python (dagster_card_processor) Setup ---
+      # --- Python Setup & Caching ---
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
-          # Use a more robust wildcard path for monorepo compatibility
-          cache-dependency-path: "**/requirements.txt"
+
+      - name: Configure and cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          # Key includes the hash of requirements.txt. A new key is generated if the file changes.
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Python | Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r dagster_card_processor/requirements.txt
+        run: pip install -r dagster_card_processor/requirements.txt
 
-      # --- Node.js (validation_tool.ts) Setup ---
+      # --- Node.js Setup & Caching ---
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -42,15 +48,75 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
-          # Use a more robust wildcard path for monorepo compatibility
-          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Configure and cache pnpm
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          # Key includes the hash of the lockfile. A new key is generated if the file changes.
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Node.js | Install dependencies
         run: pnpm install
         working-directory: ./validation_tool.ts
 
-      # --- Linting and Testing Steps ---
+  # JOB 2: Run all tests and linting.
+  # This job ONLY runs after 'install-dependencies' is successful.
+  test-and-lint:
+    runs-on: ubuntu-latest
+    # This is the key dependency link.
+    needs: install-dependencies
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --- Restore Python Dependencies ---
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore pip cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies from cache
+        run: pip install -r dagster_card_processor/requirements.txt
+
+      # --- Restore Node.js Dependencies ---
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies from cache
+        run: pnpm install
+        working-directory: ./validation_tool.ts
+
+      # --- Build, Linting, and Testing Steps ---
+      - name: DBT | Generate manifest
+        working-directory: ./dagster_card_processor
+        run: dbt build --project-dir dbt_project --profiles-dir dbt_project
+
       - name: Python | Lint with flake8
         working-directory: ./dagster_card_processor
         run: |
@@ -61,8 +127,7 @@ jobs:
         id: python-tests
         working-directory: ./dagster_card_processor
         continue-on-error: true
-        # The test command now correctly points to the new tests directory
-        run: pytest dagster_card_processor/tests/ --junitxml=pytest-report.xml
+        run: pytest --junitxml=pytest-report.xml
 
       - name: Node.js | Run build, lint, and tests
         id: node-tests
@@ -79,6 +144,5 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Test Results
-          # Using wildcards for path is more resilient
           path: "**/*-report.xml, **/junit.xml"
           fail-on-error: true

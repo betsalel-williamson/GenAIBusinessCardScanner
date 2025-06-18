@@ -1,9 +1,12 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
     "composite": true,
+    "skipLibCheck": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "noEmit": false, /* Referenced projects must emit */
     "types": ["node"]
   },
   "include": ["vite.config.ts", "server.ts", "src/server"]
