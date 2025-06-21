@@ -8,8 +8,8 @@
     <a href="https://github.com/betsalel-williamson/GenAIBusinessCardScanner/blob/main/LICENSE">
         <img alt="License" src="https://img.shields.io/github/license/betsalel-williamson/GenAIBusinessCardScanner?style=flat-square&color=blue">
     </a>
-    <a href="https://github.com/betsalel-williamson/GenAIBusinessCardScanner/actions/workflows/nodejs.yml">
-        <img alt="CI Status" src="https://github.com/betsalel-williamson/GenAIBusinessCardScanner/actions/workflows/nodejs.yml/badge.svg">
+    <a href="https://github.com/betsalel-williamson/GenAIBusinessCardScanner/actions/workflows/ci.yml">
+        <img alt="CI Status" src="https://github.com/betsalel-williamson/GenAIBusinessCardScanner/actions/workflows/ci.yml/badge.svg">
     </a>
     <img alt="Language" src="https://img.shields.io/github/languages/count/betsalel-williamson/GenAIBusinessCardScanner?style=flat-square">
     <img alt="Language" src="https://img.shields.io/github/languages/top/betsalel-williamson/GenAIBusinessCardScanner?style=flat-square">
