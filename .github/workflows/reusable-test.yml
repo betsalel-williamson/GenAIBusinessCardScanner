@@ -10,21 +10,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # --- Python Dependency Restoration ---
+      - name: Download Python venv artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-venv
+          path: ./.venv
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Restore pip cache
-        uses: actions/cache@v4
+      # --- Node.js Dependency Restoration ---
+      - name: Download Node.js modules artifact
+        uses: actions/download-artifact@v4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install Python dependencies from cache
-        run: pip install -r dagster_card_processor/requirements.txt
+          name: node-modules
+          path: ./validation_tool.ts/node_modules
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -35,48 +38,37 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Restore pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install Node.js dependencies from cache
-        run: pnpm install --frozen-lockfile
-        working-directory: ./validation_tool.ts
+          cache: 'pnpm'
+          cache-dependency-path: validation_tool.ts/pnpm-lock.yaml
 
       # --- Build, Linting, and Testing Steps ---
       - name: DBT | Seed sample data for CI
         working-directory: ./dagster_card_processor
         continue-on-error: true
         run: |
+          source ../.venv/bin/activate
           dbt seed --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
 
       - name: DBT | Build from seeded data
         working-directory: ./dagster_card_processor
         continue-on-error: true
         run: |
+          source ../.venv/bin/activate
           dbt build --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
 
       - name: Python | Lint with flake8
         working-directory: ./dagster_card_processor
         run: |
+          source ../.venv/bin/activate
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Python | Test with pytest
         continue-on-error: true
         working-directory: ./dagster_card_processor
-        run: pytest --junitxml=pytest-report.xml
+        run: |
+          source ../.venv/bin/activate
+          pytest --junitxml=pytest-report.xml
 
       - name: Node.js | Run build, lint, and tests
         continue-on-error: true

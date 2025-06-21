@@ -1,8 +1,7 @@
-# This workflow's only job is to install dependencies and cache them.
+# This workflow's job is to install dependencies, cache them, and create artifacts for subsequent jobs.
 name: Install Dependencies
 
 on:
-  # This trigger allows the workflow to be called by other workflows.
   workflow_call:
 
 jobs:
@@ -18,18 +17,29 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Configure and cache pip
+      - name: Cache Python virtual environment
+        id: cache-venv
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pip
-          # The `key` is for an exact match.
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          # The `restore-keys` provide a fallback to the most recent cache from any branch.
+          path: ./.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-venv-
 
-      - name: Python | Install dependencies
-        run: pip install -r dagster_card_processor/requirements.txt
+      - name: Install Python dependencies
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r dagster_card_processor/requirements.txt
+
+      - name: Upload Python venv artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-venv
+          path: ./.venv
+          retention-days: 1
 
       # --- Node.js Setup & Caching ---
       - name: Set up pnpm
@@ -37,27 +47,20 @@ jobs:
         with:
           version: 8
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 20 and cache pnpm dependencies
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Cache pnpm dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          # The `key` is for an exact match.
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          # The `restore-keys` provide a fallback to the most recent cache from any branch.
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          cache: 'pnpm'
+          cache-dependency-path: validation_tool.ts/pnpm-lock.yaml
 
       - name: Node.js | Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
         working-directory: ./validation_tool.ts
+
+      - name: Upload Node.js modules artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-modules
+          path: ./validation_tool.ts/node_modules
+          retention-days: 1
