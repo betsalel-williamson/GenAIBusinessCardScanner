@@ -42,6 +42,7 @@ app_data.db
 
 # Tests
 /coverage
+junit.xml
 #
 
 update.sh

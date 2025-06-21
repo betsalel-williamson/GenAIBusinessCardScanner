@@ -132,8 +132,12 @@ vi.mock("../client/components/ImagePane", () => {
 });
 
 // TestWrapper now only navigates to a filename, not an index
+// Add future prop to MemoryRouter to handle React Router warnings
 export const TestWrapper: React.FC = () => (
-  <MemoryRouter initialEntries={[`/validate/${MOCK_FILE_NAME}`]}>
+  <MemoryRouter
+    initialEntries={[`/validate/${MOCK_FILE_NAME}`]}
+    future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+  >
     <Routes>
       <Route path="/validate/:json_filename" element={<ValidatePage />} />
       <Route path="/" element={<HomePage />} />
@@ -156,7 +160,10 @@ export function setupValidatePageTests() {
 
   beforeEach(() => {
     mockNavigate.mockClear();
-    vi.spyOn(window, "confirm").mockReturnValue(true); // Mock window.confirm
+    // Mock window.confirm and window.alert for JSDOM environment
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+
     mockDataEntryPaneHandle.scrollToTop.mockClear();
     // JSDOM doesn't support layout, so we mock properties used for calculations
     Object.defineProperty(HTMLElement.prototype, "clientWidth", {
