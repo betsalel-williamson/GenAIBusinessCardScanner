@@ -36,15 +36,15 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: DBT | Seed sample data for CI
+      - name: DBT | Build from sample data for CI
+        # The dbt-duckdb adapter resolves `path` in `profiles.yml` relative to the
+        # current working directory. By changing the CWD to the dbt project root,
+        # we ensure `target/dbt.duckdb` is created inside the dbt project as expected.
+        # This single `dbt build` command runs both seeds and models.
+        working-directory: ./dagster_card_processor/dbt_project
         run: |
-          source .venv/bin/activate
-          dbt seed --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
-
-      - name: DBT | Build from seeded data
-        run: |
-          source .venv/bin/activate
-          dbt build --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
+          source ../.venv/bin/activate
+          dbt build --vars '{is_ci_run: true}'
 
       - name: Python | Lint with flake8
         run: |
