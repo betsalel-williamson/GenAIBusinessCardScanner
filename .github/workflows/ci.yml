@@ -25,7 +25,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: '.python-version'
+          python-version-file: './dagster_card_processor.python-version'
           cache: "pip"
           cache-dependency-path: "requirements.txt"
 
@@ -62,7 +62,7 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Python Test Results
-          path: "pytest-report.xml"
+          path: "./dagster_card_processor/pytest-report.xml"
           reporter: "python-pytest"
           fail-on-error: true
 
@@ -87,7 +87,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache: "pnpm"
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: ./validation_tool.ts/pnpm-lock.yaml
 
       - name: Node.js | Install dependencies
         run: pnpm install --frozen-lockfile
@@ -103,6 +103,6 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Node.js Test Results
-          path: "junit.xml"
+          path: "./validation_tool.ts/junit.xml"
           reporter: "jest-junit"
           fail-on-error: true
