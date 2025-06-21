@@ -15,7 +15,10 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
-    steps:
+    defaults:
+      run:
+        working-directory: ./dagster_card_processor
+      steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -34,28 +37,26 @@ jobs:
           pip install -r dagster_card_processor/requirements.txt
 
       - name: DBT | Seed sample data for CI
-        working-directory: ./dagster_card_processor
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           dbt seed --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
 
       - name: DBT | Build from seeded data
-        working-directory: ./dagster_card_processor
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           dbt build --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
 
       - name: Python | Lint with flake8
         working-directory: ./dagster_card_processor
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Python | Test with pytest
         working-directory: ./dagster_card_processor
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           pytest --junitxml=pytest-report.xml
 
       - name: Report Python test results
@@ -74,6 +75,9 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+    defaults:
+      run:
+        working-directory: ./validation_tool.ts
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -92,10 +96,8 @@ jobs:
 
       - name: Node.js | Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: ./validation_tool.ts
 
       - name: Node.js | Run build, lint, and tests
-        working-directory: ./validation_tool.ts
         run: |
           pnpm build
           pnpm typecheck
