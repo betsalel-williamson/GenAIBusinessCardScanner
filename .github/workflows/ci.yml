@@ -22,19 +22,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version-file: '.python-version'
           cache: "pip"
-          cache-dependency-path: "dagster_card_processor/requirements.txt"
+          cache-dependency-path: "requirements.txt"
 
       - name: Install Python dependencies
         run: |
           python3 -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
-          pip install -r dagster_card_processor/requirements.txt
+          pip install -r requirements.txt
 
       - name: DBT | Seed sample data for CI
         run: |
@@ -47,14 +47,12 @@ jobs:
           dbt build --project-dir dbt_project --profiles-dir dbt_project --vars '{is_ci_run: true}'
 
       - name: Python | Lint with flake8
-        working-directory: ./dagster_card_processor
         run: |
           source .venv/bin/activate
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Python | Test with pytest
-        working-directory: ./dagster_card_processor
         run: |
           source .venv/bin/activate
           pytest --junitxml=pytest-report.xml
@@ -64,7 +62,7 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Python Test Results
-          path: "dagster_card_processor/pytest-report.xml"
+          path: "pytest-report.xml"
           reporter: "python-pytest"
           fail-on-error: true
 
@@ -84,15 +82,12 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 8
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
           cache: "pnpm"
-          cache-dependency-path: validation_tool.ts/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Node.js | Install dependencies
         run: pnpm install --frozen-lockfile
@@ -108,6 +103,6 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Node.js Test Results
-          path: "validation_tool.ts/junit.xml"
+          path: "junit.xml"
           reporter: "jest-junit"
           fail-on-error: true
