@@ -18,7 +18,7 @@ jobs:
     defaults:
       run:
         working-directory: ./dagster_card_processor
-      steps:
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -26,8 +26,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: 'pip'
-          cache-dependency-path: 'dagster_card_processor/requirements.txt'
+          cache: "pip"
+          cache-dependency-path: "dagster_card_processor/requirements.txt"
 
       - name: Install Python dependencies
         run: |
@@ -91,7 +91,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
           cache-dependency-path: validation_tool.ts/pnpm-lock.yaml
 
       - name: Node.js | Install dependencies
