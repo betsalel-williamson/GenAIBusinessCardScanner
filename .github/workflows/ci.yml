@@ -25,7 +25,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: './dagster_card_processor/.python-version'
+          python-version-file: "./dagster_card_processor/.python-version"
           cache: "pip"
           cache-dependency-path: "**/requirements*.txt"
 
@@ -77,9 +77,34 @@ jobs:
       - name: Report Python Coverage Summary
         if: success() || failure()
         run: |
-          echo "### Python Code Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+          # Extract the total coverage percentage from the text report
+          TOTAL_COVERAGE_PERCENT=$(coverage report | tail -n 1 | awk '{print $NF}' | tr -d '%')
+
+          # Determine the color for the badge based on coverage percentage
+          COLOR="red"
+          if [ "$TOTAL_COVERAGE_PERCENT" -ge 70 ]; then
+            COLOR="success"
+          elif [ "$TOTAL_COVERAGE_PERCENT" -ge 60 ]; then
+            COLOR="yellow"
+          fi
+
+          # Construct the badge URL. The '%' must be URL-encoded as '%25'.
+          BADGE_URL="https://img.shields.io/badge/coverage-${TOTAL_COVERAGE_PERCENT}%25-${COLOR}"
+          BADGE_MARKDOWN="![Coverage]($BADGE_URL)"
+
+          # Write the complete summary to the GitHub step summary file
+          {
+            echo "### Python Code Coverage"
+            echo ""
+            echo "$BADGE_MARKDOWN"
+            echo ""
+            echo "<details><summary>Expand for full report</summary>"
+            echo ""
+            # Append the full markdown report inside the details tag
+            coverage report --format=markdown
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   node-ci:
     name: "Node.js CI"
