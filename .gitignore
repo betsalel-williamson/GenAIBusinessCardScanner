@@ -4,3 +4,4 @@ all-source-code.txt
 node_modules/
 update.sh
 gitleaks-report.json
+*.log
