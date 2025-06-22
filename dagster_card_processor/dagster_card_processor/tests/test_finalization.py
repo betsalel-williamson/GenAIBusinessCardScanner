@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+import pytest
 from dagster import materialize, build_sensor_context, ResourceDefinition
 
 from dagster_card_processor.finalization_assets import mark_as_processed
@@ -60,16 +61,15 @@ def test_mark_as_processed_asset(test_db_conn):
     assert db_result[0] == "processed"
 
 
-def test_validated_records_sensor(tmp_path):
+@pytest.fixture
+def sensor_test_db(tmp_path):
     """
-    Tests the validated_records_sensor's ability to detect new records
-    and update its cursor correctly, now using a real DuckDBResource.
+    Provides a DuckDBResource fixture pointing to a temporary, populated database
+    for sensor testing. This simplifies test setup and improves readability.
     """
-    # Arrange: Create a temporary database file and a DuckDBResource pointing to it
-    db_path = tmp_path / "test.duckdb"
-    test_resource = DuckDBResource(database_path=str(db_path))
-
-    with test_resource.get_connection() as con:
+    db_path = tmp_path / "sensor_test.duckdb"
+    resource = DuckDBResource(database_path=str(db_path))
+    with resource.get_connection() as con:
         con.execute(
             """
             CREATE TABLE records (
@@ -77,7 +77,7 @@ def test_validated_records_sensor(tmp_path):
             );
         """
         )
-        # Insert test data
+        # Base data for all test cases
         con.execute(
             "INSERT INTO records VALUES (1, 'file1.json', 'validated', '{}', '{}')"
         )
@@ -87,54 +87,79 @@ def test_validated_records_sensor(tmp_path):
         con.execute(
             "INSERT INTO records VALUES (3, 'file3.json', 'in_progress', '{}', '{}')"
         )
+    return resource
 
-    # --- Test Case 1: Initial run with no cursor ---
-    context1 = build_sensor_context(resources={"duckdb_resource": test_resource})
-    result1 = validated_records_sensor(context1)
 
-    assert result1 is not None, "Sensor should yield a result"
-    assert (
-        len(result1.run_requests) == 2
-    ), "Should find two validated records on initial run"
-    assert (
-        result1.run_requests[0].run_config["ops"]["mark_as_processed"]["config"][
-            "record_id"
-        ]
-        == 1
+@pytest.mark.parametrize(
+    "cursor, setup_sql, expected_requests, expected_cursor, description",
+    [
+        (
+            None,
+            None,  # No additional setup needed for this case
+            2,
+            "2",
+            "Initial run should find two validated records and set cursor to last ID.",
+        ),
+        (
+            "2",
+            None,  # No new records added
+            0,
+            None,
+            "Run with cursor up-to-date should find no new records.",
+        ),
+        (
+            "2",
+            "INSERT INTO records VALUES (4, 'file4.json', 'validated', '{}', '{}')",
+            1,
+            "4",
+            "Run with outdated cursor should find one new record and update cursor.",
+        ),
+    ],
+)
+def test_validated_records_sensor(
+    sensor_test_db, cursor, setup_sql, expected_requests, expected_cursor, description
+):
+    """
+    Tests the validated_records_sensor's ability to detect new records
+    and update its cursor correctly across various scenarios.
+    """
+    # Arrange: Perform any additional, case-specific DB setup
+    if setup_sql:
+        with sensor_test_db.get_connection() as con:
+            con.execute(setup_sql)
+
+    context = build_sensor_context(
+        resources={"duckdb_resource": sensor_test_db}, cursor=cursor
     )
-    assert (
-        result1.run_requests[1].run_config["ops"]["mark_as_processed"]["config"][
-            "record_id"
-        ]
-        == 2
-    )
-    assert result1.cursor == "2"
 
-    # --- Test Case 2: Run with existing cursor, no new records ---
-    context2 = build_sensor_context(
-        resources={"duckdb_resource": test_resource}, cursor="2"
-    )
-    result2 = validated_records_sensor(context2)
+    # Act
+    result = validated_records_sensor(context)
 
-    assert result2 is None, "Should not yield any results if no new records are found"
+    # Assert
+    if expected_requests == 0:
+        assert result is None, description
+    else:
+        assert result is not None, description
+        assert len(result.run_requests) == expected_requests, description
+        assert result.cursor == expected_cursor, description
 
-    # --- Test Case 3: Run with existing cursor, new records available ---
-    with test_resource.get_connection() as con:
-        con.execute(
-            "INSERT INTO records VALUES (4, 'file4.json', 'validated', '{}', '{}')"
-        )
-
-    context3 = build_sensor_context(
-        resources={"duckdb_resource": test_resource}, cursor="2"
-    )
-    result3 = validated_records_sensor(context3)
-
-    assert result3 is not None, "Sensor should yield a result for new records"
-    assert len(result3.run_requests) == 1, "Should find the one new validated record"
-    assert (
-        result3.run_requests[0].run_config["ops"]["mark_as_processed"]["config"][
-            "record_id"
-        ]
-        == 4
-    )
-    assert result3.cursor == "4"
+        if cursor is None:  # For the initial run case
+            assert (
+                result.run_requests[0].run_config["ops"]["mark_as_processed"]["config"][
+                    "record_id"
+                ]
+                == 1
+            )
+            assert (
+                result.run_requests[1].run_config["ops"]["mark_as_processed"]["config"][
+                    "record_id"
+                ]
+                == 2
+            )
+        elif cursor == "2" and setup_sql:  # For the new record case
+            assert (
+                result.run_requests[0].run_config["ops"]["mark_as_processed"]["config"][
+                    "record_id"
+                ]
+                == 4
+            )
