@@ -7,3 +7,9 @@ module_name = "dagster_card_processor"
 
 [tool.pytest.ini_options]
 filterwarnings = [ "ignore::DeprecationWarning:dbt_common" ]
+
+[tool.coverage.run]
+omit = [
+    # omit tests directory
+    "dagster_card_processor/tests/*",
+    ]
