@@ -27,7 +27,7 @@ jobs:
         with:
           python-version-file: './dagster_card_processor/.python-version'
           cache: "pip"
-          cache-dependency-path: "requirements.txt"
+          cache-dependency-path: "**/requirements*.txt"
 
       - name: Install dependencies and add venv to PATH
         run: |
@@ -48,12 +48,22 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      - name: Python | Test with pytest
+      - name: Python | Test with coverage
         # Provide dummy environment variables for CI to allow Dagster resources to initialize.
         env:
           GOOGLE_API_KEY: "ci_test_key"
           MODEL_NAME: "ci_test_model"
-        run: pytest --junitxml=pytest-report.xml
+        run: |
+          pytest \
+            --cov=dagster_card_processor \
+            --cov-report=xml:coverage.xml \
+            --junitxml=pytest-report.xml
+
+      - name: Upload Python Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-coverage-report
+          path: ./dagster_card_processor/coverage.xml
 
       - name: Report Python test results
         if: success() || failure()

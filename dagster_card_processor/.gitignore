@@ -19,3 +19,10 @@ dbt_project/*.csv
 #
 .env
 *.log
+
+# testing
+.coverage
+.coverage*
+coverage.xml
+*-report.xml
+.pytest_cache/
