@@ -6,6 +6,7 @@ from dagster_card_processor.schema_assets import response_schema_json, AssetConf
 from dagster_card_processor.card_processing_assets import processed_card_json
 from dagster_card_processor.config import FileConfig
 
+
 def test_response_schema_json(tmp_path, mock_dbt_manifest: dict):
     """
     Tests that the response_schema_json asset correctly parses the dbt manifest
@@ -14,7 +15,9 @@ def test_response_schema_json(tmp_path, mock_dbt_manifest: dict):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
 
-    config = AssetConfig(output_dir=str(output_dir), system_injected_prefix="[SYSTEM-INJECTED]")
+    config = AssetConfig(
+        output_dir=str(output_dir), system_injected_prefix="[SYSTEM-INJECTED]"
+    )
     context = build_asset_context()
 
     with patch("dagster_card_processor.schema_assets.json.load") as mock_json_load:
@@ -22,11 +25,15 @@ def test_response_schema_json(tmp_path, mock_dbt_manifest: dict):
         result_schema = response_schema_json(context, config)
 
     # Get the expected description dynamically from the mock manifest fixture.
-    expected_description = mock_dbt_manifest["nodes"]["model.dbt_card_processor.stg_cards_data"]["columns"]["company"]["description"]
+    expected_description = mock_dbt_manifest["nodes"][
+        "model.dbt_card_processor.stg_cards_data"
+    ]["columns"]["company"]["description"]
 
     # Assertions
     assert "company" in result_schema["properties"]
-    assert "source" not in result_schema["properties"] # System field is correctly excluded
+    assert (
+        "source" not in result_schema["properties"]
+    )  # System field is correctly excluded
     assert result_schema["properties"]["company"]["description"] == expected_description
 
     # Validate the file written to disk
@@ -45,7 +52,9 @@ def test_processed_card_json(mocker, tmp_path, mock_gemini_resource, sample_sche
     # mock_gemini_resource is now provided by the fixture
 
     # Mock datetime to control timestamps
-    mock_datetime = mocker.patch("dagster_card_processor.card_processing_assets.datetime")
+    mock_datetime = mocker.patch(
+        "dagster_card_processor.card_processing_assets.datetime"
+    )
     mock_now = mocker.MagicMock()
     mock_now.strftime.side_effect = lambda fmt: {
         "%Y-%m-%d": "2024-01-01",

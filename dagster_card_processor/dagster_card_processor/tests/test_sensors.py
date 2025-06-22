@@ -1,9 +1,9 @@
 import json
-from unittest.mock import MagicMock
 
 from dagster import build_sensor_context, SensorResult
 
 from dagster_card_processor.sensors import pdf_files_sensor
+
 
 def test_pdf_files_sensor_no_new_files(mocker):
     """
@@ -37,7 +37,9 @@ def test_pdf_files_sensor_initial_run(mocker):
     assert len(result.run_requests) == 2
     assert sorted([rr.run_key for rr in result.run_requests]) == sorted(new_files)
     assert result.run_requests[0].tags == {"concurrency_key": "gemini_api"}
-    assert sorted(result.dynamic_partitions_requests[0].partition_keys) == sorted(new_files)
+    assert sorted(result.dynamic_partitions_requests[0].partition_keys) == sorted(
+        new_files
+    )
 
     # Fix: Assert that the cursor was updated correctly (order-independent)
     spy_update_cursor.assert_called_once()

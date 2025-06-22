@@ -5,7 +5,13 @@ import time
 import google.generativeai as genai
 from google.generativeai import protos as genai_protos
 from google.api_core import exceptions as google_exceptions
-from dagster import ConfigurableResource, InitResourceContext, get_dagster_logger, RetryRequested
+from dagster import (
+    ConfigurableResource,
+    InitResourceContext,
+    get_dagster_logger,
+    RetryRequested,
+)
+import duckdb
 
 
 class GeminiResource(ConfigurableResource):
@@ -17,7 +23,7 @@ class GeminiResource(ConfigurableResource):
     _log = get_dagster_logger()
 
     def _generate_prompt_from_schema(self, schema: dict) -> str:
-        with open(self.prompt_template_path, 'r') as f:
+        with open(self.prompt_template_path, "r") as f:
             template = f.read()
 
         field_definitions = []
@@ -30,14 +36,19 @@ class GeminiResource(ConfigurableResource):
         field_text = "\n".join(field_definitions)
         return template.replace("{{FIELD_DEFINITIONS}}", field_text)
 
-    def _convert_json_schema_to_gemini_schema(self, json_dict: dict) -> genai_protos.Schema:
+    def _convert_json_schema_to_gemini_schema(
+        self, json_dict: dict
+    ) -> genai_protos.Schema:
         if not json_dict:
             return None
 
         type_map = {
-            "STRING": genai_protos.Type.STRING, "NUMBER": genai_protos.Type.NUMBER,
-            "INTEGER": genai_protos.Type.INTEGER, "BOOLEAN": genai_protos.Type.BOOLEAN,
-            "ARRAY": genai_protos.Type.ARRAY, "OBJECT": genai_protos.Type.OBJECT,
+            "STRING": genai_protos.Type.STRING,
+            "NUMBER": genai_protos.Type.NUMBER,
+            "INTEGER": genai_protos.Type.INTEGER,
+            "BOOLEAN": genai_protos.Type.BOOLEAN,
+            "ARRAY": genai_protos.Type.ARRAY,
+            "OBJECT": genai_protos.Type.OBJECT,
         }
         json_type_str = json_dict.get("type", "").upper()
         gemini_type = type_map.get(json_type_str)
@@ -47,13 +58,18 @@ class GeminiResource(ConfigurableResource):
         kwargs = {
             "type": gemini_type,
             "description": json_dict.get("description"),
-            "format": json_dict.get("format")
+            "format": json_dict.get("format"),
         }
         if gemini_type == genai_protos.Type.OBJECT and "properties" in json_dict:
-            props = {k: self._convert_json_schema_to_gemini_schema(v) for k, v in json_dict["properties"].items()}
+            props = {
+                k: self._convert_json_schema_to_gemini_schema(v)
+                for k, v in json_dict["properties"].items()
+            }
             kwargs["properties"] = props
         if gemini_type == genai_protos.Type.ARRAY and "items" in json_dict:
-            kwargs["items"] = self._convert_json_schema_to_gemini_schema(json_dict["items"])
+            kwargs["items"] = self._convert_json_schema_to_gemini_schema(
+                json_dict["items"]
+            )
 
         final_kwargs = {k: v for k, v in kwargs.items() if v is not None}
         return genai_protos.Schema(**final_kwargs)
@@ -69,10 +85,9 @@ class GeminiResource(ConfigurableResource):
         gemini_schema = self._convert_json_schema_to_gemini_schema(schema)
 
         pdf_bytes = Path(pdf_path).read_bytes()
-        file_part = genai_protos.Part(inline_data=genai_protos.Blob(
-            mime_type="application/pdf",
-            data=pdf_bytes
-        ))
+        file_part = genai_protos.Part(
+            inline_data=genai_protos.Blob(mime_type="application/pdf", data=pdf_bytes)
+        )
 
         prompt_parts = [system_prompt, f"Filename: {pdf_filename}", file_part]
 
@@ -84,8 +99,7 @@ class GeminiResource(ConfigurableResource):
 
         try:
             response = self._model.generate_content(
-                prompt_parts,
-                generation_config=generation_config
+                prompt_parts, generation_config=generation_config
             )
             return json.loads(response.text)
         except google_exceptions.ResourceExhausted as e:
@@ -101,5 +115,17 @@ class GeminiResource(ConfigurableResource):
             raise RetryRequested(max_retries=5)
         except json.JSONDecodeError:
             self._log.error(f"Failed to decode JSON for file {pdf_filename}.")
-            self._log.error(f"Problematic API Response Text:\n---\n{response.text}\n---")
+            self._log.error(
+                f"Problematic API Response Text:\n---\n{response.text}\n---"
+            )
             return {}
+
+
+class DuckDBResource(ConfigurableResource):
+    """A resource for connecting to a DuckDB database."""
+
+    database_path: str
+
+    def get_connection(self) -> duckdb.DuckDBPyConnection:
+        """Returns a connection to the DuckDB database."""
+        return duckdb.connect(database=self.database_path, read_only=False)
