@@ -12,3 +12,5 @@
 - For each newly detected `validated` record, the sensor triggers a `finalize_record_job`.
 - The `finalize_record_job` orchestrates the final processing steps.
 - The final step in the job is an asset (`mark_as_processed`) that updates the record's status from `validated` to `processed` in the database, preventing it from being picked up by the sensor again.
+- The `mark_as_processed` asset is unit tested against edge cases, including attempts to process non-existent records or records with a status other than `validated`.
+- The `validated_records_sensor` is unit tested to verify it handles database connection errors (`IOException`, `CatalogException`) gracefully without crashing.

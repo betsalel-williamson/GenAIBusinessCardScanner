@@ -15,3 +15,5 @@
 - The system injects metadata fields (`source`, `date_imported`, `time_imported`) into the JSON object.
 - The final, enriched JSON object is saved as a unique file in the `output/` directory.
 - API calls to the Gemini service are rate-limited to avoid errors, with built-in retries on failure.
+- The `aggregated_results_json_to_db` asset is unit tested to verify correct aggregation of multiple JSON files and successful loading into the test database.
+- The `GeminiResource` is unit tested to ensure it correctly raises a `dagster.RetryRequested` exception when a `google.api_core.exceptions.ResourceExhausted` error occurs.
