@@ -74,6 +74,13 @@ jobs:
           reporter: "java-junit" # Use the JUnit reporter for the XML format
           fail-on-error: true
 
+      - name: Report Python Coverage Summary
+        if: success() || failure()
+        run: |
+          echo "### Python Code Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+
   node-ci:
     name: "Node.js CI"
     runs-on: ubuntu-latest
