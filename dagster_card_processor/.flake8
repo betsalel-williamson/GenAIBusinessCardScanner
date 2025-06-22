@@ -1,0 +1,16 @@
+[flake8]
+exclude =
+    *.egg,
+    .bzr,
+    .eggs,
+    .git,
+    .hg,
+    .nox,
+    .svn,
+    .tox,
+    .venv,
+    .vscode,
+    __pycache__,
+    dist,
+    output,
+    venv,
