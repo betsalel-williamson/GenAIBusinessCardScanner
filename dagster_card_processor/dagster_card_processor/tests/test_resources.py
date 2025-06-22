@@ -4,17 +4,6 @@ from unittest.mock import patch, MagicMock
 import os
 from dagster_card_processor.resources import GeminiResource
 
-# Sample schema to test prompt generation
-SAMPLE_SCHEMA = {
-    "type": "object",
-    "items": { # The prompt generator looks inside 'items'
-        "properties": {
-            "company": {"description": "The name of the company."},
-            "email": {"description": "Contact's email."},
-            "website": {"description": "Company website URL."}
-        }
-    }
-}
 
 @pytest.fixture
 def mock_prompt_template(tmp_path):
@@ -29,28 +18,33 @@ Extract these fields:
     return str(template_path)
 
 
-def test_generate_prompt_from_schema(mock_prompt_template):
+def test_generate_prompt_from_schema(mock_prompt_template, sample_schema):
     """
     Tests that the Gemini resource can correctly generate a system prompt
-    from a given JSON schema.
+    from a given JSON schema. This test is robust to changes in the underlying
+    schema.yml file.
     """
     resource = GeminiResource(
         api_key="test-key",
         prompt_template_path=mock_prompt_template,
     )
 
-    # The method is private, but we test it to ensure prompt engineering is correct.
-    # This is a valid reason to break encapsulation for testing purposes.
-    generated_prompt = resource._generate_prompt_from_schema(SAMPLE_SCHEMA)
+    # Use the schema generated from the mock manifest via fixture
+    generated_prompt = resource._generate_prompt_from_schema(sample_schema)
 
-    # Assertions
-    assert "*   **`company`**: The name of the company." in generated_prompt
-    assert "*   **`email`**: Contact's email." in generated_prompt
-    assert "*   **`website`**: Company website URL." in generated_prompt
+    # Dynamically verify that every property in the sample schema is correctly
+    # represented in the generated prompt.
+    for key, prop_details in sample_schema['properties'].items():
+        expected_line = f"*   **`{key}`**: {prop_details['description']}"
+        assert expected_line in generated_prompt, \
+            f"Expected line for '{key}' not found or incorrect in generated prompt."
+
+    # General prompt structure checks
     assert "# Instructions" in generated_prompt
     assert "{{FIELD_DEFINITIONS}}" not in generated_prompt
 
-def test_process_single_pdf_handles_json_decode_error(mocker):
+
+def test_process_single_pdf_handles_json_decode_error(mocker, sample_schema):
     """
     Tests that if the Gemini API returns malformed JSON, the resource logs an
     error and returns an empty dictionary instead of crashing.
@@ -74,7 +68,7 @@ def test_process_single_pdf_handles_json_decode_error(mocker):
 
     # Run the method
     pdf_path = "fake/path.pdf"
-    result = resource.process_single_pdf(pdf_path, schema={})
+    result = resource.process_single_pdf(pdf_path, schema=sample_schema)
 
     # Assertions
     assert result == {}

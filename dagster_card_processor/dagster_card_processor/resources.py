@@ -21,7 +21,8 @@ class GeminiResource(ConfigurableResource):
             template = f.read()
 
         field_definitions = []
-        properties = schema.get("items", {}).get("properties", {})
+        # Correctly get properties from the root of the schema object
+        properties = schema.get("properties", {})
         for key, value in properties.items():
             description = value.get("description", "No description available.")
             field_definitions.append(f"*   **`{key}`**: {description}")
