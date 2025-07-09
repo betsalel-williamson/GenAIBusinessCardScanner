@@ -47,6 +47,10 @@ This project is a monorepo containing two separate applications. Please follow t
 2. **Set up the Validation UI:**
     - [**`./validation_tool.ts/README.md`**](./validation_tool.ts/README.md)
 
+## Architecture
+
+For a detailed explanation of the project's architecture, please see the [System Architecture document](./genai-docs/architecture/SYSTEM_ARCHITECTURE.md).
+
 ## Usage
 
 After completing the setup for both applications, follow this workflow:
