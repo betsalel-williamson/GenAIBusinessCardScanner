@@ -1,11 +1,11 @@
 ---
 title: 'Integrate Postmark Template Sending'
-project_name: 'postmark-cli'
-epic_name: 'b2b-marketing-automation'
-task_id: '03'
+project_name: dagster_card_processor
+epic_name: email_sending_service
+task_id: 09
 labels: 'backend, email, postmark'
 status: 'todo'
-date_created: '2025-07-08T15:12:33+0000'
+date_created: '2025-07-09T13:10:00-07:00'
 date_verified_completed: ''
 touched: '*'
 ---
@@ -16,10 +16,10 @@ Integrate the Postmark `sendEmailWithTemplate` method into the main application 
 
 ## Acceptance Criteria
 
-- [ ] The CLI uses `sendEmailWithTemplate` instead of `sendEmail`.
+- [ ] The Dagster asset/op uses `sendEmailWithTemplate`.
 - [ ] The `TemplateModel` is correctly populated with a lead's data.
 - [ ] The `action_url` in the `TemplateModel` is the personalized URL from the URL generation logic.
 
 ## Context/Links
 
-- Related user story: [../user_stories/b2b-marketing-automation/00_marketing-campaign-execution.md](./../user_stories/b2b-marketing-automation/00_marketing-campaign-execution.md)
+- Related user story: [../user_stories/email_sending_service/12_send-templated-emails.md](./../user_stories/email_sending_service/12_send-templated-emails.md)

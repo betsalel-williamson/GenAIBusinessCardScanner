@@ -1,11 +1,11 @@
 ---
 title: 'Create Postmark Email Template'
-project_name: 'postmark-cli'
-epic_name: 'b2b-marketing-automation'
-task_id: '07'
+project_name: dagster_card_processor
+epic_name: email_sending_service
+task_id: 10
 labels: 'email, postmark, design'
 status: 'todo'
-date_created: '2025-07-08T15:12:33+0000'
+date_created: '2025-07-09T13:15:00-07:00'
 date_verified_completed: ''
 touched: '*'
 ---
@@ -22,4 +22,4 @@ Create and configure the email template in the Postmark web UI.
 
 ## Context/Links
 
-- Related user story: [../user_stories/b2b-marketing-automation/02_seamless-customer-experience.md](./../user_stories/b2b-marketing-automation/02_seamless-customer-experience.md)
+- Related user story: [../user_stories/email_sending_service/12_send-templated-emails.md](./../user_stories/email_sending_service/12_send-templated-emails.md)

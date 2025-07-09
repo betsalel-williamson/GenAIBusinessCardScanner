@@ -1,8 +1,8 @@
 ---
 title: 'Create dbt Models for Lead Data Transformation'
-project_name: 'postmark-cli'
-epic_name: 'dagster_migration'
-task_id: '01'
+project_name: dagster_card_processor
+epic_name: email_orchestration_pipeline
+task_id: 12
 labels: 'backend, dbt, data-transformation'
 status: 'todo'
 date_created: '2025-07-09T10:05:00+0000'
@@ -58,4 +58,4 @@ The dbt tests must cover the following behaviors, which are extracted from the e
 
 ## Context/Links
 
-- Related user story: [../user_stories/dagster_migration/00_migrate-to-dagster.md](./../user_stories/dagster_migration/00_migrate-to-dagster.md)
+- Related user story: [../user_stories/email_sending_service/12_send-templated-emails.md](./../user_stories/email_sending_service/12_send-templated-emails.md)

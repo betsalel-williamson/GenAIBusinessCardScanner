@@ -1,11 +1,12 @@
 ---
 title: 'Implement Send-Once-Only Logic'
-project_name: 'postmark-cli'
-epic_name: 'dagster_migration'
-task_id: '02'
+project_name: dagster_card_processor
+epic_name: email_orchestration_pipeline
+task_id: 11
+story_id: 16
 labels: 'backend, dbt, dagster, data-integrity'
 status: 'todo'
-date_created: '2025-07-09T10:10:00+0000'
+date_created: '2025-07-09T13:00:00-07:00'
 date_verified_completed: ''
 touched: '*'
 ---
@@ -23,4 +24,4 @@ Implement a mechanism to ensure that a one-time marketing email is sent to each 
 
 ## Context/Links
 
-- Related user story: [../user_stories/dagster_migration/00_migrate-to-dagster.md](./../user_stories/dagster_migration/00_migrate-to-dagster.md)
+- Related user story: [../user_stories/email_orchestration_pipeline/16_prevent-duplicate-email-sends.md](./../user_stories/email_orchestration_pipeline/16_prevent-duplicate-email-sends.md)
