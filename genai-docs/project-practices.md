@@ -38,3 +38,7 @@ When choosing which language features to employ, prioritize clarity, commonality
   - Highly specialized or obscure language constructs.
   - Features that create implicit side effects or hidden complexity.
   - "Magic" features that obscure the underlying logic.
+
+## Testing Practices
+
+- **File I/O in Tests**: For simple file input/output operations, prefer creating temporary files directly within tests rather than extensive mocking. This approach enhances test clarity and realism. Mocking should be reserved for complex interactions with external libraries or systems where setting up realistic test data is overly cumbersome or introduces unnecessary dependencies.
