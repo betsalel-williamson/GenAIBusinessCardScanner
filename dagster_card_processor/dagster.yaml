@@ -1,13 +1,10 @@
 run_coordinator:
   module: dagster.core.run_coordinator
   class: QueuedRunCoordinator
-
-run_queue:
-  # Allow Dagster to queue an unlimited number of runs from the sensor.
-  max_concurrent_runs: -1
-
-# This is the key section for rate limiting.
-tag_concurrency_limits:
-  - key: "concurrency_key"
-    value: "gemini_api"
-    limit: 10
+  config:
+    run_queue:
+      max_concurrent_runs: -1
+      tag_concurrency_limits:
+        - key: "concurrency_key"
+          value: "gemini_api"
+          limit: 10

@@ -5,14 +5,7 @@ import time
 import google.generativeai as genai
 from google.generativeai import protos as genai_protos
 from google.api_core import exceptions as google_exceptions
-from dagster import (
-    ConfigurableResource,
-    InitResourceContext,
-    get_dagster_logger,
-    RetryRequested,
-)
-import duckdb
-
+from dagster import ConfigurableResource, InitResourceContext, get_dagster_logger, RetryRequested
 
 class GeminiResource(ConfigurableResource):
     api_key: str
@@ -119,13 +112,3 @@ class GeminiResource(ConfigurableResource):
                 f"Problematic API Response Text:\n---\n{response.text}\n---"
             )
             return {}
-
-
-class DuckDBResource(ConfigurableResource):
-    """A resource for connecting to a DuckDB database."""
-
-    database_path: str
-
-    def get_connection(self) -> duckdb.DuckDBPyConnection:
-        """Returns a connection to the DuckDB database."""
-        return duckdb.connect(database=self.database_path, read_only=False)

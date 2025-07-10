@@ -1,8 +1,30 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import patch, MagicMock
 import os
 from dagster_card_processor.resources import GeminiResource
 
+@patch('google.generativeai.GenerativeModel')
+def test_gemini_resource(mock_generative_model):
+    """Test the Gemini resource."""
+    mock_model_instance = MagicMock()
+    mock_generative_model.return_value = mock_model_instance
+    mock_model_instance.generate_content.return_value.text = '{"foo": "bar"}'
+
+    import tempfile
+    import os
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_pdf:
+        tmp_pdf.write(b"dummy_pdf_content")
+        tmp_pdf_path = tmp_pdf.name
+
+    try:
+        resource = GeminiResource(api_key='test_api_key')
+        resource.setup_for_execution(MagicMock())
+        result = resource.process_single_pdf(tmp_pdf_path, {})
+
+        assert result == {'foo': 'bar'}
+    finally:
+        os.remove(tmp_pdf_path)
 
 @pytest.fixture
 def mock_prompt_template(tmp_path):
@@ -59,7 +81,7 @@ def test_process_single_pdf_handles_json_decode_error(mocker, sample_schema):
         return_value=MagicMock(),
     )
     mocker.patch(
-        "dagster_card_processor.resources.Path.read_bytes",
+        "pathlib.Path.read_bytes",
         return_value=b"fake-pdf-bytes",
     )
 

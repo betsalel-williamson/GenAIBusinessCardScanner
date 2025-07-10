@@ -6,7 +6,7 @@ from .dbt_assets import aggregated_results_json_to_db, dbt_card_processor_assets
 from .schema_assets import response_schema_json
 from .card_processing_assets import processed_card_json
 from .finalization_assets import mark_as_processed
-from .resources import GeminiResource, DuckDBResource
+from .resources import GeminiResource, DuckDBResource, GoogleSheetsResource
 from .sensors import pdf_files_sensor, validated_records_sensor
 from .project import business_card_project
 
@@ -39,6 +39,9 @@ all_resources = {
     ),
     "duckdb_resource": DuckDBResource(
         database_path=os.getenv("DUCKDB_DATABASE_PATH", "database/business_cards.duckdb")
+    ),
+    "google_sheets": GoogleSheetsResource(
+        credentials_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH")
     ),
 }
 

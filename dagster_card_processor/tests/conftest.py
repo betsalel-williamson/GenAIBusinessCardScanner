@@ -5,17 +5,14 @@ from unittest.mock import MagicMock
 import os
 import duckdb
 
-PROJECT_ROOT = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "..",  # dagster_card_processor/
-)
+PROJECT_ROOT = os.path.dirname(__file__)
 
 
 @pytest.fixture(scope="session")
 def dbt_schema_data() -> dict:
     """Loads and parses the dbt schema.yml file once per test session."""
     schema_path = os.path.join(
-        PROJECT_ROOT, "dbt_project", "models", "staging", "schema.yml"
+        PROJECT_ROOT, "..", "dbt_project", "models", "staging", "schema.yml"
     )
     with open(schema_path, "r") as f:
         return yaml.safe_load(f)
@@ -24,7 +21,7 @@ def dbt_schema_data() -> dict:
 @pytest.fixture(scope="session")
 def sample_env_data() -> dict:
     """Loads and parses the sample.env file once per test session."""
-    env_path = os.path.join(PROJECT_ROOT, "sample.env")
+    env_path = os.path.join(PROJECT_ROOT, "..", "sample.env")
     return dotenv_values(env_path)
 
 

@@ -6,6 +6,7 @@ This application is the first stage of the GenAI Business Card Scanner system. I
 
 - Python 3.12
 - A Google Gemini API Key from [Google AI Studio](https://aistudio.google.com/apikey).
+- Google Sheets API enabled and Service Account Credentials configured (see below).
 
 ## Setup and Installation
 
@@ -30,7 +31,26 @@ This application is the first stage of the GenAI Business Card Scanner system. I
     pip install -r requirements.txt
     ```
 
-4. **Initialize dbt Project:**
+4. **Google Sheets Service Account Setup:**
+    To enable Google Sheets integration, you need to create a Google Cloud Platform (GCP) project, enable the Google Sheets API, and create a service account key. Follow these steps:
+
+    a. **Create a GCP Project:** If you don't have one, create a new project in the [Google Cloud Console](https://console.cloud.google.com/).
+
+    b. **Enable Google Sheets API:** In your GCP project, navigate to "APIs & Services" > "Library" and search for "Google Sheets API". Enable it.
+
+    c. **Create Service Account Key:**
+        - In the GCP Console, go to "APIs & Services" > "Credentials".
+        - Click "CREATE CREDENTIALS" > "Service account".
+        - Follow the prompts to create a new service account. Grant it the "Editor" role (or a more restrictive role if preferred) for the Google Sheet you intend to access.
+        - After creation, click on the service account email address.
+        - Go to the "Keys" tab and click "ADD KEY" > "Create new key".
+        - Select "JSON" as the key type and click "CREATE". This will download a JSON file to your computer. **Keep this file secure!**
+
+    d. **Share Google Sheet with Service Account:** The service account needs permission to access your Google Sheet. Share your Google Sheet with the service account's email address (found in the downloaded JSON key file under `client_email`).
+
+    e. **Place Credentials File:** Place the downloaded JSON key file in a secure location within your project, for example, `config/google_sheets_credentials.json`.
+
+5. **Initialize dbt Project:**
     This step compiles the dbt models and generates a manifest file that Dagster needs to understand the dbt project structure.
 
     ```bash

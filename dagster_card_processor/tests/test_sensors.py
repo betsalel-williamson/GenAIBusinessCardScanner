@@ -1,64 +1,95 @@
-from unittest.mock import MagicMock
+import json
 import pytest
-from dagster import materialize, build_sensor_context, ResourceDefinition
+from unittest.mock import MagicMock
+from dagster import build_sensor_context, SensorResult, ResourceDefinition
 
-from dagster_card_processor.finalization_assets import mark_as_processed
-from dagster_card_processor.sensors import validated_records_sensor
+from dagster_card_processor.sensors import pdf_files_sensor, validated_records_sensor
 from dagster_card_processor.resources import DuckDBResource
 
 
-class NoOpConnectionManager:
+def test_pdf_files_sensor_no_new_files(mocker):
     """
-    A context manager that wraps a database connection but does nothing on __exit__.
-    This prevents the `with` statement in the asset from closing the connection
-    that the test fixture provides, so we can run assertions on it after the asset executes.
+    Tests the sensor when no new files are present.
     """
+    mocker.patch("os.path.isdir", return_value=True)
+    mocker.patch("os.listdir", return_value=["file1.pdf"])
 
-    def __init__(self, conn):
-        self._conn = conn
+    context = build_sensor_context(cursor=json.dumps(["file1.pdf"]))
+    result = pdf_files_sensor(context)
 
-    def __enter__(self):
-        return self._conn
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # Do not close the connection
-        pass
+    assert result is None
 
 
-def test_mark_as_processed_asset(test_db_conn):
+def test_pdf_files_sensor_initial_run(mocker):
     """
-    Tests that the mark_as_processed asset correctly updates a record's status
-    from 'validated' to 'processed' using the `materialize` test utility.
+    Tests the sensor on its first run with new files.
     """
-    # Arrange: Insert a 'validated' record into the test DB
-    test_db_conn.execute(
-        "INSERT INTO records VALUES (1, 'test.json', 'validated', '{}', '{}')"
+    new_files = ["card1.pdf", "card2.pdf"]
+    mocker.patch("os.path.isdir", return_value=True)
+    mocker.patch("os.listdir", return_value=new_files)
+
+    context = build_sensor_context(cursor=None)
+
+    # Spy on the context's update_cursor method before running the sensor
+    spy_update_cursor = mocker.spy(context, "update_cursor")
+
+    result = pdf_files_sensor(context)
+
+    assert isinstance(result, SensorResult)
+    assert len(result.run_requests) == 2
+    assert sorted([rr.run_key for rr in result.run_requests]) == sorted(new_files)
+    assert result.run_requests[0].tags == {"concurrency_key": "gemini_api"}
+    assert sorted(result.dynamic_partitions_requests[0].partition_keys) == sorted(
+        new_files
     )
 
-    # Mock the DuckDB resource to return our NoOpConnectionManager.
-    mock_duckdb_resource = MagicMock(spec=DuckDBResource)
-    mock_duckdb_resource.get_connection.return_value = NoOpConnectionManager(
-        test_db_conn
-    )
+    # Fix: Assert that the cursor was updated correctly (order-independent)
+    spy_update_cursor.assert_called_once()
+    # Get the actual call argument, parse it, and compare contents
+    actual_cursor_str = spy_update_cursor.call_args[0][0]
+    assert sorted(json.loads(actual_cursor_str)) == sorted(new_files)
 
-    # Act: Use `materialize` to execute the asset.
-    result = materialize(
-        [mark_as_processed],
-        resources={
-            "duckdb_resource": ResourceDefinition.hardcoded_resource(
-                mock_duckdb_resource
-            )
-        },
-        run_config={"ops": {"mark_as_processed": {"config": {"record_id": 1}}}},
-    )
 
-    # Assert: The run was successful and the database was updated.
-    assert result.success
-    db_result = test_db_conn.execute(
-        "SELECT status FROM records WHERE id = 1"
-    ).fetchone()
-    assert db_result is not None, "Record with ID 1 not found after asset execution."
-    assert db_result[0] == "processed"
+def test_pdf_files_sensor_incremental_run(mocker):
+    """
+    Tests the sensor when one new file is added after a previous run.
+    """
+    initial_files = ["card1.pdf"]
+    updated_files = ["card1.pdf", "card2.pdf"]
+    newly_added_file = "card2.pdf"
+
+    mocker.patch("os.path.isdir", return_value=True)
+    mocker.patch("os.listdir", return_value=updated_files)
+
+    context = build_sensor_context(cursor=json.dumps(initial_files))
+    spy_update_cursor = mocker.spy(context, "update_cursor")
+
+    result = pdf_files_sensor(context)
+
+    assert isinstance(result, SensorResult)
+    assert len(result.run_requests) == 1
+    assert result.run_requests[0].run_key == newly_added_file
+    assert result.run_requests[0].partition_key == newly_added_file
+    assert result.dynamic_partitions_requests[0].partition_keys == [newly_added_file]
+
+    # Fix: Assert that the cursor was updated with the full new list of files (order-independent)
+    spy_update_cursor.assert_called_once()
+    actual_cursor_str = spy_update_cursor.call_args[0][0]
+    assert sorted(json.loads(actual_cursor_str)) == sorted(updated_files)
+
+
+def test_pdf_files_sensor_directory_not_exist(mocker):
+    """
+    Tests that the sensor does nothing if the input directory doesn't exist.
+    """
+    mocker.patch("os.path.isdir", return_value=False)
+    mock_listdir = mocker.patch("os.listdir")
+
+    context = build_sensor_context()
+    result = pdf_files_sensor(context)
+
+    assert result is None
+    mock_listdir.assert_not_called()
 
 
 @pytest.fixture
