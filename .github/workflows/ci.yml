@@ -31,33 +31,27 @@ jobs:
 
       - name: Install dependencies and add venv to PATH
         run: |
-          python3 -m venv .venv
+          python3.12 -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install .
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: DBT | Build from sample data for CI
         # This step runs from the dbt_project directory to correctly resolve local paths.
-        working-directory: ./dagster_card_processor/dbt_project
+        working-directory: ./dbt_project
         run: |
           dbt build --vars '{is_ci_run: true}'
 
       - name: Python | Lint with flake8
-        run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        run: bash dagster_business_automations/lint.sh
 
       - name: Python | Test with coverage
         # Provide dummy environment variables for CI to allow Dagster resources to initialize.
         env:
           GOOGLE_API_KEY: "ci_test_key"
           MODEL_NAME: "ci_test_model"
-        run: |
-          pytest \
-            --cov=dagster_card_processor \
-            --cov-report=xml:coverage.xml \
-            --junitxml=pytest-report.xml
+        run: bash dagster_business_automations/test.sh
 
       - name: Upload Python Coverage Report
         uses: actions/upload-artifact@v4
