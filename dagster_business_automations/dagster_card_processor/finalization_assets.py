@@ -1,5 +1,5 @@
 from dagster import Config, asset, AssetExecutionContext, MetadataValue
-from .resources import DuckDBResource
+from .defs import DuckDBResource
 
 
 class FinalizationConfig(Config):

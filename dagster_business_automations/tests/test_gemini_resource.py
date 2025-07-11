@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 import os
-from dagster_card_processor.resources import GeminiResource
+from dagster_card_processor.defs import GeminiResource
 
 
 @patch("google.generativeai.GenerativeModel")

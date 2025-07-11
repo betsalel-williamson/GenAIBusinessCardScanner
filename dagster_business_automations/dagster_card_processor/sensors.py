@@ -8,7 +8,7 @@ from dagster import (
     DefaultSensorStatus,
 )
 from .partitions import pdf_partitions
-from .resources import DuckDBResource
+from .defs import DuckDBResource
 import duckdb
 
 # SensorDbConfig is no longer needed, as we use the DuckDBResource directly.

@@ -6,7 +6,7 @@ from .dbt_assets import aggregated_results_json_to_db, dbt_business_automations_
 from .schema_assets import response_schema_json
 from .card_processing_assets import processed_card_json
 from .finalization_assets import mark_as_processed
-from .resources import (
+from .defs import (
     GeminiResource,
     DuckDBResource,
     GoogleSheetsResource,

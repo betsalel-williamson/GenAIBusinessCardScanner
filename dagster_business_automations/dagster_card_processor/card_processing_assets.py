@@ -5,7 +5,7 @@ from urllib.parse import quote
 from dagster import asset, AssetExecutionContext, MetadataValue
 from .config import FileConfig  # <-- Import the shared config
 from .partitions import pdf_partitions  # <-- Import from the new location
-from .resources import GeminiResource
+from .defs import GeminiResource
 from .schema_assets import response_schema_json
 
 

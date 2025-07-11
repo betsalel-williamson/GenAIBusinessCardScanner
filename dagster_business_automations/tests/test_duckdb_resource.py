@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from dagster_card_processor.resources import DuckDBResource
+from dagster_card_processor.defs import DuckDBResource
 
 
 def test_duckdb_resource_get_connection():
