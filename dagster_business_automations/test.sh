@@ -27,5 +27,3 @@ pytest \
   --cov=dagster_card_processor \
   --cov-report=xml:coverage.xml \
   --junitxml=pytest-report.xml
-
-dbt build --project-dir dbt_project --profiles-dir dbt_project
