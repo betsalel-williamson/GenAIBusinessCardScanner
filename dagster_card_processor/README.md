@@ -10,8 +10,18 @@ This application is the first stage of the GenAI Business Card Scanner system. I
 
 ## Setup and Installation
 
-1. **Navigate to Directory:**
-    Ensure you are in this directory (`dagster_card_processor`).
+**Important:** All commands should be run from the root of the `dagster_card_processor` directory.
+
+1. **Set up Python Virtual Environment:**
+    This project uses a virtual environment to manage dependencies. The virtual environment is created in the root of the monorepo.
+
+    ```bash
+    # From the dagster_card_processor directory
+    python3 -m venv ../.venv
+    source ../.venv/bin/activate
+    pip install --upgrade pip
+    pip install .
+    ```
 
 2. **Configure Environment Variables:**
     The pipeline needs your Google API key. Copy the sample file and edit it.
@@ -22,23 +32,14 @@ This application is the first stage of the GenAI Business Card Scanner system. I
 
     Now, open `.env` in a text editor and set your `GOOGLE_API_KEY`. The other variables can typically be left as defaults.
 
-3. **Set up Python Virtual Environment:**
-
-    ```bash
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    ```
-
-4. **Google Sheets Service Account Setup:**
+3. **Google Sheets Service Account Setup:**
     To enable Google Sheets integration, you need to create a Google Cloud Platform (GCP) project, enable the Google Sheets API, and create a service account key. Follow these steps:
 
-    a. **Create a GCP Project:** If you don't have one, create a new project in the [Google Cloud Console](https://console.cloud.google.com/).
+    a.  **Create a GCP Project:** If you don't have one, create a new project in the [Google Cloud Console](https://console.cloud.google.com/).
 
-    b. **Enable Google Sheets API:** In your GCP project, navigate to "APIs & Services" > "Library" and search for "Google Sheets API". Enable it.
+    b.  **Enable Google Sheets API:** In your GCP project, navigate to "APIs & Services" > "Library" and search for "Google Sheets API". Enable it.
 
-    c. **Create Service Account Key:**
+    c.  **Create Service Account Key:**
         - In the GCP Console, go to "APIs & Services" > "Credentials".
         - Click "CREATE CREDENTIALS" > "Service account".
         - Follow the prompts to create a new service account. Grant it the "Editor" role (or a more restrictive role if preferred) for the Google Sheet you intend to access.
@@ -46,11 +47,11 @@ This application is the first stage of the GenAI Business Card Scanner system. I
         - Go to the "Keys" tab and click "ADD KEY" > "Create new key".
         - Select "JSON" as the key type and click "CREATE". This will download a JSON file to your computer. **Keep this file secure!**
 
-    d. **Share Google Sheet with Service Account:** The service account needs permission to access your Google Sheet. Share your Google Sheet with the service account's email address (found in the downloaded JSON key file under `client_email`).
+    d.  **Share Google Sheet with Service Account:** The service account needs permission to access your Google Sheet. Share your Google Sheet with the service account's email address (found in the downloaded JSON key file under `client_email`).
 
-    e. **Place Credentials File:** Place the downloaded JSON key file in a secure location within your project, for example, `config/google_sheets_credentials.json`.
+    e.  **Place Credentials File:** Place the downloaded JSON key file in a secure location within your project, for example, `config/google_sheets_credentials.json`.
 
-5. **Initialize dbt Project:**
+4. **Initialize dbt Project:**
     This step compiles the dbt models and generates a manifest file that Dagster needs to understand the dbt project structure.
 
     ```bash
@@ -67,7 +68,7 @@ This application is the first stage of the GenAI Business Card Scanner system. I
 
     ```bash
     # Make sure your virtual environment is active
-    # (source .venv/bin/activate)
+    # (source ../.venv/bin/activate)
     dagster dev
     ```
 
@@ -77,6 +78,15 @@ This application is the first stage of the GenAI Business Card Scanner system. I
     - In the Dagster UI, go to the **Deployment -> Sensors** tab.
     - Find the `pdf_files_sensor` and toggle it on.
     - The sensor will automatically detect the new PDFs and create a processing run for each one. Runs are queued to respect API rate limits, so they will execute one by one.
+
+## How to Test
+
+To run the tests, execute the following command from the `dagster_card_processor` directory:
+
+```bash
+# Ensure your virtual environment is active
+bash test.sh
+```
 
 ## Pipeline Output
 
