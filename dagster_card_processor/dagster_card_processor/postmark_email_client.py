@@ -1,6 +1,7 @@
 from postmarker.core import PostmarkClient
 from dagster_card_processor.email_client_interface import EmailClient
 
+
 class PostmarkEmailClient(EmailClient):
     def __init__(self, api_token: str, sender_email: str):
         self._client = PostmarkClient(server_token=api_token)

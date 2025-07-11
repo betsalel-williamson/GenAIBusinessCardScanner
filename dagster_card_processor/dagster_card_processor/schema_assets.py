@@ -6,7 +6,9 @@ from .project import business_card_project
 
 class AssetConfig(Config):
     output_dir: str = os.getenv("OUTPUT_DIR", "output")
-    system_injected_prefix: str = os.getenv("SYSTEM_INJECTED_PREFIX", "[SYSTEM-INJECTED]")
+    system_injected_prefix: str = os.getenv(
+        "SYSTEM_INJECTED_PREFIX", "[SYSTEM-INJECTED]"
+    )
 
 
 @asset(deps=[AssetKey(["staging", "stg_cards_data"])])
@@ -27,7 +29,7 @@ def response_schema_json(context: AssetExecutionContext, config: AssetConfig) ->
         if not description.strip().startswith(SYSTEM_INJECTED_PREFIX):
             business_card_properties[col_name] = {
                 "type": "string",
-                "description": description
+                "description": description,
             }
 
     schema = {
@@ -35,7 +37,7 @@ def response_schema_json(context: AssetExecutionContext, config: AssetConfig) ->
         "title": "Business Card",
         "description": "A single extracted business card object.",
         "type": "object",
-        "properties": business_card_properties
+        "properties": business_card_properties,
     }
 
     output_path = os.path.join(config.output_dir, "response_schema.json")

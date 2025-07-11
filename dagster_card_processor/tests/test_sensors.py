@@ -1,7 +1,6 @@
 import json
 import pytest
-from unittest.mock import MagicMock
-from dagster import build_sensor_context, SensorResult, ResourceDefinition
+from dagster import build_sensor_context, SensorResult
 
 from dagster_card_processor.sensors import pdf_files_sensor, validated_records_sensor
 from dagster_card_processor.resources import DuckDBResource

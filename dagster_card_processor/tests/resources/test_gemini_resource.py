@@ -3,7 +3,8 @@ from unittest.mock import patch, MagicMock
 import os
 from dagster_card_processor.resources import GeminiResource
 
-@patch('google.generativeai.GenerativeModel')
+
+@patch("google.generativeai.GenerativeModel")
 def test_gemini_resource(mock_generative_model):
     """Test the Gemini resource."""
     mock_model_instance = MagicMock()
@@ -18,13 +19,14 @@ def test_gemini_resource(mock_generative_model):
         tmp_pdf_path = tmp_pdf.name
 
     try:
-        resource = GeminiResource(api_key='test_api_key')
+        resource = GeminiResource(api_key="test_api_key")
         resource.setup_for_execution(MagicMock())
         result = resource.process_single_pdf(tmp_pdf_path, {})
 
-        assert result == {'foo': 'bar'}
+        assert result == {"foo": "bar"}
     finally:
         os.remove(tmp_pdf_path)
+
 
 @pytest.fixture
 def mock_prompt_template(tmp_path):

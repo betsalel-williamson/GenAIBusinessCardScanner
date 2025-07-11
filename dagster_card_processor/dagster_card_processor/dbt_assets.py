@@ -63,8 +63,7 @@ def aggregated_results_json_to_db(
         context.add_output_metadata({"num_records_loaded": record_count})
         context.log.info(f"Loaded {record_count} records into the table.")
         # final_csv_output_path = os.path.join(output_dir, "results.csv")
-        export_csv_query = (
-            """COPY (
+        export_csv_query = """COPY (
                 SELECT
                     company,
                     website,
@@ -93,7 +92,6 @@ def aggregated_results_json_to_db(
                     products
                 FROM stg_cards_data
                 ) TO 'output/results.csv' (HEADER, DELIMITER ',')"""
-        )
         con.execute(export_csv_query)
         # context.add_output_metadata({"final_csv_output_path": final_csv_output_path})
 

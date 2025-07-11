@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class EmailClient(ABC):
     @abstractmethod
     def send_templated_email(

@@ -1,6 +1,7 @@
 from dagster import ConfigurableResource, InitResourceContext, ResourceDependency
 from dagster_card_processor.email_client_interface import EmailClient
 
+
 class EmailClientResource(ConfigurableResource):
     email_client: ResourceDependency[EmailClient]
     _log = None
@@ -15,8 +16,12 @@ class EmailClientResource(ConfigurableResource):
         if self.email_client is None:
             raise Exception("EmailClient not set during resource initialization.")
         try:
-            response = self.email_client.send_templated_email(to_email, template_id, template_model)
-            self._log.info(f"Templated email sent to {to_email} using template {template_id}: {response}")
+            response = self.email_client.send_templated_email(
+                to_email, template_id, template_model
+            )
+            self._log.info(
+                f"Templated email sent to {to_email} using template {template_id}: {response}"
+            )
             return response
         except Exception as e:
             self._log.error(f"Failed to send templated email to {to_email}: {e}")

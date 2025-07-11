@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock
-import pytest
 from dagster import materialize, ResourceDefinition
 
 from dagster_card_processor.finalization_assets import mark_as_processed

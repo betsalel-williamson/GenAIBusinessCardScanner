@@ -11,7 +11,9 @@ if not credentials_path:
     exit(1)
 
 try:
-    print(f"Attempting to read from Google Sheet ID: {sheet_id}, Worksheet: {worksheet_name}")
+    print(
+        f"Attempting to read from Google Sheet ID: {sheet_id}, Worksheet: {worksheet_name}"
+    )
     resource = GoogleSheetsResource(credentials_path=credentials_path)
     data = resource.read_sheet(sheet_id, worksheet_name)
     print("Successfully read data from Google Sheet!")
@@ -23,6 +25,10 @@ try:
 except Exception as e:
     print(f"An error occurred: {e}")
     print("Please ensure:")
-    print("- The GOOGLE_SHEETS_CREDENTIALS_PATH is correct and points to a valid JSON key file.")
-    print("- The service account email (from the JSON key file) has 'Viewer' or 'Editor' access to the Google Sheet.")
+    print(
+        "- The GOOGLE_SHEETS_CREDENTIALS_PATH is correct and points to a valid JSON key file."
+    )
+    print(
+        "- The service account email (from the JSON key file) has 'Viewer' or 'Editor' access to the Google Sheet."
+    )
     print("- The Google Sheets API is enabled for your GCP project.")

@@ -1,6 +1,7 @@
 import duckdb
 from dagster import ConfigurableResource
 
+
 class DuckDBResource(ConfigurableResource):
     """A resource for connecting to a DuckDB database."""
 

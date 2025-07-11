@@ -39,7 +39,9 @@ def processed_card_json(
 
     # Check if the AI returned a valid dictionary
     if not isinstance(card_data, dict) or not card_data:
-        context.log.warning(f"No valid card data returned for {source_filename}. Skipping.")
+        context.log.warning(
+            f"No valid card data returned for {source_filename}. Skipping."
+        )
         # We can optionally yield an AssetMaterialization with failure metadata here
         return
 
@@ -66,7 +68,6 @@ def processed_card_json(
 
     context.log.info(f"Partition results saved to {output_path}")
 
-    context.add_output_metadata({
-        "output_path": output_path,
-        metadata_label: MetadataValue.md(markdown_content)
-    })
+    context.add_output_metadata(
+        {"output_path": output_path, metadata_label: MetadataValue.md(markdown_content)}
+    )

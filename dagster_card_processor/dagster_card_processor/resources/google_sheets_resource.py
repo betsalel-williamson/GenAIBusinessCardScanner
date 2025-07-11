@@ -2,12 +2,18 @@ from dagster import ConfigurableResource
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+
 class GoogleSheetsResource(ConfigurableResource):
     credentials_path: str
 
     def get_client(self):
-        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials_path, scope)
+        scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive",
+        ]
+        creds = ServiceAccountCredentials.from_json_keyfile_name(
+            self.credentials_path, scope
+        )
         client = gspread.authorize(creds)
         return client
 

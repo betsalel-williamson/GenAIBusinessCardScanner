@@ -2,7 +2,7 @@
 
 -- In a CI environment, dbt will be run with the 'is_ci_run' variable set to true.
 -- In that case, we select from the sample data provided by the seed file.
-{% if var('is_ci_run', default=false) %}
+{% if var('is_ci_run', default=false) or not var('validated_json_path', false) %}
 
 select
     *
