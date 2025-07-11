@@ -7,8 +7,8 @@ from .config import FileConfig
 from .card_processing_assets import processed_card_json
 from .project import business_card_project
 
-duckdb_database_path = business_card_project.project_dir.joinpath(
-    "business_cards.duckdb"
+duckdb_database_path = os.getenv(
+    "DUCKDB_DATABASE_PATH", "database/business_cards.duckdb"
 )
 
 
@@ -97,7 +97,7 @@ def aggregated_results_json_to_db(
 
 
 @dbt_assets(manifest=business_card_project.manifest_path)
-def dbt_card_processor_assets(
+def dbt_business_automations_assets(
     context: AssetExecutionContext,
     dbt: DbtCliResource,
 ):

@@ -26,7 +26,7 @@ def test_response_schema_json(tmp_path, mock_dbt_manifest: dict):
 
     # Get the expected description dynamically from the mock manifest fixture.
     expected_description = mock_dbt_manifest["nodes"][
-        "model.dbt_card_processor.stg_cards_data"
+        "model.dbt_business_automations.stg_cards_data"
     ]["columns"]["company"]["description"]
 
     # Assertions

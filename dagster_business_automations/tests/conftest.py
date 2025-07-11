@@ -12,7 +12,7 @@ PROJECT_ROOT = os.path.dirname(__file__)
 def dbt_schema_data() -> dict:
     """Loads and parses the dbt schema.yml file once per test session."""
     schema_path = os.path.join(
-        PROJECT_ROOT, "..", "dbt_project", "models", "staging", "schema.yml"
+        PROJECT_ROOT, "..", "..", "dbt_project", "models", "staging", "schema.yml"
     )
     with open(schema_path, "r") as f:
         return yaml.safe_load(f)
@@ -47,7 +47,9 @@ def mock_dbt_manifest(dbt_schema_data: dict) -> dict:
         for col in model_definition.get("columns", [])
     }
 
-    return {"nodes": {"model.dbt_card_processor.stg_cards_data": {"columns": columns}}}
+    return {
+        "nodes": {"model.dbt_business_automations.stg_cards_data": {"columns": columns}}
+    }
 
 
 @pytest.fixture
@@ -68,7 +70,9 @@ def sample_schema(mock_dbt_manifest: dict, sample_env_data: dict) -> dict:
     replicating the logic of the response_schema_json asset.
     The data is sourced dynamically from schema.yml and sample.env.
     """
-    model_node = mock_dbt_manifest["nodes"]["model.dbt_card_processor.stg_cards_data"]
+    model_node = mock_dbt_manifest["nodes"][
+        "model.dbt_business_automations.stg_cards_data"
+    ]
     system_injected_prefix = sample_env_data.get(
         "SYSTEM_INJECTED_PREFIX", "[SYSTEM-INJECTED]"
     )

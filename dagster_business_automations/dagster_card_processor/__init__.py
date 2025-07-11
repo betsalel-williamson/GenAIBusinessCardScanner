@@ -2,7 +2,7 @@ import os
 from dagster_dbt import DbtCliResource
 from dotenv import load_dotenv
 from dagster import Definitions, define_asset_job, AssetSelection
-from .dbt_assets import aggregated_results_json_to_db, dbt_card_processor_assets
+from .dbt_assets import aggregated_results_json_to_db, dbt_business_automations_assets
 from .schema_assets import response_schema_json
 from .card_processing_assets import processed_card_json
 from .finalization_assets import mark_as_processed
@@ -30,7 +30,7 @@ finalize_record_job = define_asset_job(
 )
 
 all_assets = [
-    dbt_card_processor_assets,
+    dbt_business_automations_assets,
     aggregated_results_json_to_db,
     response_schema_json,
     processed_card_json,
@@ -41,19 +41,19 @@ all_resources = {
     "dbt": DbtCliResource(project_dir=business_card_project),
     "gemini": GeminiResource(
         api_key=os.getenv("GOOGLE_API_KEY"), model_name=os.getenv("MODEL_NAME")
-    ),
+    ),  # type: ignore
     "duckdb_resource": DuckDBResource(
         database_path=os.getenv(
             "DUCKDB_DATABASE_PATH", "database/business_cards.duckdb"
         )
     ),
     "google_sheets": GoogleSheetsResource(
-        credentials_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH")
+        credentials_path=str(os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH"))
     ),
     "email_client": EmailClientResource(
         email_client=PostmarkEmailClient(
-            api_token=os.getenv("POSTMARK_API_TOKEN"),
-            sender_email=os.getenv("POSTMARK_SENDER_EMAIL"),
+            api_token=str(os.getenv("POSTMARK_API_TOKEN")),
+            sender_email=str(os.getenv("POSTMARK_SENDER_EMAIL")),
         )
     ),
 }

@@ -1,6 +1,0 @@
-dbt_card_processor:
-  target: dev
-  outputs:
-    dev:
-      type: duckdb
-      path: dbt_project/target/dbt.duckdb

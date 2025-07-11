@@ -2,7 +2,7 @@ from pathlib import Path
 
 from dagster_dbt import DbtProject
 
-DBT_PROJECT_PATH = Path(__file__).parent.parent.joinpath("dbt_project")
+DBT_PROJECT_PATH = Path(__file__).parent.parent.joinpath("../dbt_project")
 
 business_card_project = DbtProject(
     project_dir=DBT_PROJECT_PATH.as_posix(),

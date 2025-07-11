@@ -19,7 +19,7 @@ def response_schema_json(context: AssetExecutionContext, config: AssetConfig) ->
     with open(business_card_project.manifest_path) as f:
         manifest = json.load(f)
 
-    model_node = manifest["nodes"]["model.dbt_card_processor.stg_cards_data"]
+    model_node = manifest["nodes"]["model.dbt_business_automations.stg_cards_data"]
 
     SYSTEM_INJECTED_PREFIX = config.system_injected_prefix
 

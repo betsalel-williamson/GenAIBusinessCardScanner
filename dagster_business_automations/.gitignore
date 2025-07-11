@@ -11,13 +11,6 @@ local_storage/
 tmp*/
 .tmp*/
 
-# DBT
-dbt_project/logs/
-dbt_project/target/
-dbt_project/.user.yml
-dbt_project/*.duckdb
-dbt_project/*.csv
-
 #
 .env
 *.log
