@@ -13,6 +13,8 @@ import {
   vi,
 } from "vitest";
 
+import { MemoryRouter } from "react-router-dom";
+import { StatusProvider } from "../client/context/StatusContext";
 import FileUpload from "../client/components/FileUpload";
 
 const API_UPLOAD_URL = "/api/upload";
@@ -23,7 +25,13 @@ const mockOnUploadComplete = vi.fn();
 
 const renderFileUpload = () => {
   const user = userEvent.setup();
-  const utils = render(<FileUpload onUploadComplete={mockOnUploadComplete} />);
+  const utils = render(
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <StatusProvider>
+        <FileUpload onUploadComplete={mockOnUploadComplete} />
+      </StatusProvider>
+    </MemoryRouter>
+  );
   return { user, ...utils };
 };
 
@@ -104,7 +112,7 @@ describe("FileUpload Component", () => {
 
     // Wait for the final states, skipping the intermediate "Uploading..." check
     await waitFor(() => {
-      expect(screen.getByText("Success")).toBeInTheDocument();
+      expect(screen.getByText("Processing...")).toBeInTheDocument();
       expect(screen.getByText("Duplicate content")).toBeInTheDocument();
     });
 

@@ -6,9 +6,11 @@ import {
   fireEvent,
   within,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { StatusProvider } from "../client/context/StatusContext";
 import HomePage from "../client/pages/HomePage";
 import { describe, test, expect, beforeAll, afterEach, afterAll } from "vitest";
 
@@ -17,13 +19,15 @@ const API_FILES_URL = "/api/files";
 const server = setupServer();
 
 const renderHomePage = () => {
-  render(
-    <MemoryRouter
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-    >
-      <HomePage />
-    </MemoryRouter>,
+  const user = userEvent.setup();
+  const utils = render(
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <StatusProvider>
+        <HomePage />
+      </StatusProvider>
+    </MemoryRouter>
   );
+  return { user, ...utils };
 };
 
 beforeAll(() => server.listen());

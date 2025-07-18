@@ -6,7 +6,7 @@ const vitestConfig: VitestUserConfigInterface = {
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: ["src/__tests__/setupTests.ts"],
+    setupFiles: ["src/setupTests.ts"],
     coverage: {
       thresholds: {
         // Thresholds for all files
