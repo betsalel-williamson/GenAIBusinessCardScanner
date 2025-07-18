@@ -40,7 +40,7 @@ touched: { a star is added here every day that we try to work on this task }
 
 ## Context/Links
 
-- Related user story: {relative path to user story}
+- Related design spec: {relative path to design spec}
 - Additional context: {links or notes}
 ```
 

@@ -18,8 +18,7 @@ This document serves as the central index for all documentation related to the p
 
 ### Development Process & Operational Protocols
 
-- [**process.md**](process.md)
-  - Outlines the iterative, data-informed 7-step improvement cycle for software development, integrating AI as a core accelerator.
+
 - [**secondary-protocols.md**](secondary-protocols.md)
   - Additional operational mandates and communication style guidelines for the GenAI system, emphasizing directness, conciseness, and minimal diffs.
 - [**task-standards.md**](task-standards.md)

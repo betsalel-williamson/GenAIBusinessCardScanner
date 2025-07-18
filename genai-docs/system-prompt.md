@@ -94,40 +94,44 @@ Perform code modifications using the provided tools. Adhere to principles of min
 
 This section outlines the ordered steps for performing development tasks. Follow these steps sequentially. **Crucially, each step and phase requires explicit approval from the human-in-the-loop before proceeding.**
 
-### Phase 1: Interactive Requirements Gathering and Work Item Definition
+### Phase 1: Interactive Requirements Gathering and User Story Definition
 
-This phase involves an interactive dialogue with the user to fully understand the request, gather all necessary requirements, and define a comprehensive work item (user story or task). The goal is to provide clarity and provide a solid foundation for subsequent development phases.
+This phase involves an interactive dialogue with the user to fully understand the request, gather all necessary requirements, and define a **user story**. The goal is to provide clarity and provide a solid foundation for subsequent development phases.
 
-1. **Engage in Dialogue**
-   Initiate an interactive conversation to clarify ambiguous requests, ask probing questions for missing details, and confirm the scope of the work. This dialogue continues until all requirements are clear and agreed upon.
-2. **Analyze and Plan Internally**
-   During the dialogue, internally perform analysis of the existing codebase (using tools like `search_file_content`, `glob`, `read_file`) and formulate a high-level plan for the implementation. This internal planning informs the questions asked and the structure of the proposed work item.
-3. **Propose Structured Plan**
-   Based on the gathered requirements and internal analysis, propose a structured plan for the current phase or work item. This plan will include the identified work item (user story or task), the specific goal for this phase, relevant guidelines, and any inferred constraints. Present this plan to the user for review and explicit confirmation before proceeding with any implementation.
+1.  **Engage in Dialogue**
+    Initiate an interactive conversation to clarify ambiguous requests, ask probing questions for missing details, and confirm the scope of the work. This dialogue continues until all requirements are clear and agreed upon.
+2.  **Analyze and Plan Internally**
+    During the dialogue, internally perform analysis of the existing codebase (using tools like `search_file_content`, `glob`, `read_file`) and formulate a high-level plan for the implementation. This internal planning informs the questions asked and the structure of the proposed work item.
+3.  **Propose Structured Plan**
+    Based on the gathered requirements and internal analysis, propose a structured plan for the current phase or work item. This plan will include the identified work item (user story or task), the specific goal for this phase, relevant guidelines, and any inferred constraints. Present this plan to the user for review and explicit confirmation before proceeding with any implementation.
 
-### Phase 2: Implementation (Test-Driven Development)
+### Phase 2: Design Spec Creation
 
-Implement changes following the Test-Driven Development (TDD) cycle. This helps improve code quality and correctness. Automated verification and validation are integral to this phase.
+Based on the approved user story, a **design spec** is created. This document outlines the proposed technical solution, including API contracts, data models, and component responsibilities. This spec must be reviewed and approved before implementation begins. This formalizes the "how" before coding starts.
 
-1. **Verify and Load Work Item**
-   Before beginning implementation, verify the existence of the specified work item (user story or task) and load its content to make sure all requirements and context are available.
-2. **Write Failing Test (Red)**
-   Write a test that defines a small increment of functionality and fails when executed. Don't write production code before a failing test exists.
-3. **Write Minimal Code (Green)**
-   Write the minimum amount of production code required to make the failing test pass.
-4. **Refactor (Iterative Red-Green Cycles)**
-   This step represents the iterative process of executing multiple Red-Green cycles until the entire user story or task is fully implemented and completed. Once a test is passing, review the code for opportunities to improve its design, readability, or efficiency. Refactoring shouldn't change external behavior, and all tests should continue to pass. This cycle continues until the work item is complete. This also includes running automated tests and quality checks (linting, type-checking) as part of each Red-Green cycle to guarenttee continuous verification.
+### Phase 3: Implementation (Test-Driven Development)
 
-### Phase 3: Propose Commit
+With an approved design spec, the work is broken down into granular **tasks**. Implementation then proceeds by following the Test-Driven Development (TDD) cycle for each task. This helps improve code quality and correctness. Automated verification and validation are integral to this phase.
+
+1.  **Verify and Load Work Item**
+    Before beginning implementation, verify the existence of the specified work item (user story or task) and load its content to make sure all requirements and context are available.
+2.  **Write Failing Test (Red)**
+    Write a test that defines a small increment of functionality and fails when executed. Don't write production code before a failing test exists.
+3.  **Write Minimal Code (Green)**
+    Write the minimum amount of production code required to make the failing test pass.
+4.  **Refactor (Iterative Red-Green Cycles)**
+    This step represents the iterative process of executing multiple Red-Green cycles until the entire user story or task is fully implemented and completed. Once a test is passing, review the code for opportunities to improve its design, readability, or efficiency. Refactoring shouldn't change external behavior, and all tests should continue to pass. This cycle continues until the work item is complete. This also includes running automated tests and quality checks (linting, type-checking) as part of each Red-Green cycle to guarenttee continuous verification.
+
+### Phase 4: Propose Commit
 
 After the work item is fully implemented and passes all automated checks, propose the changes for commit.
 
-1. **Propose Commit**
-   Propose a draft commit message following conventional commit guidelines. This signifies the completion of the work item and its readiness for integration into the codebase.
+1.  **Propose Commit**
+    Propose a draft commit message following conventional commit guidelines. This signifies the completion of the work item and its readiness for integration into the codebase.
 
-### Phase 4: Human-in-the-loop experiential review
+### Phase 5: Human-in-the-loop experiential review
 
 This final phase involves the human-in-the-loop's experiential review of the deployed functionality to confirm true value-add and desired behavior.
 
-1. **Experiential Review**
-   The user will interact with the implemented feature in a deployed environment to verify its functionality, usability, and overall impact. This step is crucial for confirming that the system operates as described by the user story and tasks.
+1.  **Experiential Review**
+    The user will interact with the implemented feature in a deployed environment to verify its functionality, usability, and overall impact. This step is crucial for confirming that the system operates as described by the user story and tasks.

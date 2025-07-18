@@ -6,9 +6,7 @@ User stories capture end-user value and must conform to the following naming and
 
 ## User Story File Naming Convention
 
-User stories are stored in the `work_items/user_stories/` directory, grouped by feature epic.
-
-**Path:** `work_items/user_stories/{epic_name}/{story_number}_{kebab-case-title}.md`
+**Path:** `work_items/{epic_name}/{story_number}_{kebab-case-title}/00_user-story.md`
 
 - **`{epic_name}`**: Logical grouping for a feature set (for example, `user_authentication`, `payment_processing`).
 - **`{story_number}`**: Two-digit number for ordering within the epic (for example, `00`, `01`).
