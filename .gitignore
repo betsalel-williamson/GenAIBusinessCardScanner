@@ -5,3 +5,9 @@ node_modules/
 update.sh
 gitleaks-report.json
 *.log
+.yarn
+
+# lock files
+uv.lock
+pnpm-lock.yaml
+validation_tool.ts/pnpm-lock.yaml
