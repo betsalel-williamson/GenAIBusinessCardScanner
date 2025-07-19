@@ -1,5 +1,5 @@
 import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import { Database, open } from "sqlite";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -7,13 +7,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, "..", "..", "app_data.db");
 
 // You can use a verbose instance for debugging purposes
-const db = await open({
-  filename: DB_PATH,
-  driver: sqlite3.Database,
-});
+let dbInstance: Database<sqlite3.Database, sqlite3.Statement> | null = null;
+
+export async function getDb(): Promise<Database<sqlite3.Database, sqlite3.Statement>> {
+  if (!dbInstance) {
+    dbInstance = await open({
+      filename: DB_PATH,
+      driver: sqlite3.Database,
+    });
+  }
+  return dbInstance;
+}
 
 export async function initDb() {
   console.log("Initializing database schema...");
+  const db = await getDb();
   await db.exec(`
     CREATE TABLE IF NOT EXISTS records (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,4 +34,4 @@ export async function initDb() {
   console.log("Database initialized.");
 }
 
-export default db;
+export default getDb;

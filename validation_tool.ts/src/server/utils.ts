@@ -1,8 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import db from "./db.js";
 import { DataRecord } from "../../types/types.js";
+import getDb from "./db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..", "..");
@@ -50,6 +50,7 @@ export const getFileListWithStatus = async (): Promise<FileInfo[]> => {
     }
   }
 
+  const db = await getDb();
   // 2. Get individual records from the database
   const recordsFromDb = await db.all<FileInfo[]>(
     "SELECT filename, status FROM records",
@@ -67,6 +68,8 @@ export const getFileListWithStatus = async (): Promise<FileInfo[]> => {
 export const loadData = async (
   jsonFilename: string,
 ): Promise<DataRecord | null> => {
+  const db = await getDb();
+
   const result = await db.get<{ data: string }>(
     "SELECT data FROM records WHERE filename = ?",
     jsonFilename,
@@ -84,6 +87,8 @@ export const loadData = async (
 export const loadSourceData = async (
   jsonFilename: string,
 ): Promise<DataRecord | null> => {
+  const db = await getDb();
+
   const result = await db.get<{ source_data: string }>(
     "SELECT source_data FROM records WHERE filename = ?",
     jsonFilename,

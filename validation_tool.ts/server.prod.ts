@@ -4,28 +4,17 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import compression from "compression";
 import cors from "cors";
-import { createServer as createViteServer } from "vite";
 import apiRouter from "./src/server/api";
-import { initDb } from "./src/server/db.js";
 import { initializeApplication } from "./src/server/init.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const isTest = process.env.NODE_ENV === "test";
 
 async function createServer() {
   await initializeApplication(); // Initialize the application
 
   const app = express();
 
-  const vite = await createViteServer({
-    server: { middlewareMode: true },
-    appType: "custom",
-    logLevel: isTest ? "error" : "info",
-  });
-
-  app.use(vite.middlewares);
-
+  app.use(compression());
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
@@ -33,8 +22,12 @@ async function createServer() {
   // API routes
   app.use("/api", apiRouter);
 
+  app.use(
+    express.static(path.resolve(__dirname, "../client"), { index: false }),
+  );
+
   // Serve static images from public directory
-  app.use("/public", express.static(path.resolve(__dirname, "public")));
+  app.use("/public", express.static(path.resolve(__dirname, "../../public")));
   app.use(
     "/images",
     express.static(
@@ -52,24 +45,20 @@ async function createServer() {
 
     try {
       const template = await fs.readFile(
-        path.resolve(__dirname, "index.html"),
+        path.resolve(__dirname, "../client/index.html"),
         "utf-8",
       );
 
-      const transformedTemplate = await vite.transformIndexHtml(url, template);
-
-      const { render } = await vite.ssrLoadModule(
-        "/src/client/entry-server.tsx",
-      );
+      const { render } = await import("./src/client/entry-server.tsx");
 
       const appHtml = await render(url);
 
-      const html = transformedTemplate.replace(`<!--app-html-->`, appHtml);
+      const html = template.replace(`<!--app-html-->`, appHtml);
 
       res.status(200).set({ "Content-Type": "text/html" }).end(html);
     } catch (e) {
       if (e instanceof Error) {
-        vite.ssrFixStacktrace(e);
+        console.error(e.stack);
         next(e);
       } else {
         next(new Error("Unknown error during SSR"));
