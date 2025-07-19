@@ -1,0 +1,4 @@
+packages:
+  - 'dagster_business_automations'
+  - 'dbt_project'
+  - 'validation_tool.ts'

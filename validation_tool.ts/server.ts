@@ -2,11 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
-import compression from "compression";
-import cors from "cors";
+import cors from "cors"; // Re-adding the import for cors
 import { createServer as createViteServer } from "vite";
 import apiRouter from "./src/server/api";
-import { initDb } from "./src/server/db.js";
 import { initializeApplication } from "./src/server/init.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,7 +24,7 @@ async function createServer() {
 
   app.use(vite.middlewares);
 
-  app.use(cors());
+  app.use(cors()); // Re-adding cors middleware
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 

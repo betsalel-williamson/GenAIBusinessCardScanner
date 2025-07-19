@@ -18,9 +18,9 @@ const vitestConfig: VitestUserConfigInterface = {
       ignoreEmptyLines: true,
     },
     // Add JUnit reporter for GitHub Actions test summary
-    reporters: ['default', 'junit'],
+    reporters: ["default", "junit"],
     outputFile: {
-      junit: 'junit.xml',
+      junit: "junit.xml",
     },
   },
   esbuild: {

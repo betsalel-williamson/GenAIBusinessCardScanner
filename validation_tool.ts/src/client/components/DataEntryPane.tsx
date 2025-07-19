@@ -1,9 +1,4 @@
-import {
-  useState,
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-} from "react";
+import { useState, forwardRef, useImperativeHandle, useRef } from "react";
 import type { DataRecord } from "../../../types/types";
 
 // Define the desired order of fields

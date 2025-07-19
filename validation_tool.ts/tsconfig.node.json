@@ -6,7 +6,7 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "noEmit": false, /* Referenced projects must emit */
+    "noEmit": false /* Referenced projects must emit */,
     "types": ["node"]
   },
   "include": ["vite.config.ts", "server.ts", "src/server"]

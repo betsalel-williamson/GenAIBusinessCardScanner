@@ -1,0 +1,32 @@
+echo "Running pre-commit hook..."
+
+# Run markdown formatter
+echo "Running markdown formatter..."
+pnpm run markdown-format
+
+# Run pre-commit checks for validation_tool.ts
+if [ -f "validation_tool.ts/package.json" ]; then
+  echo "Running pre-commit checks for validation_tool.ts"
+  (cd validation_tool.ts && pnpm run precommit-checks)
+fi
+
+# Run pre-commit checks for dagster_business_automations (Python)
+if [ -d "dagster_business_automations" ]; then
+  echo "Running pre-commit checks for dagster_business_automations"
+  (cd dagster_business_automations && \
+    python3.12 -m venv .venv && \
+    source .venv/bin/activate && \
+    pip install --upgrade pip && \
+    pip install . && \
+    bash lint.sh && \
+    bash test.sh)
+fi
+
+# Run pre-commit checks for dbt_project
+if [ -d "dbt_project" ]; then
+  echo "Running dbt build for dbt_project"
+  # Use the dbt executable from the dagster_business_automations virtual environment
+  (cd dbt_project && ../dagster_business_automations/.venv/bin/dbt build --vars '{is_ci_run: true}')
+fi
+
+git update-index --again

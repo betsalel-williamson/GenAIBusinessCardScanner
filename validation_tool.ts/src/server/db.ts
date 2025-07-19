@@ -9,7 +9,9 @@ const DB_PATH = path.join(__dirname, "..", "..", "app_data.db");
 // You can use a verbose instance for debugging purposes
 let dbInstance: Database<sqlite3.Database, sqlite3.Statement> | null = null;
 
-export async function getDb(): Promise<Database<sqlite3.Database, sqlite3.Statement>> {
+export async function getDb(): Promise<
+  Database<sqlite3.Database, sqlite3.Statement>
+> {
   if (!dbInstance) {
     dbInstance = await open({
       filename: DB_PATH,

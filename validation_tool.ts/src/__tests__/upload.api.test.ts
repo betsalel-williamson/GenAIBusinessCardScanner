@@ -2,18 +2,13 @@ import request from "supertest";
 import express from "express";
 import fs from "fs/promises";
 import path from "path";
-import crypto from "crypto";
 import { describe, test, expect, beforeAll, beforeEach } from "vitest";
 import uploadRouter from "../server/routes/upload.js";
-import { UploadResult } from "../../types/types";
 
 const app = express();
 app.use("/api/upload", uploadRouter);
 
-const TEST_UPLOAD_DIR = path.resolve(
-  __dirname,
-  "test_upload_dir",
-);
+const TEST_UPLOAD_DIR = path.resolve(__dirname, "test_upload_dir");
 
 const createDummyFileBuffer = (content: string) => Buffer.from(content);
 

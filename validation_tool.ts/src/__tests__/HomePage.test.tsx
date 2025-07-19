@@ -21,11 +21,13 @@ const server = setupServer();
 const renderHomePage = () => {
   const user = userEvent.setup();
   const utils = render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
       <StatusProvider>
         <HomePage />
       </StatusProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
   return { user, ...utils };
 };

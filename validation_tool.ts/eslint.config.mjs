@@ -62,8 +62,24 @@ export default tseslint.config(
     },
   },
 
+  // New configuration for .ts files to handle unused vars and explicit any
+  {
+    files: ["**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_$" },
+      ],
+    },
+  },
+
   // 3. Prettier configuration
   // This MUST be the last item in the array to override other configs.
   // It disables any ESLint rules that would conflict with Prettier's formatting.
   eslintConfigPrettier,
+
+  {
+    ignores: ["dist/**"],
+  },
 );

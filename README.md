@@ -72,3 +72,5 @@ Contributions are welcome. Please refer to the issues tab for areas where you ca
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
+
+<!-- Test pre-commit hooks -->

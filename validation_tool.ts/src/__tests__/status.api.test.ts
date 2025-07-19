@@ -1,6 +1,6 @@
 import request from "supertest";
 import express from "express";
-import { describe, test, expect, vi } from "vitest";
+import { describe, test, vi } from "vitest"; // Removed 'expect'
 import apiRouter from "../server/api.js";
 
 // Mock the db module
@@ -19,7 +19,8 @@ describe("API Route: /api/status", () => {
       .get("/api/status")
       .expect("Content-Type", "text/event-stream")
       .expect(200)
-      .end((err, res) => {
+      .end((err, _) => {
+        // Changed '_res' to '_'
         if (err) return done(err);
         done();
       });

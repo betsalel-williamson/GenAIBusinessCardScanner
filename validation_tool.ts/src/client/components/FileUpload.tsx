@@ -5,7 +5,14 @@ import type { UploadApiResponse, UploadResult } from "../../../types/types";
 
 interface UploadedFile {
   file: File;
-  status: "queued" | "uploading" | "success" | "error" | "skipped" | "processing" | "ready_for_review";
+  status:
+    | "queued"
+    | "uploading"
+    | "success"
+    | "error"
+    | "skipped"
+    | "processing"
+    | "ready_for_review";
   message: string;
 }
 
@@ -59,7 +66,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
       const responseData = await response.json();
 
       if (!response.ok) {
-        const errorMessage = responseData.error || "Upload failed on the server.";
+        const errorMessage =
+          responseData.error || "Upload failed on the server.";
         throw new Error(errorMessage);
       }
 
@@ -112,14 +120,24 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
   };
 
   const hasCompletedFiles = filesToUpload.some(
-    (f) => f.status === "success" || f.status === "skipped" || f.status === "ready_for_review",
+    (f) =>
+      f.status === "success" ||
+      f.status === "skipped" ||
+      f.status === "ready_for_review",
   );
   const queuedFilesCount = filesToUpload.filter(
     (f) => f.status === "queued" || f.status === "error",
   ).length;
 
   const getStatusStyle = (
-    status: "queued" | "uploading" | "success" | "error" | "skipped" | "processing" | "ready_for_review",
+    status:
+      | "queued"
+      | "uploading"
+      | "success"
+      | "error"
+      | "skipped"
+      | "processing"
+      | "ready_for_review",
   ) => {
     switch (status) {
       case "success":

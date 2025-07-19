@@ -1,8 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface FileStatus {
   fileId: string;
-  status: 'processing' | 'ready_for_review' | 'error';
+  status: "processing" | "ready_for_review" | "error";
   message?: string;
 }
 
@@ -12,13 +18,15 @@ interface StatusContextType {
 
 const StatusContext = createContext<StatusContextType | undefined>(undefined);
 
-export const StatusProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const StatusProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [statuses, setStatuses] = useState<Record<string, FileStatus>>({});
 
   useEffect(() => {
     // Only initialize EventSource on the client-side
-    if (typeof window !== 'undefined') {
-      const eventSource = new EventSource('/api/status');
+    if (typeof window !== "undefined") {
+      const eventSource = new EventSource("/api/status");
 
       eventSource.onmessage = (event) => {
         const newStatus: FileStatus = JSON.parse(event.data);
@@ -50,7 +58,7 @@ export const StatusProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 export const useStatus = () => {
   const context = useContext(StatusContext);
   if (context === undefined) {
-    throw new Error('useStatus must be used within a StatusProvider');
+    throw new Error("useStatus must be used within a StatusProvider");
   }
   return context;
 };
