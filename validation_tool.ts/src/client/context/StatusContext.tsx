@@ -16,25 +16,28 @@ export const StatusProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [statuses, setStatuses] = useState<Record<string, FileStatus>>({});
 
   useEffect(() => {
-    const eventSource = new EventSource('/api/status');
+    // Only initialize EventSource on the client-side
+    if (typeof window !== 'undefined') {
+      const eventSource = new EventSource('/api/status');
 
-    eventSource.onmessage = (event) => {
-      const newStatus: FileStatus = JSON.parse(event.data);
-      setStatuses((prevStatuses) => ({
-        ...prevStatuses,
-        [newStatus.fileId]: newStatus,
-      }));
-    };
+      eventSource.onmessage = (event) => {
+        const newStatus: FileStatus = JSON.parse(event.data);
+        setStatuses((prevStatuses) => ({
+          ...prevStatuses,
+          [newStatus.fileId]: newStatus,
+        }));
+      };
 
-    eventSource.onerror = () => {
-      // Handle error, maybe set a global error state
-      eventSource.close();
-    };
+      eventSource.onerror = () => {
+        // Handle error, maybe set a global error state
+        eventSource.close();
+      };
 
-    // Cleanup on unmount
-    return () => {
-      eventSource.close();
-    };
+      // Cleanup on unmount
+      return () => {
+        eventSource.close();
+      };
+    }
   }, []);
 
   return (
