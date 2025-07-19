@@ -26,17 +26,24 @@ async function createServer() {
     express.static(path.resolve(__dirname, "../client"), { index: false }),
   );
 
-  // Serve static images from public directory
-  app.use("/public", express.static(path.resolve(__dirname, "../../public")));
+  // Serve static images from public directory, configurable via env var
+  app.use(
+    "/public",
+    express.static(
+      process.env.PUBLIC_MOUNT_PATH || path.resolve(__dirname, "../../public"),
+    ),
+  );
+  // Serve images from cards_to_process directory, configurable via env var
   app.use(
     "/images",
     express.static(
-      path.resolve(
-        __dirname,
-        "..",
-        "dagster_card_processor",
-        "cards_to_process",
-      ),
+      process.env.CARDS_TO_PROCESS_MOUNT_PATH ||
+        path.resolve(
+          __dirname,
+          "..",
+          "dagster_card_processor",
+          "cards_to_process",
+        ),
     ),
   );
 
