@@ -101,3 +101,5 @@ We welcome contributions! If you find a bug, have a feature request, or want to 
 ## 📜 License
 
 This project is open-source and available under the [MIT License](https://github.com/jonluca/vite-typescript-ssr-react/blob/main/LICENSE).
+
+<!-- temp change -->
