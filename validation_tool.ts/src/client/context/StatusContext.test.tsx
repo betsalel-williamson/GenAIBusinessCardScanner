@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, act } from "@testing-library/react";
 import { vi, describe, test, expect, beforeEach, Mock } from "vitest";
-import { StatusProvider, useStatus } from "../client/context/StatusContext";
+import { StatusProvider, useStatus } from "../context/StatusContext";
 
 // Mock EventSource
 global.EventSource = vi.fn(() => ({

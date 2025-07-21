@@ -10,8 +10,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { StatusProvider } from "../client/context/StatusContext";
-import HomePage from "../client/pages/HomePage";
+import { StatusProvider } from "../context/StatusContext";
+import HomePage from "../pages/HomePage";
 import { describe, test, expect, beforeAll, afterEach, afterAll } from "vitest";
 
 const API_FILES_URL = "/api/files";

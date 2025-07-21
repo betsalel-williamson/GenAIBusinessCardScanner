@@ -14,8 +14,8 @@ import {
 } from "vitest";
 
 import { MemoryRouter } from "react-router-dom";
-import { StatusProvider } from "../client/context/StatusContext";
-import FileUpload from "../client/components/FileUpload";
+import { StatusProvider } from "../context/StatusContext";
+import FileUpload from "../components/FileUpload";
 
 const API_UPLOAD_URL = "/api/upload";
 

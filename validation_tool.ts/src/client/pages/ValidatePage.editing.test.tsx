@@ -1,6 +1,6 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, test, expect } from "vitest";
-import { setupValidatePageTests, TestWrapper } from "./test_utils";
+import { setupValidatePageTests, TestWrapper } from "../../test_utils";
 
 describe("ValidatePage - Editing", () => {
   setupValidatePageTests();

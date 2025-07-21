@@ -7,7 +7,7 @@ import {
   MOCK_FILE_NAME,
   MOCK_NEXT_FILE_NAME,
   server,
-} from "./test_utils";
+} from "../../test_utils";
 import { http, HttpResponse } from "msw";
 
 describe("ValidatePage - Navigation (Single Record Files)", () => {

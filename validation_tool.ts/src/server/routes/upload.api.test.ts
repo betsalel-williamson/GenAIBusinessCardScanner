@@ -3,7 +3,7 @@ import express from "express";
 import fs from "fs/promises";
 import path from "path";
 import { describe, test, expect, beforeAll, beforeEach } from "vitest";
-import uploadRouter from "../server/routes/upload.js";
+import uploadRouter from "./upload.js";
 
 const app = express();
 app.use("/api/upload", uploadRouter);

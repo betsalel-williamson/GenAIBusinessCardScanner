@@ -4,9 +4,10 @@ project_name: dagster-card-processor
 epic_name: pipeline_robustness
 task_id: 00_pipeline_robustness/03_update_development_environment_setup
 labels: environment-management, development
-status: todo
+status: verified completed
 date_created: 2025-07-10T12:15:00-07:00
-touched: *
+date_verified_completed: '2025-07-21T00:00:00-07:00'
+touched: '*'
 ---
 
 ## Task

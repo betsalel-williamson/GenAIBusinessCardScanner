@@ -5,7 +5,7 @@ import {
   TestWrapper,
   MOCK_SINGLE_RECORD,
   server,
-} from "./test_utils";
+} from "../../test_utils";
 import { http, HttpResponse } from "msw";
 
 describe("ValidatePage - Rendering (Single Record Files)", () => {

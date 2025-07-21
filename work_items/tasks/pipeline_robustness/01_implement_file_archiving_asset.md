@@ -6,7 +6,8 @@ task_id: 00_pipeline_robustness/01_implement_file_archiving_asset
 labels: data-pipeline, assets
 status: todo
 date_created: 2025-07-10T12:05:00-07:00
-touched: *
+date_verified_completed: ''
+touched: '*'
 ---
 
 ## Task

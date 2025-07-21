@@ -1,7 +1,7 @@
 import request from "supertest";
 import express from "express";
 import { describe, test, vi } from "vitest"; // Removed 'expect'
-import apiRouter from "../server/api.js";
+import apiRouter from "../api.js";
 
 // Mock the db module
 vi.mock("../server/db.js", () => {

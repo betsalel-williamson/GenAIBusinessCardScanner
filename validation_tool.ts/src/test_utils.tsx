@@ -3,14 +3,14 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { beforeAll, afterEach, afterAll, vi, beforeEach } from "vitest";
-import HomePage from "../client/pages/HomePage";
-import ValidatePage from "../client/pages/ValidatePage";
-import type { DataRecord } from "../../types/types";
+import HomePage from "./client/pages/HomePage.js";
+import ValidatePage from "./client/pages/ValidatePage.js";
+import type { DataRecord } from "../types/types";
 import type {
   DataEntryPaneProps,
   DataEntryPaneHandle,
-} from "../client/components/DataEntryPane";
-import type { ImagePaneProps } from "../client/components/ImagePane";
+} from "./client/components/DataEntryPane.js";
+import type { ImagePaneProps } from "./client/components/ImagePane.js";
 
 export const MOCK_FILE_NAME = "test-data-000.json"; // Now a single record file name
 export const MOCK_NEXT_FILE_NAME = "test-data-001.json"; // A subsequent file
@@ -84,10 +84,10 @@ export const mockDataEntryPaneHandle = {
   scrollToTop: vi.fn(),
 };
 
-vi.mock("../client/components/DataEntryPane", async () => {
+vi.mock("./client/components/DataEntryPane", async () => {
   const actualModule = await vi.importActual<
-    typeof import("../client/components/DataEntryPane")
-  >("../client/components/DataEntryPane");
+    typeof import("./client/components/DataEntryPane")
+  >("./client/components/DataEntryPane");
   const OriginalDataEntryPaneComponent = actualModule.default;
 
   return {
@@ -105,7 +105,7 @@ vi.mock("../client/components/DataEntryPane", async () => {
 });
 
 // Mock ImagePane to prevent PDF.js issues in JSDOM
-vi.mock("../client/components/ImagePane", () => {
+vi.mock("./client/components/ImagePane", () => {
   return {
     default: React.forwardRef<HTMLDivElement, ImagePaneProps>(
       ({ pdfSrc }, ref) => {

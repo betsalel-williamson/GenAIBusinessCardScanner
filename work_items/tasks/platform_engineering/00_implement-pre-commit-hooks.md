@@ -7,7 +7,7 @@ labels: platform, automation, developer-experience
 status: todo
 date_created: 2025-07-18T21:12:00-07:00
 date_verified_completed:
-touched: *
+touched: '*'
 ---
 
 ## Task
