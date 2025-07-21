@@ -126,7 +126,7 @@ jobs:
           cache-dependency-path: ./validation_tool.ts/package.json
 
       - name: Node.js | Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Node.js | Run build, lint, and tests
         run: |
