@@ -1,3 +1,13 @@
+# Dagster project configuration for dg CLI
+[tool.dg]
+directory_type = "project"
+
+[tool.dg.project]
+root_module = "dagster_card_processor"
+
+[tool.setuptools]
+packages = ["dagster_card_processor"]
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
@@ -24,9 +34,6 @@ dependencies = [
     "python-dotenv==1.1.0",
     "PyYAML==6.0.1",
 ]
-
-[tool.setuptools]
-packages = ["dagster_card_processor"]
 
 [tool.dagster]
 module_name = "dagster_card_processor"

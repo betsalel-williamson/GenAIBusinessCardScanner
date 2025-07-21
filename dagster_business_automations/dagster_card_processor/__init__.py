@@ -6,15 +6,15 @@ from .dbt_assets import aggregated_results_json_to_db, dbt_business_automations_
 from .schema_assets import response_schema_json
 from .card_processing_assets import processed_card_json
 from .finalization_assets import mark_as_processed
-from .defs import (
-    GeminiResource,
-    DuckDBResource,
-    GoogleSheetsResource,
-    EmailClientResource,
-)
 from .postmark_email_client import PostmarkEmailClient
 from .sensors import pdf_files_sensor, validated_records_sensor
 from .project import business_card_project
+
+# Import resources from their correct, specific locations
+from .defs.business_card_scanner.gemini.resources import GeminiResource
+from .defs.business_card_scanner.duckdb.resources import DuckDBResource
+from .defs.email_sender.google_sheets.resources import GoogleSheetsResource
+from .defs.email_sender.email_client.resources import EmailClientResource
 
 load_dotenv()
 
@@ -38,7 +38,10 @@ all_assets = [
 ]
 
 all_resources = {
-    "dbt": DbtCliResource(project_dir=business_card_project),
+    "dbt": DbtCliResource(
+        project_dir=business_card_project,
+        dbt_executable=os.getenv("DBT_EXECUTABLE_PATH", "dbt"),
+    ),
     "gemini": GeminiResource(
         api_key=os.getenv("GOOGLE_API_KEY"), model_name=os.getenv("MODEL_NAME")
     ),  # type: ignore
@@ -61,7 +64,7 @@ all_resources = {
 all_sensors = [pdf_files_sensor, validated_records_sensor]
 all_jobs = [process_all_assets_job, finalize_record_job]
 
-defs = Definitions(
+definitions = Definitions(
     assets=all_assets,
     resources=all_resources,
     sensors=all_sensors,

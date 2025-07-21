@@ -1,0 +1,3 @@
+workspace:
+  python_modules:
+    - dagster_card_processor

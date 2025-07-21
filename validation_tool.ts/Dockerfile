@@ -3,20 +3,17 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Copy pnpm related files
-COPY package.json pnpm-workspace.yaml ./ 
-
 # Copy validation_tool.ts specific package.json
-COPY validation_tool.ts/package.json validation_tool.ts/
+COPY package.json ./
 
 # Install pnpm
 RUN npm install -g pnpm
 
 # Copy the rest of the validation_tool.ts source code
-COPY validation_tool.ts validation_tool.ts/
+COPY . ./
 
 # Change to validation_tool.ts directory for project-specific dependency installation and build
-WORKDIR /app/validation_tool.ts
+WORKDIR /app
 
 # Install dependencies for validation_tool.ts
 RUN pnpm install
@@ -32,36 +29,33 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy pnpm related files for production install
-COPY package.json pnpm-workspace.yaml ./ 
-
 # Copy validation_tool.ts specific package.json for production install
-COPY validation_tool.ts/package.json validation_tool.ts/
+COPY package.json ./
 
 # Copy built assets from the builder stage
-COPY --from=builder /app/validation_tool.ts/dist ./validation_tool.ts/dist
+COPY --from=builder /app/dist ./dist
 
 # Copy necessary files for running the server
-COPY --from=builder /app/validation_tool.ts/package.json ./validation_tool.ts/package.json
-COPY --from=builder /app/validation_tool.ts/server.prod.ts ./validation_tool.ts/server.prod.ts
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/server.prod.ts ./server.prod.ts
 
 # Copy the public directory from the builder stage's validation_tool.ts directory into the production image
-COPY --from=builder /app/validation_tool.ts/public ./validation_tool.ts/public
+COPY --from=builder /app/public ./public
 
-WORKDIR /app/validation_tool.ts
+# Copy the healthcheck script
+COPY scripts/healthcheck.js ./scripts/healthcheck.js
+
+WORKDIR /app
 
 # Install production dependencies only
 RUN npm install -g pnpm && pnpm install --prod
-
-# Install curl for healthcheck
-RUN apk add --no-cache curl
 
 ENV NODE_ENV=production
 ENV CARDS_TO_PROCESS_MOUNT_PATH=/mnt/cards_to_process
 
 # Healthcheck instruction
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD curl -f http://localhost:7456 || exit 1
+  CMD node scripts/healthcheck.js || exit 1
 
 EXPOSE 7456
 

@@ -1,6 +1,35 @@
 version: '3.8'
+
+volumes:
+  cards_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./examples/cards_to_process
+
 services:
   redis:
     image: "redis:alpine"
     ports:
       - "6379:6379"
+
+  dagster:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./dagster_business_automations/.env.test
+    volumes:
+      - cards_data:/mnt/cards_to_process
+
+  validation_tool:
+    build:
+      context: ./validation_tool.ts
+      dockerfile: Dockerfile
+    ports:
+      - "7456:7456"
+    volumes:
+      - cards_data:/mnt/cards_to_process

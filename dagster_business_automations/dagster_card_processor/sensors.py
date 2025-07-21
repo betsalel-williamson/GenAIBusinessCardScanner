@@ -9,6 +9,7 @@ from dagster import (
 )
 from .partitions import pdf_partitions
 from .defs import DuckDBResource
+from .config import FileConfig  # Import FileConfig
 import duckdb
 
 # SensorDbConfig is no longer needed, as we use the DuckDBResource directly.
@@ -24,7 +25,8 @@ def pdf_files_sensor(context: SensorEvaluationContext):
     A sensor that checks for new PDF files and creates a partition and a run request for each one,
     tagging each run for concurrency control.
     """
-    input_dir = "cards_to_process"
+    # Use input_dir from FileConfig
+    input_dir = FileConfig().input_dir
     if not os.path.isdir(input_dir):
         return
 
@@ -98,8 +100,5 @@ def validated_records_sensor(
         for record_id, filename in new_records
     ]
 
-    # Update cursor to the ID of the last record found
-    new_cursor = str(new_records[-1][0])
-
     # The framework will persist the cursor from the returned SensorResult.
-    return SensorResult(run_requests=run_requests, cursor=new_cursor)
+    return SensorResult(run_requests=run_requests, cursor=str(new_records[-1][0]))

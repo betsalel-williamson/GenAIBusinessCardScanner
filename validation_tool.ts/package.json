@@ -78,5 +78,12 @@
     "vite": "^5.4.19",
     "vitest": "^3.2.3",
     "concurrently": "^9.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msw",
+      "sqlite3"
+    ]
   }
 }

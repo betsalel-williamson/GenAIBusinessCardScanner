@@ -14,12 +14,5 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "markdownlint-cli2": "^0.18.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "msw",
-      "sqlite3"
-    ]
   }
 }

@@ -1,0 +1,99 @@
+# Project-specific exclusions (top-level items not needed for Dagster build)
+.gitignore
+.markdownlint-cli2.yaml
+*.md
+docker-compose.yml
+LICENSE
+package.json
+pnpm-workspace.yaml
+*.sh
+.gemini/
+.git/
+.github/
+.husky/
+.yarn/
+docs/
+genai-docs/
+node_modules/
+validation_tool.ts/
+work_items/
+
+# Python Specific Exclusions
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
+**/.Python
+**/.python-version
+**/.mypy_cache/
+**/.dmypy.json
+
+# Python Environment & Packaging Exclusions
+**/build/
+**/develop-eggs/
+**/dist/
+**/downloads/
+**/eggs/
+**/.eggs/
+**/lib/
+**/lib64/
+**/parts/
+**/sdist/
+**/var/
+**/*.egg-info/
+**/.installed.cfg
+**/*.egg
+**/*.manifest
+**/*.spec
+**/pip-log.txt
+**/pip-delete-this-directory.txt
+**/.venv
+**/venv/
+**/ENV/
+**/env/
+
+# Testing & Coverage Exclusions
+**/htmlcov/
+**/.tox/
+**/.nox/
+**/.coverage
+**/.coverage.*
+**/.cache
+**/*.cover
+**/.hypothesis/
+**/.pytest_cache/
+
+# Environment Configuration Exclusions
+**/.env
+**/.env.*
+
+# IDE/Editor Specific Exclusions
+**/.vscode/
+**/.ipynb_checkpoints
+**/*.swp
+**/*~
+
+# macOS Specific Exclusions
+**/.DS_Store
+
+# General Temporary & Log Files Exclusions
+**/output/
+**/logs/
+**/*.tmp
+**/*.log
+
+# Database Specific Exclusions
+**/*.duckdb
+
+# Specific exclusions within dagster_business_automations/ (not covered by general patterns)
+# These are subdirectories within copied paths that are not needed in the Docker image.
+dagster_business_automations/*.md
+dagster_business_automations/scripts/
+dagster_business_automations/tests/
+dagster_business_automations/*.sh
+dagster_business_automations/dagster_card_processor/cards_to_process/
+**/.tmp_dagster_home_*/
+
+# Specific exclusions within dbt_project/ (not covered by general patterns)
+dbt_project/.user.yml
+**/target/
