@@ -123,7 +123,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache: "pnpm"
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: ./validation_tool.ts/package.json
 
       - name: Node.js | Install dependencies
         run: pnpm install --frozen-lockfile
