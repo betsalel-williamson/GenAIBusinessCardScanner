@@ -9,11 +9,6 @@ volumes:
       device: ./examples/cards_to_process
 
 services:
-  redis:
-    image: "redis:alpine"
-    ports:
-      - "6379:6379"
-
   dagster:
     build:
       context: .
