@@ -10,7 +10,7 @@ export interface ImagePaneProps {
   pdfSrc: string; // Keep name for now, but it handles images too
   transformation: TransformationState;
   onTransformationChange: (newTransformation: TransformationState) => void;
-  imageWrapperRef: React.RefObject<HTMLDivElement>;
+  imageWrapperRef: React.RefObject<HTMLDivElement | null>;
 }
 
 interface PdfJs {

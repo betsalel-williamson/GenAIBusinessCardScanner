@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useStatus } from "../context/StatusContext";
 import type { UploadApiResponse, UploadResult } from "../../../types/types";
 

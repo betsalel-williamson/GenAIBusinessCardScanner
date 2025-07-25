@@ -10,10 +10,10 @@ import {
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 import { JSDOM } from "jsdom";
-import { StaticRouter } from "react-router-dom/server";
+import { StaticRouter } from "react-router";
 import App from "../src/client/App";
 import { hydrateRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 import { act } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
@@ -68,9 +68,7 @@ describe("SSR Hydration", () => {
       hydrateRoot(
         rootElement,
         <React.StrictMode>
-          <BrowserRouter
-            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-          >
+          <BrowserRouter>
             <App />
           </BrowserRouter>
         </React.StrictMode>,

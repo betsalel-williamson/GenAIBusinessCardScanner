@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { useUndoableState } from "./useUndoableState";
 import { useDebounce } from "./useDebounce";
 import type { DataRecord, TransformationState } from "../../../types/types";

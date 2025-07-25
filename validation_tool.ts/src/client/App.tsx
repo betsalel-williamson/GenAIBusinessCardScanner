@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router";
 import HomePage from "./pages/HomePage";
 import ValidatePage from "./pages/ValidatePage";
 import { StatusProvider } from "./context/StatusContext";

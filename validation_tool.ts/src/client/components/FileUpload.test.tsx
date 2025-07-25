@@ -13,7 +13,7 @@ import {
   vi,
 } from "vitest";
 
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { StatusProvider } from "../context/StatusContext";
 import FileUpload from "../components/FileUpload";
 

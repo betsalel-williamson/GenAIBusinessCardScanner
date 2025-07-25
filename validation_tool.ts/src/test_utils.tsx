@@ -1,5 +1,5 @@
 import React from "react";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { beforeAll, afterEach, afterAll, vi, beforeEach } from "vitest";
@@ -72,8 +72,8 @@ export const server = setupServer(
 );
 
 export const mockNavigate = vi.fn();
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual("react-router");
   return {
     ...actual,
     useNavigate: () => mockNavigate,

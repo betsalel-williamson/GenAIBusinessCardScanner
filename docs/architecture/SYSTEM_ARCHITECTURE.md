@@ -23,7 +23,7 @@ The application employs a **Client-Server-Side Rendered (SSR) architecture** bui
 
 ### 2. Client-Side (React/TypeScript with Vite)
 
-- **React App (`src/client/App.tsx`)**: The main React application defines the client-side routes using `react-router-dom`.
+- **React App (`src/client/App.tsx`)**: The main React application defines the client-side routes using `react-router`.
 - **SSR Entry Points (`src/client/entry-client.tsx`, `src/client/entry-server.tsx`)**: Handle hydration on the client and server-side rendering respectively.
 - **Pages**:
   - `HomePage.tsx`: Displays a list of batch files and individual records, providing actions to "Ingest" or "Validate".
