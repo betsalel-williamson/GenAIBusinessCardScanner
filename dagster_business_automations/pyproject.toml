@@ -21,7 +21,7 @@ dependencies = [
     "dagster-dg-cli",
     "dagster-webserver==1.11.3", # Updated
     "dagster==1.11.3", # Updated
-    "dbt-core==1.9.8",
+    "dbt-core==1.10.5",
     "dbt-duckdb==1.9.3",
     "flake8==7.3.0",
     "google-generativeai==0.8.5",
