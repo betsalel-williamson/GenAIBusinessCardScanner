@@ -1,15 +1,30 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import type { ViteUserConfig as VitestUserConfigInterface } from "vitest/config";
+import { denyImports } from "vite-env-only"; // Keep this import as it was in your file
 
-const vitestConfig: VitestUserConfigInterface = {
+export default defineConfig({
+  plugins: [
+    react(),
+    denyImports({
+      // Keep this plugin as it was in your file
+      client: {
+        specifiers: ["fs-extra", /^node:/, "@prisma/*"],
+        files: ["**/server/*"],
+      },
+      server: {
+        specifiers: ["jquery"],
+      },
+    }),
+  ],
+  build: {
+    minify: true,
+  },
   test: {
-    globals: true,
-    environment: "jsdom",
-    setupFiles: ["src/setupTests.ts"],
+    globals: true, // Common setting for all projects
+    setupFiles: ["src/setupTests.ts"], // Common setting for all projects
     coverage: {
+      // Common setting for all projects
       thresholds: {
-        // Thresholds for all files
         functions: 95,
         branches: 70,
       },
@@ -17,28 +32,32 @@ const vitestConfig: VitestUserConfigInterface = {
       reporter: ["default", "text", "json", "html"],
       ignoreEmptyLines: true,
     },
-    // Add JUnit reporter for GitHub Actions test summary
-    reporters: ["default", "junit"],
+    reporters: ["default", "junit"], // Common setting for all projects
     outputFile: {
+      // Common setting for all projects
       junit: "junit.xml",
     },
+    projects: [
+      {
+        // Client-side tests
+        extends: true,
+        test: {
+          environment: "jsdom",
+          include: ["src/client/**/*.test.{ts,tsx}"],
+        },
+      },
+      {
+        // Server-side tests
+        extends: true,
+        test: {
+          environment: "node",
+          include: ["src/server/**/*.test.ts"],
+        },
+      },
+    ],
   },
   esbuild: {
-    // Transpile all files with ESBuild to remove comments from code coverage.
-    // Required for `test.coverage.ignoreEmptyLines` to work:
+    // Common setting for all projects
     include: ["**/*.js", "**/*.jsx", "**/*.mjs", "**/*.ts", "**/*.tsx"],
   },
-};
-
-export default defineConfig({
-  plugins: [react()],
-  // The 'server' block with proxy settings has been removed.
-  // In our integrated SSR development setup, the Express server (server.ts)
-  // handles all requests, including API calls. The Vite server runs in
-  // middleware mode and does not need to proxy requests. This was causing
-  // the ECONNREFUSED error.
-  build: {
-    minify: false, // TODO: update to true for production build
-  },
-  test: vitestConfig.test,
 });
