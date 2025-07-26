@@ -19,7 +19,7 @@ The application employs a **Client-Server-Side Rendered (SSR) architecture** bui
   - `/api/autosave/:filename` (PATCH): Receives an updated record and updates its `data` and `status` in the database.
   - `/api/commit/:filename` (PATCH): Receives a finalized record, updates its status to 'validated' in the database, and identifies the next record for validation.
   - `/api/ingest/:filename` (POST): Reads a batch file from `data_source/`, splits it into individual records, and inserts each one into the database.
-- **Static File Serving**: Serves static assets, including PDF images from `dagster_card_processor/cards_to_process/`.
+- **Static File Serving**: Serves static assets, including PDF images from `dagster_project/cards_to_process/`.
 
 ### 2. Client-Side (React/TypeScript with Vite)
 

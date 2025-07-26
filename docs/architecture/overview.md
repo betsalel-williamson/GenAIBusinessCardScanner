@@ -16,10 +16,10 @@ The system is composed of several loosely coupled services, designed to run as D
 
 - **Frontend Service (`validation_tool.ts`)**: A React web application providing the user interface for uploading, viewing, and managing business cards.
 - **API/Validation Backend (`validation_tool.ts`)**: An Express.js application handling file uploads, initial validation, and serving the frontend. It uses SQLite for local data storage.
-- **Data Processing & Automation Backend (`dagster_business_automations`)**: A Dagster project responsible for orchestrating more complex business card processing, data transformation (using dbt-duckdb), and potentially external integrations (e.g., Google Generative AI, Postmark for emails).
+- **Data Processing & Automation Backend (`dagster_project`)**: A Dagster project responsible for orchestrating more complex business card processing, data transformation (using dbt-duckdb), and potentially external integrations (e.g., Google Generative AI, Postmark for emails).
 - **Redis**: Used for caching or as a message broker, potentially by Dagster.
-- **Database Services**: SQLite (for `validation_tool.ts`) and DuckDB (for `dagster_business_automations`).
-- **File Storage**: A shared Docker volume for persistent storage of uploaded images, accessible by both `validation_tool.ts` and `dagster_business_automations`.
+- **Database Services**: SQLite (for `validation_tool.ts`) and DuckDB (for `dagster_project`).
+- **File Storage**: A shared Docker volume for persistent storage of uploaded images, accessible by both `validation_tool.ts` and `dagster_project`.
 
 ## 3. Key Interactions
 
@@ -34,7 +34,7 @@ The system is composed of several loosely coupled services, designed to run as D
 ## 4. Current State
 
 - The core frontend and API/validation backend are implemented within `validation_tool.ts`.
-- A Dagster project (`dagster_business_automations`) exists for data processing and automation.
+- A Dagster project (`dagster_project`) exists for data processing and automation.
 - `docker-compose.yml` currently only defines a Redis service, indicating an incomplete local development setup.
 - File uploads are handled by `multer` and stored on the local filesystem within the `validation_tool.ts` service.
 
@@ -42,7 +42,7 @@ The system is composed of several loosely coupled services, designed to run as D
 
 - Complete the `docker-compose.yml` to include all core services (frontend, API/validation backend, Dagster, databases, and Redis) and configure the shared Docker volume for file storage.
 - Ensure seamless local development experience with all services running via Docker Compose.
-- Integrate the `validation_tool.ts` backend with the `dagster_business_automations` for triggering and monitoring processing jobs.
+- Integrate the `validation_tool.ts` backend with the `dagster_project` for triggering and monitoring processing jobs.
 
 ## 6. Future Considerations
 
@@ -60,7 +60,7 @@ graph TD
     B --> C(API/Validation Backend: validation_tool.ts)
     C --> D[Shared Docker Volume (File Storage)]
     C --> E[SQLite Database]
-    C --> F(Data Processing & Automation Backend: dagster_business_automations)
+    C --> F(Data Processing & Automation Backend: dagster_project)
     F --> G[DuckDB]
     F --> H[Redis]
     F --> I(External Services: Google Generative AI, Postmark)

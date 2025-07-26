@@ -7,7 +7,7 @@ This document details the deployment strategy for the project, focusing on local
 The application is designed to be deployed on a local machine using Docker Compose.
 
 - **Compute**: Containerized services running via Docker Compose.
-- **Databases**: Local SQLite files (for `validation_tool.ts`) and DuckDB files (for `dagster_business_automations`).
+- **Databases**: Local SQLite files (for `validation_tool.ts`) and DuckDB files (for `dagster_project`).
 - **File Storage**: A shared Docker volume for persistent storage of uploaded images.
 - **Networking**: Docker's internal networking for inter-container communication.
 - **Redis**: A Redis container for caching or message brokering.
@@ -32,11 +32,11 @@ Our process automates the build and test steps for local development.
 ## 4. Current State
 
 - The `docker-compose.yml` currently only defines a Redis service.
-- The `validation_tool.ts` (frontend and Express backend) and `dagster_business_automations` (Dagster project) are separate codebases that need to be integrated into the Docker Compose setup.
+- The `validation_tool.ts` (frontend and Express backend) and `dagster_project` (Dagster project) are separate codebases that need to be integrated into the Docker Compose setup.
 
 ## 5. Immediate Goals
 
-- Expand `docker-compose.yml` to include all necessary services: `validation_tool.ts` (frontend and backend), `dagster_business_automations` (Dagster webserver and daemon), and Redis.
+- Expand `docker-compose.yml` to include all necessary services: `validation_tool.ts` (frontend and backend), `dagster_project` (Dagster webserver and daemon), and Redis.
 - Configure a shared Docker volume for file storage.
 - Create appropriate `Dockerfile`s for each service.
 - Ensure all services can communicate and function correctly within the Docker Compose environment.

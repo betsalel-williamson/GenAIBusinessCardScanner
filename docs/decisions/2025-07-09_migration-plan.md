@@ -32,7 +32,7 @@ The final workflow will be:
     * Remove the `sqlite3` and `sqlite` dependencies.
 
 3. **Update dbt Configuration**:
-    * Modify `dagster_card_processor/dbt_project/profiles.yml` to point to the new shared database path: `../../database/business_cards.duckdb`.
+    * Modify `dagster_project/dbt_project/profiles.yml` to point to the new shared database path: `../../database/business_cards.duckdb`.
 
 4. **Remove Obsolete Files**:
     * Delete `src/server/migrate.ts`. Its function is no longer needed.
@@ -45,7 +45,7 @@ The final workflow will be:
 1. **Create PDF Upload Endpoint (Validation Tool Backend)**:
     * Add a middleware like `multer` to handle `multipart/form-data`.
     * Create a new API route, `POST /api/upload`, in `validation_tool.ts`.
-    * This endpoint will receive uploaded PDF files and save them to the `dagster_card_processor/cards_to_process/` directory. This directory already exists and is monitored by the Dagster sensor.
+    * This endpoint will receive uploaded PDF files and save them to the `dagster_project/cards_to_process/` directory. This directory already exists and is monitored by the Dagster sensor.
 
 2. **Create PDF Upload Component (Validation Tool Frontend)**:
     * On `HomePage.tsx`, add a new UI component for file uploading.
@@ -87,14 +87,14 @@ The final workflow will be:
     * It will execute an `UPDATE` statement on the `records` table, changing the status of the processed record from `validated` to `processed`. This prevents the sensor from picking it up again.
 
 4. **Update Dagster Definitions**:
-    * Wire the new sensor, job, and dbt assets together in `dagster_card_processor/__init__.py`.
+    * Wire the new sensor, job, and dbt assets together in `dagster_project/__init__.py`.
 
 ### Phase 4: Cleanup and Documentation
 
 **Goal**: Remove all remaining obsolete code and update documentation to reflect the new, unified architecture.
 
 1. **Code Cleanup**:
-    * Remove the `output/` directory from `dagster_card_processor`.
+    * Remove the `output/` directory from `dagster_project`.
     * Review `pyproject.toml`, `requirements.txt`, and `package.json` for unused dependencies.
     * Review the Validation Tool's types and components to remove anything related to the old batch workflow.
     * Review all unit tests and outline all features that should be unit tested.
