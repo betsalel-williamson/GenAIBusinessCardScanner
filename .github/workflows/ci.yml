@@ -66,6 +66,7 @@ jobs:
 
       - name: Report Python Coverage Summary
         if: success() || failure()
+        working-directory: ./data_orchestrator.py/dagster_project
         run: |
           # Extract the total coverage percentage from the text report
           TOTAL_COVERAGE_PERCENT=$(coverage report | tail -n 1 | awk '{print $NF}' | tr -d '%')
