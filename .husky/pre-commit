@@ -6,7 +6,7 @@ echo "Running pre-commit hook..."
 
 # Set up Python environment from the root .venv using a relative path
 PROJECT_ROOT=$(dirname "$0")/..
-source "${PROJECT_ROOT}/.venv/bin/activate"
+source "${PROJECT_ROOT}/data_orchestrator.py/dagster_project/.venv/bin/activate"
 
 # Run markdown formatter (runs unconditionally as it's fast and fixes issues)
 echo "Running markdown formatter..."
