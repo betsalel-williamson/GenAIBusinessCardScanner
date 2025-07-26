@@ -3,7 +3,7 @@
 ## Build and Tag
 
 ```sh
-docker build -t ghcr.io/<your-org>/<image-name>:<tag> -f dagster_business_automations/Dockerfile .
+docker build -t ghcr.io/<your-org>/<image-name>:<tag> -f dagster_project/Dockerfile .
 ```
 
 ## Tag Existing Image
