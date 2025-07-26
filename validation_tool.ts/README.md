@@ -16,7 +16,7 @@ This tool enables users to validate and edit JSON data records alongside their c
 
 1. Place your JSON data files (each containing an array of records) into the `validation_tool.ts/data_source/` directory.
 2. Ensure each record in your JSON includes a `source` field pointing to a PDF filename (e.g., `"source": "my_document.pdf"`).
-3. Place the corresponding PDF files into `dagster_card_processor/cards_to_process/` (or adjust the static file serving path in `server.ts`).
+3. Place the corresponding PDF files into `dagster_project/cards_to_process/` (or adjust the static file serving path in `server.ts`).
 4. Navigate to `http://localhost:7456` and start validating!
 
 ## Contributing

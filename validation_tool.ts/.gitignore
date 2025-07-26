@@ -48,7 +48,7 @@ junit.xml
 update.sh
 
 # Dagster related directories
-dagster_card_processor/
+dagster_project/
 
 # Copied PDF.js worker
 public/pdf.worker.min.js

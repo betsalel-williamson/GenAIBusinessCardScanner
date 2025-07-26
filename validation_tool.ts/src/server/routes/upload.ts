@@ -3,20 +3,14 @@ import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
 import crypto from "crypto";
-import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const UPLOAD_DIR = path.resolve(
-  __dirname,
-  "..", // up to /server
-  "..", // up to /src
-  "..", // up to /validation_tool.ts
-  "..", // up to /dagster_card_processor
-  "dagster_card_processor",
-  "cards_to_process",
-);
+// UPLOAD_DIR should point to the mounted volume for cards to process
+const UPLOAD_DIR =
+  process.env.CARDS_TO_PROCESS_MOUNT_PATH || "/mnt/cards_to_process";
 
 // Ensure the upload directory exists upon server startup
+// In a Dockerized environment with mounted volumes, this directory should already exist.
+// However, for local development without Docker, it's good to ensure it's there.
 fs.mkdir(UPLOAD_DIR, { recursive: true });
 
 const storage = multer.memoryStorage();
@@ -73,19 +67,30 @@ router.post("/", (req: Request, res: Response) => {
         const newFilePath = path.join(UPLOAD_DIR, newFilename);
 
         try {
-          await fs.access(newFilePath);
-          results.push({
-            originalName: file.originalname,
-            status: "skipped",
-            reason: "Duplicate content already exists on server.",
-          });
-        } catch {
-          await fs.writeFile(newFilePath, file.buffer);
+          // Attempt to write the file exclusively. If it already exists, this will throw an error.
+          await fs.writeFile(newFilePath, file.buffer, { flag: "wx" });
           results.push({
             originalName: file.originalname,
             status: "success",
             newName: newFilename,
           });
+        } catch (writeError) {
+          // If the file already exists (EEXIST error from 'wx' flag), mark as skipped.
+          if (
+            writeError &&
+            typeof writeError === "object" &&
+            "code" in writeError &&
+            writeError.code === "EEXIST"
+          ) {
+            results.push({
+              originalName: file.originalname,
+              status: "skipped",
+              reason: "File with identical content already exists on server.",
+            });
+          } else {
+            // Re-throw other write errors
+            throw writeError;
+          }
         }
       } catch (error) {
         results.push({

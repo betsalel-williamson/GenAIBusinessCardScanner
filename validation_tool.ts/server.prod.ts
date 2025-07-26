@@ -38,16 +38,11 @@ async function createServer() {
     "/images",
     express.static(
       process.env.CARDS_TO_PROCESS_MOUNT_PATH ||
-        path.resolve(
-          __dirname,
-          "..",
-          "dagster_card_processor",
-          "cards_to_process",
-        ),
+        path.resolve(__dirname, "..", "dagster_project", "cards_to_process"),
     ),
   );
 
-  app.use("*", async (req, res, next) => {
+  app.use("*splat", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {

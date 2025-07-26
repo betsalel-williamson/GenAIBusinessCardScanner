@@ -1,5 +1,12 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
+import { tmpdir } from "os";
+import { join } from "path";
+import { mkdtempSync, rmSync } from "fs"; // Use sync versions for module-level setup
+
+// Create a temporary directory synchronously at module load time
+const tempTestDir = mkdtempSync(join(tmpdir(), "test-cards-to-process-"));
+process.env.CARDS_TO_PROCESS_MOUNT_PATH = tempTestDir;
 
 // Mock EventSource
 global.EventSource = vi.fn(() => ({
@@ -27,3 +34,10 @@ vi.mock("pdfjs-dist", () => ({
   })),
   version: "mock-version",
 }));
+
+// Cleanup the temporary directory after all tests are done
+afterAll(() => {
+  if (tempTestDir) {
+    rmSync(tempTestDir, { recursive: true, force: true });
+  }
+});
