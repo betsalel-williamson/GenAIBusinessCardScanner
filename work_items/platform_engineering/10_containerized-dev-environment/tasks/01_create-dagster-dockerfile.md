@@ -1,6 +1,6 @@
 ---
 title: 'Create Dockerfile for Dagster'
-project_name: dagster_business_automations
+project_name: dagster_project
 epic_name: platform_engineering
 task_id: 17
 story_id: 10
@@ -13,10 +13,10 @@ touched: '*'
 
 **Description:**
 
-Create a `Dockerfile` in the `dagster_business_automations` directory to containerize the Dagster services.
+Create a `Dockerfile` in the `dagster_project` directory to containerize the Dagster services.
 
 **Acceptance Criteria:**
 
-- A `Dockerfile` is created in the `dagster_business_automations` directory.
+- A `Dockerfile` is created in the `dagster_project` directory.
 - The Dockerfile installs all necessary Python dependencies.
 - The Dockerfile configures the entrypoint to run both the Dagit webserver and the Dagster daemon.

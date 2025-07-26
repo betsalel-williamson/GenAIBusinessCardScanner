@@ -1,6 +1,6 @@
 ---
 title: 'Add Unit Tests for Update Method'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: google_sheets_integration
 task_id: 6
 story_id: 11

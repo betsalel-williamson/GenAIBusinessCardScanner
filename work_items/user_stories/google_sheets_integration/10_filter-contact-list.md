@@ -1,6 +1,6 @@
 ---
 title: 'Filter Contact List for Outreach'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: google_sheets_integration
 story_id: 10
 labels: 'backend, dagster, google-sheets'

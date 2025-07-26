@@ -1,6 +1,6 @@
 ---
 title: 'Add Unit Tests for Filter Contacts Asset'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: google_sheets_integration
 task_id: 4
 story_id: 10
@@ -17,7 +17,7 @@ Add unit tests for the `filter_contacts` asset to ensure it correctly filters th
 
 **Acceptance Criteria:**
 
-- A new test file is created (e.g., `dagster_card_processor/tests/test_email_outreach_assets.py`).
+- A new test file is created (e.g., `dagster_project/tests/test_email_outreach_assets.py`).
 - The tests use a sample contact list as input.
 - The tests verify that the asset correctly identifies contacts to be included and excluded based on the filter criteria.
 - The tests verify that the asset handles an empty input list gracefully.

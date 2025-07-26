@@ -1,6 +1,6 @@
 ---
 title: 'Create dbt Models for Lead Data Transformation'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_orchestration_pipeline
 task_id: 12
 labels: 'backend, dbt, data-transformation'

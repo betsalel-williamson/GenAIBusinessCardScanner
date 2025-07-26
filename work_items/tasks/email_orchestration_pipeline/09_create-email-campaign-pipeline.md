@@ -1,6 +1,6 @@
 ---
 title: 'Create Email Campaign Pipeline'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_orchestration_pipeline
 task_id: 9
 story_id: 13
@@ -17,6 +17,6 @@ Create a new Dagster pipeline that orchestrates the email campaign. This pipelin
 
 **Acceptance Criteria:**
 
-- The pipeline is defined in a new file (e.g., `dagster_card_processor/pipelines/email_campaign_pipeline.py`).
+- The pipeline is defined in a new file (e.g., `dagster_project/pipelines/email_campaign_pipeline.py`).
 - The pipeline includes the assets for reading the Google Sheet, filtering the contacts, and sending the emails.
 - The pipeline has a configuration option to enable/disable "dry-run" mode.

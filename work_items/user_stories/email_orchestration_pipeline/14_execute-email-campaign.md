@@ -1,6 +1,6 @@
 ---
 title: 'Execute Email Campaign'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_orchestration_pipeline
 story_id: 14
 labels: 'backend, dagster, workflow'

@@ -1,6 +1,6 @@
 ---
 title: 'Modify Dagster Pipeline to Emit Status Events'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: interactive_batch_upload
 task_id: 14
 story_id: 9

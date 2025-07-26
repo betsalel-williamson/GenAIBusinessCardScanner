@@ -1,6 +1,6 @@
 ---
 title: 'Core AI Data Extraction'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: data_extraction
 story_id: 0
 labels: 'backend, ai, dagster'

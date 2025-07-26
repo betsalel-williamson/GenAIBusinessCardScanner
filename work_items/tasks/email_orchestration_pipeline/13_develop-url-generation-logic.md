@@ -1,6 +1,6 @@
 ---
 title: 'Develop URL Generation Logic'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_orchestration_pipeline
 task_id: 13
 story_id: 12

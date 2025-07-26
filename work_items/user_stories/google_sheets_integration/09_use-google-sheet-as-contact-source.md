@@ -1,6 +1,6 @@
 ---
 title: 'Use Google Sheet as the Contact Source'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: google_sheets_integration
 story_id: 9
 labels: 'backend, dagster, google-sheets'

@@ -26,7 +26,7 @@ The environment will be orchestrated by a single `docker-compose.yml` file at th
 ### 2.2. Dockerfiles
 
 * **`validation_tool.ts/Dockerfile`**: This will be a multi-stage build. The first stage will install dependencies and build the application. The second, smaller stage will copy the built artifacts and run the production server. This will create a smaller, more secure production image.
-* **`dagster_business_automations/Dockerfile`**: This will install the Python dependencies and configure the entrypoint to run both the Dagit webserver and the Dagster daemon.
+* **`dagster_project/Dockerfile`**: This will install the Python dependencies and configure the entrypoint to run both the Dagit webserver and the Dagster daemon.
 
 ### 2.3. Volumes
 
@@ -45,7 +45,7 @@ A custom bridge network will be created to allow the services to communicate wit
 
 * A new `docker-compose.yml` file will be created in the project root.
 * A new `Dockerfile` will be created in the `validation_tool.ts` directory.
-* A new `Dockerfile` will be created in the `dagster_business_automations` directory.
+* A new `Dockerfile` will be created in the `dagster_project` directory.
 
 ## 4. Alternatives Considered
 

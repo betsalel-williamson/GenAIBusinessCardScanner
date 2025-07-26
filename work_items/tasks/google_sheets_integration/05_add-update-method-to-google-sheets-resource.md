@@ -1,6 +1,6 @@
 ---
 title: 'Add Update Method to Google Sheets Resource'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: google_sheets_integration
 task_id: 5
 story_id: 11

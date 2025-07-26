@@ -1,6 +1,6 @@
 ---
 title: 'Send Personalized Emails with a Template'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_sending_service
 story_id: 12
 labels: 'backend, dagster, postmark'

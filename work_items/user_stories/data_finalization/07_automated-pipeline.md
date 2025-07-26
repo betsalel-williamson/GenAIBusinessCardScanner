@@ -1,6 +1,6 @@
 ---
 title: 'Automated Finalization Pipeline'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: data_finalization
 story_id: 7
 labels: 'backend, dagster, dbt'

@@ -1,6 +1,6 @@
 ---
 title: 'Create Filter Contacts Asset'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: google_sheets_integration
 task_id: 3
 story_id: 10
@@ -17,7 +17,7 @@ Create a new Dagster asset that takes the raw contact list from the Google Sheet
 
 **Acceptance Criteria:**
 
-- The asset is defined in a new file (e.g., `dagster_card_processor/assets/email_outreach_assets.py`).
+- The asset is defined in a new file (e.g., `dagster_project/assets/email_outreach_assets.py`).
 - The asset depends on the asset that reads the Google Sheet.
 - The asset filters the list based on a configurable column name and value.
 - The asset outputs a list of dictionaries, where each dictionary represents a contact to be emailed.

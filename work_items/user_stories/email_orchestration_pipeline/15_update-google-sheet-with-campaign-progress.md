@@ -1,6 +1,6 @@
 ---
 title: 'Update Google Sheet with Campaign Progress'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_orchestration_pipeline
 story_id: 15
 labels: 'backend, dagster, workflow'

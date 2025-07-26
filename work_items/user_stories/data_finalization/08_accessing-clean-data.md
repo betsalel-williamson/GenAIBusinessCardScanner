@@ -1,6 +1,6 @@
 ---
 title: 'Accessing Clean, Structured Data'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: data_finalization
 story_id: 8
 labels: 'backend, dbt, data-modeling'

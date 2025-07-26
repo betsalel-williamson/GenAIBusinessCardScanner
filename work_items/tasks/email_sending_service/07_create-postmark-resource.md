@@ -1,6 +1,6 @@
 ---
 title: 'Create Postmark Resource'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_sending_service
 task_id: 7
 story_id: 12
@@ -17,7 +17,7 @@ Create a new Dagster resource that encapsulates the logic for sending emails via
 
 **Acceptance Criteria:**
 
-- The resource is defined in its own file (e.g., `dagster_card_processor/resources/postmark_resource.py`).
+- The resource is defined in its own file (e.g., `dagster_project/resources/postmark_resource.py`).
 - The resource is configurable with the Postmark API key.
 - The resource has a method `send_email(recipient, subject, body)`.
 - The resource supports both development (using a "test" API key that doesn't actually send emails) and production environments.

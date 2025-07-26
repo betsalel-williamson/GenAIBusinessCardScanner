@@ -1,6 +1,6 @@
 ---
 title: 'Prevent Duplicate Email Sends'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_orchestration_pipeline
 story_id: 16
 labels: 'backend, dagster, data-integrity'

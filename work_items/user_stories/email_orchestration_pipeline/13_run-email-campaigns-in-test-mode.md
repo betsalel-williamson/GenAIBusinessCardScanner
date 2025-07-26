@@ -1,6 +1,6 @@
 ---
 title: 'Run Email Campaigns in Test Mode'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: email_orchestration_pipeline
 story_id: 13
 labels: 'backend, dagster, workflow'

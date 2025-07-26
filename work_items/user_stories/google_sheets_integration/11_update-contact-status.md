@@ -1,6 +1,6 @@
 ---
 title: 'Update Contact Status in Google Sheet'
-project_name: dagster_card_processor
+project_name: dagster_project
 epic_name: google_sheets_integration
 story_id: 11
 labels: 'backend, dagster, google-sheets'
