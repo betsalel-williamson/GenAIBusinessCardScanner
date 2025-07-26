@@ -15,6 +15,9 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+    defaults:
+      run:
+        working-directory: ./data_orchestrator.py/dagster_project
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,16 +25,16 @@ jobs:
       - name: Set up Python/UV
         uses: astral-sh/setup-uv@v6
         with:
+          version: "latest"
           enable-cache: true
-          version-file: ".python-version"
 
       - name: Install the project
-        run: uv sync --project data_orchestrator.py/dagster_project --all-extras --dev
+        run: uv sync --all-extras --dev
 
       - name: Install dependencies and add venv to PATH
         run: |
-          source data_orchestrator.py/dagster_project/.venv/bin/activate
-          echo "$PWD/data_orchestrator.py/dagster_project/.venv/bin" >> $GITHUB_PATH
+          source .venv/bin/activate
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: DBT | Build from sample data for CI
         # This step runs from the dbt_project directory to correctly resolve local paths.
@@ -40,14 +43,14 @@ jobs:
           dbt build --vars '{is_ci_run: true}'
 
       - name: Python | Lint with flake8
-        run: bash data_orchestrator.py/dagster_project/lint.sh
+        run: bash lint.sh
 
       - name: Python | Test with coverage
         # Provide dummy environment variables for CI to allow Dagster resources to initialize.
         env:
           GOOGLE_API_KEY: "ci_test_key"
           MODEL_NAME: "ci_test_model"
-        run: bash data_orchestrator.py/dagster_project/test.sh
+        run: bash test.sh
 
       - name: Upload Python Coverage Report
         uses: actions/upload-artifact@v4
@@ -66,7 +69,6 @@ jobs:
 
       - name: Report Python Coverage Summary
         if: success() || failure()
-        working-directory: ./data_orchestrator.py/dagster_project
         run: |
           # Extract the total coverage percentage from the text report
           TOTAL_COVERAGE_PERCENT=$(coverage report | tail -n 1 | awk '{print $NF}' | tr -d '%')
