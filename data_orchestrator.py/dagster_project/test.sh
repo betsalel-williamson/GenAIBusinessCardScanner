@@ -2,7 +2,7 @@
 
 set -e
 
-cd $(dirname "$0")
+cd "$(dirname "$0")"
 
 # Run lintering and formatting checks
 echo "Running lintering and formatting checks..."

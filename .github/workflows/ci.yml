@@ -15,56 +15,52 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
-    defaults:
-      run:
-        working-directory: ./dagster_project
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python/UV
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version-file: "./dagster_project/.python-version"
-          cache: "pip"
-          cache-dependency-path: "**/requirements*.txt"
+          enable-cache: true
+          python-version-file: ".python-version"
+
+      - name: Install the project
+        run: uv sync --project data_orchestrator.py/dagster_project --all-extras --dev
 
       - name: Install dependencies and add venv to PATH
         run: |
-          python3.12 -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
-          python -m pip install .
-          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          source data_orchestrator.py/dagster_project/.venv/bin/activate
+          echo "$PWD/data_orchestrator.py/dagster_project/.venv/bin" >> $GITHUB_PATH
 
       - name: DBT | Build from sample data for CI
         # This step runs from the dbt_project directory to correctly resolve local paths.
-        working-directory: ./dbt_project
+        working-directory: ./data_orchestrator.py/dbt_project
         run: |
           dbt build --vars '{is_ci_run: true}'
 
       - name: Python | Lint with flake8
-        run: bash lint.sh
+        run: bash data_orchestrator.py/dagster_project/lint.sh
 
       - name: Python | Test with coverage
         # Provide dummy environment variables for CI to allow Dagster resources to initialize.
         env:
           GOOGLE_API_KEY: "ci_test_key"
           MODEL_NAME: "ci_test_model"
-        run: bash test.sh
+        run: bash data_orchestrator.py/dagster_project/test.sh
 
       - name: Upload Python Coverage Report
         uses: actions/upload-artifact@v4
         with:
           name: python-coverage-report
-          path: ./dagster_project/coverage.xml
+          path: "./data_orchestrator.py/dagster_project/coverage.xml"
 
       - name: Report Python test results
         if: success() || failure()
         uses: dorny/test-reporter@v2
         with:
           name: Python Test Results
-          path: "./dagster_project/pytest-report.xml"
+          path: "./data_orchestrator.py/dagster_project/pytest-report.xml"
           reporter: "java-junit" # Use the JUnit reporter for the XML format
           fail-on-error: true
 

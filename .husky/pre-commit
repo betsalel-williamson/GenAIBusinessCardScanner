@@ -1,5 +1,7 @@
 set -e
 
+cd "$(dirname "$0")/.."
+
 echo "Running pre-commit hook..."
 
 # Set up Python environment from the root .venv using a relative path
