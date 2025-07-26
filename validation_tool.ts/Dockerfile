@@ -52,6 +52,8 @@ RUN npm install -g pnpm && pnpm install --prod
 
 ENV NODE_ENV=production
 ENV CARDS_TO_PROCESS_MOUNT_PATH=/mnt/cards_to_process
+ENV SOURCE_DATA_MOUNT_PATH=/mnt/data_source
+ENV PROCESSED_BATCH_DATA_MOUNT_PATH=/mnt/data_processed_batches
 
 # Healthcheck instruction
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \

@@ -36,12 +36,13 @@ async function createServer() {
   app.use(
     "/images",
     express.static(
-      path.resolve(
-        __dirname,
-        "..",
-        "dagster_card_processor",
-        "cards_to_process",
-      ),
+      process.env.CARDS_TO_PROCESS_MOUNT_PATH ||
+        path.resolve(
+          __dirname,
+          "..",
+          "dagster_card_processor",
+          "cards_to_process",
+        ),
     ),
   );
 

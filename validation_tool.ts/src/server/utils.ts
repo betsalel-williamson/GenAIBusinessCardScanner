@@ -8,11 +8,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..", "..");
 
 // Directory paths for ingestion process
-export const SOURCE_DATA_DIR = path.join(ROOT_DIR, "data_source");
-export const PROCESSED_BATCH_DATA_DIR = path.join(
-  ROOT_DIR,
-  "data_processed_batches",
-);
+export const SOURCE_DATA_DIR =
+  process.env.SOURCE_DATA_MOUNT_PATH || path.join(ROOT_DIR, "data_source");
+export const PROCESSED_BATCH_DATA_DIR =
+  process.env.PROCESSED_BATCH_DATA_MOUNT_PATH ||
+  path.join(ROOT_DIR, "data_processed_batches");
 
 export interface FileInfo {
   filename: string;

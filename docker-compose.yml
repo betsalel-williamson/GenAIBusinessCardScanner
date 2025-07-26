@@ -7,6 +7,18 @@ volumes:
       type: none
       o: bind
       device: ./examples/cards_to_process
+  data_source_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./validation_tool.ts/data_source
+  data_processed_batches_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./validation_tool.ts/data_processed_batches
 
 services:
   dagster:
@@ -28,3 +40,5 @@ services:
       - "7456:7456"
     volumes:
       - cards_data:/mnt/cards_to_process
+      - data_source_volume:/mnt/data_source
+      - data_processed_batches_volume:/mnt/data_processed_batches
