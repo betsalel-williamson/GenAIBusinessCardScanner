@@ -11,7 +11,7 @@
       "args": [
         "dev",
         "-m",
-        "dagster_card_processor"
+        "dagster_project"
       ],
       "envFile": "${workspaceFolder}/.env",
       "subProcess": true,

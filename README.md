@@ -19,7 +19,7 @@
 
 This project provides a comprehensive, two-part system for processing business cards:
 
-1. **Data Processing Pipeline (`dagster_card_processor`):** A Python-based pipeline using Dagster, dbt, and the Google Gemini API to automatically extract and structure information from PDF files.
+1. **Data Processing Pipeline (`dagster_project`):** A Python-based pipeline using Dagster, dbt, and the Google Gemini API to automatically extract and structure information from PDF files.
 2. **Validation UI (`validation_tool.ts`):** A Node.js and React application that provides a web interface for a human to efficiently review, correct, and validate the AI-extracted data.
 
 ### Core Workflow
@@ -42,7 +42,7 @@ PDFs -> [ 1. Dagster Pipeline ] -> results.json -> [ 2. Validation UI ] -> Valid
 This project is a monorepo containing two separate applications. Please follow the setup instructions in each application's respective `README.md` file.
 
 1. **Set up the Data Processing Pipeline:**
-    - [**`./dagster_card_processor/README.md`**](./dagster_card_processor/README.md)
+    - [**`./dagster_project/README.md`**](./dagster_project/README.md)
 
 2. **Set up the Validation UI:**
     - [**`./validation_tool.ts/README.md`**](./validation_tool.ts/README.md)
@@ -55,12 +55,12 @@ For a detailed explanation of the project's architecture, please see the [System
 
 After completing the setup for both applications, follow this workflow:
 
-1. **Run the Pipeline:** Add your business card PDFs to `dagster_card_processor/cards_to_process/` and run the Dagster pipeline as described in its README. This will produce a `results.json` file in `dagster_card_processor/output/`.
+1. **Run the Pipeline:** Add your business card PDFs to `dagster_project/cards_to_process/` and run the Dagster pipeline as described in its README. This will produce a `results.json` file in `dagster_project/output/`.
 
 2. **Prepare for Validation:** Copy the output file into the validation tool's ingestion directory:
 
     ```bash
-    cp dagster_card_processor/output/results.json validation_tool.ts/data_source/
+    cp dagster_project/output/results.json validation_tool.ts/data_source/
     ```
 
 3. **Validate Data:** Start the validation UI server. In the web interface, ingest the `results.json` file and proceed to validate each record.

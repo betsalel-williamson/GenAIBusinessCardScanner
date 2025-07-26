@@ -10,13 +10,13 @@ This application is the first stage of the GenAI Business Card Scanner system. I
 
 ## Setup and Installation
 
-**Important:** All commands should be run from the root of the `dagster_card_processor` directory.
+**Important:** All commands should be run from the root of the `dagster_project` directory.
 
 1. **Set up Python Virtual Environment:**
     This project uses a virtual environment to manage dependencies. The virtual environment is created in the root of the monorepo.
 
     ```bash
-    # From the dagster_card_processor directory
+    # From the dagster_project directory
     python3 -m venv ../.venv
     source ../.venv/bin/activate
     pip install --upgrade pip
@@ -64,7 +64,7 @@ This application is the first stage of the GenAI Business Card Scanner system. I
 1. **Add PDFs:** Place your business card PDF files into the `cards_to_process/` directory.
 
 2. **Launch Dagster:**
-    From this directory (`dagster_card_processor/`), start the Dagster webserver.
+    From this directory (`dagster_project/`), start the Dagster webserver.
 
     ```bash
     # Make sure your virtual environment is active
@@ -81,7 +81,7 @@ This application is the first stage of the GenAI Business Card Scanner system. I
 
 ## How to Test
 
-To run the tests, execute the following command from the `dagster_card_processor` directory:
+To run the tests, execute the following command from the `dagster_project` directory:
 
 ```bash
 # Ensure your virtual environment is active

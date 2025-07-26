@@ -18,7 +18,7 @@ updates:
     # You can add more options here, e.g., `open-pull-requests-limit: 10`
 
   - package-ecosystem: "uv"
-    directory: "/dagster_business_automations/"
+    directory: "/dagster_project/"
     schedule:
       interval: "daily"
     # You can add more options here, e.g., `open-pull-requests-limit: 10`

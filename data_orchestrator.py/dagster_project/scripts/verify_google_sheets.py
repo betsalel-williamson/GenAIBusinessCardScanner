@@ -1,5 +1,5 @@
 import os
-from dagster_card_processor.defs import GoogleSheetsResource
+from dagster_project.defs import GoogleSheetsResource
 
 sheet_id = "1JSbMpy6nM0y8S_-eavKR-hgvayrQ6urN5Y4TpnQVi9k"
 worksheet_name = "Data"

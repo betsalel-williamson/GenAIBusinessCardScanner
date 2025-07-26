@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
-from dagster_card_processor.defs import EmailClientResource
-from dagster_card_processor.email_client_interface import EmailClient
+from dagster_project.defs import EmailClientResource
+from dagster_project.email_client_interface import EmailClient
 
 
 def test_email_client_resource_send_templated_email():

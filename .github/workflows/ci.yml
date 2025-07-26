@@ -17,7 +17,7 @@ jobs:
       pull-requests: write
     defaults:
       run:
-        working-directory: ./dagster_business_automations
+        working-directory: ./dagster_project
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: "./dagster_business_automations/.python-version"
+          python-version-file: "./dagster_project/.python-version"
           cache: "pip"
           cache-dependency-path: "**/requirements*.txt"
 
@@ -57,14 +57,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: python-coverage-report
-          path: ./dagster_business_automations/coverage.xml
+          path: ./dagster_project/coverage.xml
 
       - name: Report Python test results
         if: success() || failure()
         uses: dorny/test-reporter@v2
         with:
           name: Python Test Results
-          path: "./dagster_business_automations/pytest-report.xml"
+          path: "./dagster_project/pytest-report.xml"
           reporter: "java-junit" # Use the JUnit reporter for the XML format
           fail-on-error: true
 

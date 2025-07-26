@@ -34,6 +34,6 @@ set +a
 export INPUT_DIR="${TEST_INPUT_DIR}"
 
 pytest \
-  --cov=dagster_card_processor \
+  --cov=dagster_project \
   --cov-report=xml:coverage.xml \
   --junitxml=pytest-report.xml

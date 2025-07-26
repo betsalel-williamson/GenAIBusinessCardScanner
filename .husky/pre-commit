@@ -1,4 +1,10 @@
+set -e
+
 echo "Running pre-commit hook..."
+
+# Set up Python environment from the root .venv using a relative path
+PROJECT_ROOT=$(dirname "$0")/..
+source "${PROJECT_ROOT}/.venv/bin/activate"
 
 # Run markdown formatter (runs unconditionally as it's fast and fixes issues)
 echo "Running markdown formatter..."
@@ -12,27 +18,22 @@ else
   (cd validation_tool.ts && pnpm run precommit-checks)
 fi
 
-# Run pre-commit checks for dagster_business_automations (Python) if there are staged changes in its directory
-if git diff --cached --quiet -- dagster_business_automations; then
-  echo "No staged changes in dagster_business_automations, skipping pre-commit checks."
+# Run pre-commit checks for dagster_project (Python) if there are staged changes in its directory
+if git diff --cached --quiet -- data_orchestrator.py/dagster_project; then
+  echo "No staged changes in dagster_project, skipping pre-commit checks."
 else
-  echo "Running pre-commit checks for dagster_business_automations"
-  (cd dagster_business_automations && \
-    python3.12 -m venv .venv && \
-    source .venv/bin/activate && \
-    pip install --upgrade pip && \
-    pip install . && \
+  echo "Running pre-commit checks for dagster_project"
+  (cd data_orchestrator.py/dagster_project && \
     bash lint.sh && \
     bash test.sh)
 fi
 
 # Run pre-commit checks for dbt_project if there are staged changes in its directory
-if git diff --cached --quiet -- dbt_project; then
-  echo "No staged changes in dbt_project, skipping pre-commit checks."
+if git diff --cached --quiet -- data_orchestrator.py/dbt_project; then
+  echo "No staged changes in dbt_project, skipping dbt build."
 else
-  echo "Running dbt build for dbt_project"
-  # Use the dbt executable from the dagster_business_automations virtual environment
-  (cd dbt_project && ../dagster_business_automations/.venv/bin/dbt build --vars '{is_ci_run: true}')
+  echo "Running dbt build for data_orchestrator.py/dbt_project"
+  (cd data_orchestrator.py/dbt_project && dbt build --vars '{is_ci_run: true}')
 fi
 
 git update-index --again

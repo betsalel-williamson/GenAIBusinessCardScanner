@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from dagster_card_processor.postmark_email_client import PostmarkEmailClient
+from dagster_project.postmark_email_client import PostmarkEmailClient
 from postmarker.core import PostmarkClient
 
 

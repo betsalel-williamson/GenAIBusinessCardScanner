@@ -2,9 +2,9 @@ import json
 from unittest.mock import patch
 from dagster import build_asset_context
 
-from dagster_card_processor.schema_assets import response_schema_json, AssetConfig
-from dagster_card_processor.card_processing_assets import processed_card_json
-from dagster_card_processor.config import FileConfig
+from dagster_project.schema_assets import response_schema_json, AssetConfig
+from dagster_project.card_processing_assets import processed_card_json
+from dagster_project.config import FileConfig
 
 
 def test_response_schema_json(tmp_path, mock_dbt_manifest: dict):
@@ -20,7 +20,7 @@ def test_response_schema_json(tmp_path, mock_dbt_manifest: dict):
     )
     context = build_asset_context()
 
-    with patch("dagster_card_processor.schema_assets.json.load") as mock_json_load:
+    with patch("dagster_project.schema_assets.json.load") as mock_json_load:
         mock_json_load.return_value = mock_dbt_manifest
         result_schema = response_schema_json(context, config)
 
@@ -52,9 +52,7 @@ def test_processed_card_json(mocker, tmp_path, mock_gemini_resource, sample_sche
     # mock_gemini_resource is now provided by the fixture
 
     # Mock datetime to control timestamps
-    mock_datetime = mocker.patch(
-        "dagster_card_processor.card_processing_assets.datetime"
-    )
+    mock_datetime = mocker.patch("dagster_project.card_processing_assets.datetime")
     mock_now = mocker.MagicMock()
     mock_now.strftime.side_effect = lambda fmt: {
         "%Y-%m-%d": "2024-01-01",

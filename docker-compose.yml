@@ -23,12 +23,12 @@ volumes:
 services:
   dagster:
     build:
-      context: .
+      context: ./data_orchestrator.py
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     env_file:
-      - ./dagster_business_automations/.env.test
+      - ./data_orchestrator.py/dagster_project/.env.test
     volumes:
       - cards_data:/mnt/cards_to_process
 

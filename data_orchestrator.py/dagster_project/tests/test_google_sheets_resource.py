@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 
-from dagster_card_processor.defs import GoogleSheetsResource
+from dagster_project.defs import GoogleSheetsResource
 
 
 @patch("gspread.authorize")

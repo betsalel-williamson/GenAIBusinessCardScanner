@@ -3,10 +3,10 @@
 directory_type = "project"
 
 [tool.dg.project]
-root_module = "dagster_card_processor"
+root_module = "dagster_project"
 
 [tool.setuptools]
-packages = ["dagster_card_processor"]
+packages = ["dagster_project"]
 
 [build-system]
 requires = ["setuptools"]
@@ -36,11 +36,11 @@ dependencies = [
 ]
 
 [tool.dagster]
-module_name = "dagster_card_processor"
+module_name = "dagster_project"
 
 [tool.pytest.ini_options]
 filterwarnings = [ "ignore::DeprecationWarning:dbt_common" ]
 
 [tool.coverage.run]
-source = ["dagster_card_processor"]
+source = ["dagster_project"]
 omit = ["tests/*"]

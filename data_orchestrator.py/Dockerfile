@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 # Set the PATH to include standard system binaries and the virtual environment's bin directory
-ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/dagster_business_automations/.venv/bin"
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/dagster_project/.venv/bin"
 
 # Install system dependencies and clean up (minimal)
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
@@ -24,16 +24,16 @@ RUN groupadd -r appuser && useradd --no-log-init -r -g appuser -m appuser \
 WORKDIR /app
 
 # Copy essential files and directories
-COPY dagster_business_automations/dagster_card_processor/ ./dagster_business_automations/dagster_card_processor/
-COPY dagster_business_automations/pyproject.toml ./dagster_business_automations/pyproject.toml
-COPY dagster_business_automations/dagster.yaml ./dagster_business_automations/dagster.yaml
-COPY dagster_business_automations/workspace.yaml ./dagster_business_automations/workspace.yaml
-COPY dagster_business_automations/config/ ./dagster_business_automations/config/
-COPY dagster_business_automations/healthcheck.py ./dagster_business_automations/healthcheck.py
+COPY dagster_project/dagster_project/ ./dagster_project/dagster_project/
+COPY dagster_project/pyproject.toml ./dagster_project/pyproject.toml
+COPY dagster_project/dagster.yaml ./dagster_project/dagster.yaml
+COPY dagster_project/workspace.yaml ./dagster_project/workspace.yaml
+COPY dagster_project/config/ ./dagster_project/config/
+COPY dagster_project/healthcheck.py ./dagster_project/healthcheck.py
 COPY dbt_project/ ./dbt_project/
 
 # Now change WORKDIR to the dagster project root for dependency installation and running
-WORKDIR /app/dagster_business_automations
+WORKDIR /app/dagster_project
 
 # Install Python dependencies using uv with --system (container best practice)
 RUN uv pip install --system . requests
@@ -54,4 +54,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD python healthcheck.py
 
 # Entrypoint
-CMD ["dg", "dev", "-m", "dagster_card_processor", "--host", "0.0.0.0"]
+CMD ["dg", "dev", "-m", "dagster_project", "--host", "0.0.0.0"]

@@ -1,5 +1,5 @@
 from dagster import ConfigurableResource, InitResourceContext, ResourceDependency
-from dagster_card_processor.email_client_interface import EmailClient
+from dagster_project.email_client_interface import EmailClient
 
 
 class EmailClientResource(ConfigurableResource):

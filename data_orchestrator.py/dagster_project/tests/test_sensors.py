@@ -2,8 +2,8 @@ import json
 import pytest
 from dagster import build_sensor_context, SensorResult
 
-from dagster_card_processor.sensors import pdf_files_sensor, validated_records_sensor
-from dagster_card_processor.defs import DuckDBResource
+from dagster_project.sensors import pdf_files_sensor, validated_records_sensor
+from dagster_project.defs import DuckDBResource
 
 
 def test_pdf_files_sensor_no_new_files(mocker):

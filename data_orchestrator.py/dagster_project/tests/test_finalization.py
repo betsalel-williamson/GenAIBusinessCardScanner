@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock
 from dagster import materialize, ResourceDefinition
 
-from dagster_card_processor.finalization_assets import mark_as_processed
-from dagster_card_processor.defs import DuckDBResource
+from dagster_project.finalization_assets import mark_as_processed
+from dagster_project.defs import DuckDBResource
 
 
 class NoOpConnectionManager:
