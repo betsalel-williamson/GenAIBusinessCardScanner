@@ -156,7 +156,7 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(
             {autosaveStatus.message}
           </span>
         </div>
-        <div ref={scrollableDivRef} className="flex-grow overflow-y-auto p-6">
+        <div ref={scrollableDivRef} className="grow overflow-y-auto p-6">
           {" "}
           {/* Assign ref here */}
           <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
@@ -175,7 +175,7 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(
                     value={String(currentRecord[key] || "")}
                     onChange={(e) => onFieldChange(key, e.target.value)}
                     onFocus={(e) => onFieldFocus(key, e.target.value)} // Report focus event
-                    className="flex-grow p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[50px]"
+                    className="grow p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[50px]"
                     rows={3}
                   />
                   <button
@@ -253,14 +253,14 @@ const DataEntryPane = forwardRef<DataEntryPaneHandle, DataEntryPaneProps>(
           <button
             type="button"
             onClick={onCommit}
-            className="flex-grow px-4 py-3 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            className="grow px-4 py-3 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
             Commit & Next File
           </button>
           <button
             type="button"
             onClick={onBack}
-            className="flex-grow px-4 py-3 font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+            className="grow px-4 py-3 font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
           >
             Back to List
           </button>

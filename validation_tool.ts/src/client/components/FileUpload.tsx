@@ -195,7 +195,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
                   className="flex items-center justify-between text-sm p-2 bg-white rounded-md border border-gray-200"
                 >
                   <span className="truncate pr-2">{file.name}</span>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     {currentStatus === "ready_for_review" ? (
                       <Link
                         to={`/validate/${file.name}`}

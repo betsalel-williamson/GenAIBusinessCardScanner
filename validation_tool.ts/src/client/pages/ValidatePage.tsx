@@ -92,7 +92,7 @@ const ValidatePage: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 pb-2">
-      <div className="flex-grow p-6 flex flex-col">
+      <div className="grow p-6 flex flex-col">
         {currentRecord && currentFileSrc ? (
           <ImagePane
             imageWrapperRef={imageWrapperRef}

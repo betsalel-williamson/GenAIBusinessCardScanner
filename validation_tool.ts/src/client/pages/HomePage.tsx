@@ -147,7 +147,7 @@ const HomePage: React.FC = () => {
                   key={file.filename}
                   className="py-4 flex justify-between items-center"
                 >
-                  <div className="flex-grow">
+                  <div className="grow">
                     <span className="text-lg text-gray-800 font-medium mr-2">
                       {file.filename}
                     </span>

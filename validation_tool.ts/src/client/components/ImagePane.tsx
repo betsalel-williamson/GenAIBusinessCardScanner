@@ -233,7 +233,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
 
   if (!pdfSrc) {
     return (
-      <div className="flex-grow flex items-center justify-center text-gray-500">
+      <div className="grow flex items-center justify-center text-gray-500">
         No source file provided for this record.
       </div>
     );
@@ -264,7 +264,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
   return (
     <div
       ref={viewportRef}
-      className={`flex-grow overflow-hidden relative ${isDragging ? "grabbing" : "grab"} flex items-center justify-center`}
+      className={`grow overflow-hidden relative ${isDragging ? "grabbing" : "grab"} flex items-center justify-center`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

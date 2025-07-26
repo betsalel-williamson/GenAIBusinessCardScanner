@@ -40,7 +40,7 @@ const StatusDisplay: React.FC<StatusDisplayProps> = ({
   }
 
   return (
-    <div className="flex-grow flex items-center justify-center text-center p-4 rounded-md">
+    <div className="grow flex items-center justify-center text-center p-4 rounded-md">
       <div className={`text-xl ${messageClass}`}>
         <p className="font-semibold mb-2">{message}</p>
         <p className="text-base">{description}</p>
