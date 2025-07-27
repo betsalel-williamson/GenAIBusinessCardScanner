@@ -95,7 +95,7 @@ const HomePage: React.FC = () => {
   const getEmptyMessage = () => {
     switch (filterStatus) {
       case "all":
-        return "No files found. Place batch JSON files in 'data_source/' to begin.";
+        return "No files found. Place batch JSON files in 'json_data_source/' to begin.";
       case "active_work_only":
         return "No active work found. All files may be validated, or you need to ingest a new batch.";
       case "in_progress_only":

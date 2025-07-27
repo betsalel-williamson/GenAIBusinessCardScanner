@@ -18,7 +18,7 @@ Create a new Dagster asset responsible for moving successfully processed PDF fil
 
 - [ ] A new asset `archive_processed_file` is created.
 - [ ] The `archive_processed_file` asset takes the path of the processed PDF as input.
-- [ ] The asset successfully moves the input PDF file from `cards_to_process` to `cards_processed`.
+- [ ] The asset successfully moves the input PDF file from `image_data_source` to `cards_processed`.
 - [ ] The `process_all_assets_job` is updated to include `archive_processed_file` as a dependency of `processed_card_json`.
 - [ ] Unit tests are added for the `archive_processed_file` asset.
 

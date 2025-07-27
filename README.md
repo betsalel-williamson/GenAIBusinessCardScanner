@@ -55,15 +55,11 @@ For a detailed explanation of the project's architecture, please see the [System
 
 After completing the setup for both applications, follow this workflow:
 
-1. **Run the Pipeline:** Add your business card PDFs to `dagster_project/cards_to_process/` and run the Dagster pipeline as described in its README. This will produce a `results.json` file in `dagster_project/output/`.
+1. **Run the Pipeline:** Add your business card PDFs to `examples/image_data_source/` and run the Dagster pipeline as described in its README. This will produce `*.json` files in `examples/json_data_source/`.
 
-2. **Prepare for Validation:** Copy the output file into the validation tool's ingestion directory:
+2. **Prepare for Validation:** The validation tool's ingestion directory will source the data from `examples/json_data_source/`
 
-    ```bash
-    cp dagster_project/output/results.json validation_tool.ts/data_source/
-    ```
-
-3. **Validate Data:** Start the validation UI server. In the web interface, ingest the `results.json` file and proceed to validate each record.
+3. **Validate Data:** Start the validation UI server. In the web interface, ingest the `*.json` files and proceed to validate each record.
 
 ## Contributing
 
@@ -72,5 +68,3 @@ Contributions are welcome. Please refer to the issues tab for areas where you ca
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
-
-<!-- Test pre-commit hooks -->

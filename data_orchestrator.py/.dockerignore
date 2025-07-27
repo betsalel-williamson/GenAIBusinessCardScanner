@@ -91,7 +91,7 @@ dagster_project/*.md
 dagster_project/scripts/
 dagster_project/tests/
 dagster_project/*.sh
-dagster_project/dagster_project/cards_to_process/
+dagster_project/dagster_project/image_data_source/
 **/.tmp_dagster_home_*/
 
 # Specific exclusions within dbt_project/ (not covered by general patterns)

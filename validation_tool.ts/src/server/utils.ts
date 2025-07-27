@@ -1,18 +1,11 @@
 import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
 import { DataRecord } from "../../types/types.js";
 import getDb from "./db.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(__dirname, "..", "..");
+import { config } from "./config.js";
 
 // Directory paths for ingestion process
-export const SOURCE_DATA_DIR =
-  process.env.SOURCE_DATA_MOUNT_PATH || path.join(ROOT_DIR, "data_source");
-export const PROCESSED_BATCH_DATA_DIR =
-  process.env.PROCESSED_BATCH_DATA_MOUNT_PATH ||
-  path.join(ROOT_DIR, "data_processed_batches");
+export const SOURCE_DATA_DIR = config.JSON_DATA_SOURCE_MOUNT_PATH;
+export const JSON_DATA_PROCESSED = config.JSON_DATA_PROCESSED_MOUNT_PATH;
 
 export interface FileInfo {
   filename: string;
@@ -24,7 +17,7 @@ export interface FileInfo {
  * Returns a combined list of batch files needing ingestion and records for validation.
  */
 export const getFileListWithStatus = async (): Promise<FileInfo[]> => {
-  // 1. Get batch files from the data_source directory
+  // 1. Get batch files from the json_data_source directory
   let sourceBatchFiles: FileInfo[] = [];
   try {
     const files = await fs.readdir(SOURCE_DATA_DIR);

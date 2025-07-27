@@ -9,12 +9,12 @@ echo "Running lintering and formatting checks..."
 black .
 flake8 .
 
-# Create a temporary directory for INPUT_DIR for testing
-TEST_INPUT_DIR=$(mktemp -d -t dagster_input_dir_XXXXXX)
-echo "Using temporary directory for INPUT_DIR: ${TEST_INPUT_DIR}"
+# Create a temporary directory for IMAGE_DATA_SOURCE for testing
+TEST_IMAGE_DATA_SOURCE=$(mktemp -d -t dagster_input_dir_XXXXXX)
+echo "Using temporary directory for IMAGE_DATA_SOURCE: ${TEST_IMAGE_DATA_SOURCE}"
 
 # Ensure the temporary directory is cleaned up on exit
-trap "rm -rf ${TEST_INPUT_DIR}" EXIT
+trap "rm -rf ${TEST_IMAGE_DATA_SOURCE}" EXIT
 
 # Run tests
 echo "Running tests..."
@@ -30,8 +30,8 @@ set -a
 source .env.test
 set +a
 
-# Set INPUT_DIR for tests
-export INPUT_DIR="${TEST_INPUT_DIR}"
+# Set IMAGE_DATA_SOURCE for tests
+export IMAGE_DATA_SOURCE="${TEST_IMAGE_DATA_SOURCE}"
 
 pytest \
   --cov=dagster_project \

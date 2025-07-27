@@ -5,7 +5,7 @@ from .project import business_card_project
 
 
 class AssetConfig(Config):
-    output_dir: str = os.getenv("OUTPUT_DIR", "output")
+    output_dir: str = os.getenv("JSON_DATA_SOURCE", "output")
     system_injected_prefix: str = os.getenv(
         "SYSTEM_INJECTED_PREFIX", "[SYSTEM-INJECTED]"
     )

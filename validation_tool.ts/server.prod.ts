@@ -33,12 +33,12 @@ async function createServer() {
       process.env.PUBLIC_MOUNT_PATH || path.resolve(__dirname, "../../public"),
     ),
   );
-  // Serve images from cards_to_process directory, configurable via env var
+  // Serve images from image_data_source directory, configurable via env var
   app.use(
     "/images",
     express.static(
       process.env.CARDS_TO_PROCESS_MOUNT_PATH ||
-        path.resolve(__dirname, "..", "dagster_project", "cards_to_process"),
+        path.resolve(__dirname, "..", "dagster_project", "image_data_source"),
     ),
   );
 

@@ -21,7 +21,7 @@ The solution will leverage the existing file upload component and backend API. T
 ### High-Level Flow
 
 1. **User Uploads Files:** The user selects one or more PDF/image files using the existing `FileUpload.tsx` component.
-2. **Backend Receives Files:** The Express server receives the files via the `/api/upload` endpoint, saves them to the `cards_to_process` directory, which triggers the existing Dagster sensor.
+2. **Backend Receives Files:** The Express server receives the files via the `/api/upload` endpoint, saves them to the `image_data_source` directory, which triggers the existing Dagster sensor.
 3. **SSE Connection:** Upon upload, the frontend establishes an SSE connection to a new server endpoint using the native `EventSource` API.
 4. **Dagster Pipeline Emits Events:** The Dagster pipeline will be modified to emit events at key stages of the process (e.g., `processing_started`, `processing_complete`, `processing_error`).
 5. **Backend Relays Events:** The Express server's SSE endpoint will subscribe to a Redis pub/sub channel. The Dagster pipeline will publish events to this channel.

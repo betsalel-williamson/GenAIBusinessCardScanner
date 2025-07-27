@@ -45,7 +45,7 @@ The final workflow will be:
 1. **Create PDF Upload Endpoint (Validation Tool Backend)**:
     * Add a middleware like `multer` to handle `multipart/form-data`.
     * Create a new API route, `POST /api/upload`, in `validation_tool.ts`.
-    * This endpoint will receive uploaded PDF files and save them to the `dagster_project/cards_to_process/` directory. This directory already exists and is monitored by the Dagster sensor.
+    * This endpoint will receive uploaded PDF files and save them to the `dagster_project/image_data_source/` directory. This directory already exists and is monitored by the Dagster sensor.
 
 2. **Create PDF Upload Component (Validation Tool Frontend)**:
     * On `HomePage.tsx`, add a new UI component for file uploading.
@@ -65,7 +65,7 @@ The final workflow will be:
 4. **Remove Redundant Logic and Files**:
     * Delete the `aggregated_results_json_to_db` asset from `dbt_assets.py`.
     * Delete the `src/server/routes/ingest.ts` route from the Validation Tool, as Dagster now handles all ingestion.
-    * Remove the `data_source/` and `data_processed_batches/` directories.
+    * Remove the `json_data_source/` and `data_processed_batches/` directories.
     * Update `HomePage.tsx` to remove any logic related to "batch" files or ingestion buttons.
 
 ### Phase 3: Create the Finalization Pipeline

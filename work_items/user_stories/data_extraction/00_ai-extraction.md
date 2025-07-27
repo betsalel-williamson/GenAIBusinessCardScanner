@@ -16,7 +16,7 @@ touched: '**'
 
 ## Acceptance Criteria
 
-- A Dagster sensor detects any new PDF file added to the `cards_to_process` directory.
+- A Dagster sensor detects any new PDF file added to the `image_data_source` directory.
 - For each new PDF, a unique Dagster run is triggered and tagged for rate-limiting.
 - The pipeline generates a JSON schema for the AI based on the `stg_cards_data` dbt model's columns and descriptions.
 - The pipeline uses the Google Gemini resource to process the PDF against the generated schema.

@@ -6,12 +6,12 @@ import crypto from "crypto";
 
 // UPLOAD_DIR should point to the mounted volume for cards to process
 const UPLOAD_DIR =
-  process.env.CARDS_TO_PROCESS_MOUNT_PATH || "/mnt/cards_to_process";
+  process.env.CARDS_TO_PROCESS_MOUNT_PATH || "/mnt/image_data_source";
 
 // Ensure the upload directory exists upon server startup
 // In a Dockerized environment with mounted volumes, this directory should already exist.
 // However, for local development without Docker, it's good to ensure it's there.
-fs.mkdir(UPLOAD_DIR, { recursive: true });
+// fs.mkdir(UPLOAD_DIR, { recursive: true });
 
 const storage = multer.memoryStorage();
 

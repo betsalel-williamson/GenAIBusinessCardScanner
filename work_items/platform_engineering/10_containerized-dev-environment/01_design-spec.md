@@ -33,7 +33,7 @@ The environment will be orchestrated by a single `docker-compose.yml` file at th
 To ensure data persistence and communication between services, the following volumes will be defined:
 
 * `db_storage`: For the `business_cards.duckdb` file.
-* `cards_to_process`: For the business card files to be processed by Dagster.
+* `image_data_source`: For the business card files to be processed by Dagster.
 * `processing_output`: For the JSON output from the AI extraction.
 * `dagster_storage`: For Dagster's run history and other metadata.
 

@@ -27,7 +27,7 @@ const StatusDisplay: React.FC<StatusDisplayProps> = ({
       break;
     case "empty":
       messageClass = "text-gray-500";
-      description = `No data found for ${jsonFilename || "this file"}. Check your JSON file in 'data_source/'.`;
+      description = `No data found for ${jsonFilename || "this file"}. Check your JSON file in 'json_data_source/'.`;
       break;
     case "no-source":
       messageClass = "text-gray-700";

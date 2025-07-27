@@ -1,24 +1,30 @@
 version: '3.8'
 
 volumes:
-  cards_data:
+  image_data_source_volume:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ./examples/cards_to_process
-  data_source_volume:
+      device: ./examples/image_data_source
+  image_data_processed_volume:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ./validation_tool.ts/data_source
-  data_processed_batches_volume:
+      device: ./examples/image_data_processed
+  json_data_source_volume:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ./validation_tool.ts/data_processed_batches
+      device: ./examples/json_data_source
+  json_data_processed_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./examples/json_data_processed
 
 services:
   dagster:
@@ -30,7 +36,10 @@ services:
     env_file:
       - ./data_orchestrator.py/dagster_project/.env.test
     volumes:
-      - cards_data:/mnt/cards_to_process
+      - image_data_source_volume:/mnt/image_data_source
+      - image_data_processed_volume:/mnt/image_data_processed
+      - json_data_source_volume:/mnt/json_data_source
+      - json_data_processed_volume:/mnt/json_data_processed
 
   validation_tool:
     build:
@@ -39,6 +48,7 @@ services:
     ports:
       - "7456:7456"
     volumes:
-      - cards_data:/mnt/cards_to_process
-      - data_source_volume:/mnt/data_source
-      - data_processed_batches_volume:/mnt/data_processed_batches
+      - image_data_source_volume:/mnt/image_data_source
+      - image_data_processed_volume:/mnt/image_data_processed
+      - json_data_source_volume:/mnt/json_data_source
+      - json_data_processed_volume:/mnt/json_data_processed

@@ -37,7 +37,7 @@ async function createServer() {
     "/images",
     express.static(
       process.env.CARDS_TO_PROCESS_MOUNT_PATH ||
-        path.resolve(__dirname, "..", "dagster_project", "cards_to_process"),
+        path.resolve(__dirname, "..", "dagster_project", "image_data_source"),
     ),
   );
 

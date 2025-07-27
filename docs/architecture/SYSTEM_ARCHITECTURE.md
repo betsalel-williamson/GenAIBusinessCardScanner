@@ -13,13 +13,13 @@ The application employs a **Client-Server-Side Rendered (SSR) architecture** bui
 - **`server.ts`**: The core Express server. It integrates Vite in `middlewareMode` for SSR during development and serves pre-built client assets in production.
 - **Database (`src/server/db.ts`)**: A **SQLite database** (`app_data.db`) serves as the central store for all individual validation records. It replaces the previous file-based system for `in_progress` and `validated` data.
 - **API Endpoints (`src/server/api.ts` and sub-routes)**:
-  - `/api/files`: Lists all available work, distinguishing between "batch" files (from `data_source/` that need ingestion) and "record" files (from the database that need validation).
+  - `/api/files`: Lists all available work, distinguishing between "batch" files (from `json_data_source/` that need ingestion) and "record" files (from the database that need validation).
   - `/api/files/:filename`: Serves the current data for a specific record from the database.
   - `/api/source-data/:filename`: Provides the original, untouched data for a specific record from the database's `source_data` column, used for the field-level revert feature.
   - `/api/autosave/:filename` (PATCH): Receives an updated record and updates its `data` and `status` in the database.
   - `/api/commit/:filename` (PATCH): Receives a finalized record, updates its status to 'validated' in the database, and identifies the next record for validation.
-  - `/api/ingest/:filename` (POST): Reads a batch file from `data_source/`, splits it into individual records, and inserts each one into the database.
-- **Static File Serving**: Serves static assets, including PDF images from `dagster_project/cards_to_process/`.
+  - `/api/ingest/:filename` (POST): Reads a batch file from `json_data_source/`, splits it into individual records, and inserts each one into the database.
+- **Static File Serving**: Serves static assets, including PDF images from `dagster_project/image_data_source/`.
 
 ### 2. Client-Side (React/TypeScript with Vite)
 
@@ -38,13 +38,13 @@ The application employs a **Client-Server-Side Rendered (SSR) architecture** bui
 
 The system uses a hybrid approach of a database and specific directories for a clear data lifecycle:
 
-1. **`data_source/` (Directory)**: Contains original, multi-record JSON **batch files** that need to be processed. This is the starting point of the ingestion pipeline.
+1. **`json_data_source/` (Directory)**: Contains original, multi-record JSON **batch files** that need to be processed. This is the starting point of the ingestion pipeline.
 2. **SQLite Database (`app_data.db`)**: The core of the new architecture. It contains a `records` table where each row represents a single record to be validated. A record has a `status` of `'source'`, `'in_progress'`, or `'validated'`.
-3. **`data_processed_batches/` (Directory)**: After a batch file from `data_source/` is successfully ingested into the database, it is moved here for archival purposes.
+3. **`data_processed_batches/` (Directory)**: After a batch file from `json_data_source/` is successfully ingested into the database, it is moved here for archival purposes.
 
 **Workflow:**
 
-1. A user places a batch JSON file into `data_source/`.
+1. A user places a batch JSON file into `json_data_source/`.
 2. On the `HomePage`, the file appears with an "Ingest" button.
 3. The user clicks "Ingest". The server reads the batch file, creates a new entry in the SQLite `records` table for each item in the batch, and moves the original file to `data_processed_batches/`.
 4. The individual records now appear on the `HomePage` with a "Validate" button.

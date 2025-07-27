@@ -61,15 +61,15 @@ This application is the first stage of the GenAI Business Card Scanner system. I
 
 ## How to Run
 
-1. **Add PDFs:** Place your business card PDF files into the `cards_to_process/` directory.
+1. **Add PDFs:** Place your business card PDF files into the `examples/image_data_source/` directory.
 
 2. **Launch Dagster:**
     From this directory (`dagster_project/`), start the Dagster webserver.
 
     ```bash
     # Make sure your virtual environment is active
-    # (source ../.venv/bin/activate)
-    dagster dev
+    # (source .venv/bin/activate)
+    dg dev
     ```
 
     The Dagster UI will be available at `http://localhost:3000`.

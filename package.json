@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "markdown-format": "markdownlint-cli2 --fix",
-    "init:python": "uv sync --project data_orchestrator.py/dagster_project && echo \"Run:\nsource ./data_orchestrator.py/dagster_project/.venv/bin/activate\""
+    "init:python": "uv sync --project data_orchestrator.py/dagster_project && echo \"Run:\nsource ./data_orchestrator.py/dagster_project/.venv/bin/activate\"",
+    "build:dagster": "(cd data_orchestrator.py/dagster_project && uv pip install .)"
   },
   "keywords": [],
   "author": "",

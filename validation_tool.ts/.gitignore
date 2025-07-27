@@ -35,7 +35,7 @@ dist-ssr
 # Data directories (specific to this app)
 data_in_progress/
 data_validated/
-data_source/
+json_data_source/
 public/images/
 data_migrated/
 app_data.db

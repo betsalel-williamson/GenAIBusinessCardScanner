@@ -19,7 +19,7 @@ touched: '**'
 - The homepage displays a file upload area (e.g., button, drag-and-drop zone).
 - I can select multiple PDF files at once from my local machine.
 - The UI provides clear feedback for each file's upload status (success, failure, in-progress).
-- Successfully uploaded PDFs are stored in the `cards_to_process` directory for Dagster to detect.
+- Successfully uploaded PDFs are stored in the `image_data_source` directory for Dagster to detect.
 
 ## Metrics for Success
 
