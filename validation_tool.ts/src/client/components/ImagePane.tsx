@@ -6,6 +6,8 @@ import type {
   PDFDocumentLoadingTask,
 } from "pdfjs-dist";
 
+import { RenderParameters } from "pdfjs-dist/types/src/display/api";
+
 export interface ImagePaneProps {
   pdfSrc: string; // Keep name for now, but it handles images too
   transformation: TransformationState;
@@ -119,7 +121,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       canvas.style.width = "100%";
       canvas.style.height = "auto";
 
-      const renderContext = {
+      const renderContext: RenderParameters = {
         canvasContext: context,
         viewport: viewport,
       };
