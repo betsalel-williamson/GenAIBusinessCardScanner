@@ -24,7 +24,7 @@ labels: { comma-separated-labels }
 status: { status }
 date_created: { iso date LA timezone }
 date_verified_completed: { iso date LA timezone }
-touched: { a star is added here every day that we try to work on this story }
+touched: { a star is added here every day that we try to work on this }
 ---
 
 - **As a** {User Persona},
