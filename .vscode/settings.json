@@ -23,5 +23,13 @@
     "MD033": {
       "allowed_elements": ["p", "a", "h1", "img"]
     }
-  }
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "python-envs.pythonProjects": [
+    {
+      "path": "data_orchestrator.py/dagster_project",
+      "envManager": "ms-python.python:system",
+      "packageManager": "ms-python.python:pip"
+    }
+  ]
 }
