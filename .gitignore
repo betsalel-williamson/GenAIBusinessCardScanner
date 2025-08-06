@@ -1,5 +1,5 @@
 .venv/
-.env
+*.env
 all-source-code.txt
 node_modules/
 update.sh

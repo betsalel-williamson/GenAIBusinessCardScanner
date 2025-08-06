@@ -12,7 +12,7 @@ tmp*/
 .tmp*/
 
 #
-.env
+*.env
 *.log
 
 # testing
