@@ -197,6 +197,8 @@ def test_aggregated_results_json_to_db_robust_ingestion_and_export(tmp_path):
     with open(csv_output_path, "r") as f:
         csv_content = f.read()
 
+    print(csv_content)  # For debugging purposes
+
     # Check header row (order might vary due to dynamic select, but key columns should be there)
     header_line = csv_content.splitlines()[0]
     assert "company" in header_line
