@@ -122,6 +122,7 @@ const ImagePane: React.FC<ImagePaneProps> = ({
       canvas.style.height = "auto";
 
       const renderContext: RenderParameters = {
+        canvas: canvas,
         canvasContext: context,
         viewport: viewport,
       };
