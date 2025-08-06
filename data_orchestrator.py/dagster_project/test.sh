@@ -4,6 +4,8 @@ set -e
 
 cd "$(dirname "$0")"
 
+source ./.venv/bin/activate
+
 # Run lintering and formatting checks
 echo "Running lintering and formatting checks..."
 black .
