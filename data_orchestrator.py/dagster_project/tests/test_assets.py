@@ -213,7 +213,7 @@ def test_aggregated_results_json_to_db_robust_ingestion_and_export(tmp_path):
     # Company A: All fields present, phone with leading single quote
     assert (
         r"Company A,www.companya.com,John Doe,john.doe@companya.com,'111-222-3333,First contact"
-        in csv_content
+        in csv_content.splitlines()[1]
     )
 
     # Company B: Missing website, phone; explicit null for notes
