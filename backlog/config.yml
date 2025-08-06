@@ -1,0 +1,15 @@
+project_name: "GenAIBusinessCardScanner"
+default_status: "backlog"
+statuses: ["backlog", "todo", "in-progress", "blocked", "done", "verified completed", "canceled"]
+labels: ["type:task", "type:user-story", "type:design-spec", "type:architecture-doc", "type:decision", "type:documentation", "migration", "backend", "data-pipeline", "duckdb", "platform-engineering", "developer-experience", "email-orchestration", "email-sending", "google-sheets", "interactive-batch-upload", "pipeline-robustness", "refactoring"]
+milestones: []
+date_format: "iso"
+max_column_width: 20
+default_editor: "code"
+auto_open_browser: true
+default_port: 6420
+remote_operations: true
+auto_commit: false
+bypass_git_hooks: false
+check_active_branches: true
+active_branch_days: 5
