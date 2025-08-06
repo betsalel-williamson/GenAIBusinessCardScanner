@@ -3,8 +3,8 @@ import json
 from datetime import datetime, timezone
 from urllib.parse import quote
 from dagster import asset, AssetExecutionContext, MetadataValue
-from .config import FileConfig  # <-- Import the shared config
-from .partitions import pdf_partitions  # <-- Import from the new location
+from .config import ProcessedCardConfig
+from .partitions import pdf_partitions
 from .defs import GeminiResource
 from .schema_assets import response_schema_json
 
@@ -15,7 +15,7 @@ from .schema_assets import response_schema_json
 )
 def processed_card_json(
     context: AssetExecutionContext,
-    config: FileConfig,
+    config: ProcessedCardConfig,
     gemini: GeminiResource,
 ) -> None:
     """
@@ -52,7 +52,7 @@ def processed_card_json(
 
     # Generate metadata for this card
     encoded_filename = quote(source_filename)
-    pdf_url = f"{config.pdf_base_url}/{config.input_dir}/{encoded_filename}"
+    pdf_url = f"{config.pdf_base_url}/{encoded_filename}"
     company_name = card_data.get("company", "Unknown Company")
     metadata_label = f"Card: {company_name} ({source_filename})"
     markdown_content = (

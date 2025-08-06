@@ -9,7 +9,7 @@ from dagster import (
 )
 from .partitions import pdf_partitions
 from .defs import DuckDBResource
-from .config import FileConfig  # Import FileConfig
+from .config import InputConfig
 import duckdb
 
 # SensorDbConfig is no longer needed, as we use the DuckDBResource directly.
@@ -26,7 +26,7 @@ def pdf_files_sensor(context: SensorEvaluationContext):
     tagging each run for concurrency control.
     """
     # Use input_dir from FileConfig
-    input_dir = FileConfig().input_dir
+    input_dir = InputConfig().input_dir
     if not os.path.isdir(input_dir):
         return
 

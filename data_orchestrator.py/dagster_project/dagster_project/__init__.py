@@ -1,4 +1,3 @@
-import os
 from dagster_dbt import DbtCliResource
 from dotenv import load_dotenv
 from dagster import Definitions, define_asset_job, AssetSelection
@@ -15,8 +14,12 @@ from .defs.business_card_scanner.gemini.resources import GeminiResource
 from .defs.business_card_scanner.duckdb.resources import DuckDBResource
 from .defs.email_sender.google_sheets.resources import GoogleSheetsResource
 from .defs.email_sender.email_client.resources import EmailClientResource
+from .config import GlobalAppConfig  # Import GlobalAppConfig
 
 load_dotenv()
+
+# Instantiate global configuration
+global_config = GlobalAppConfig()
 
 # Define a job that materializes all assets for initial processing
 process_all_assets_job = define_asset_job(
@@ -40,23 +43,19 @@ all_assets = [
 all_resources = {
     "dbt": DbtCliResource(
         project_dir=business_card_project,
-        dbt_executable=os.getenv("DBT_EXECUTABLE_PATH", "dbt"),
+        dbt_executable=global_config.dbt_executable,
     ),
     "gemini": GeminiResource(
-        api_key=os.getenv("GOOGLE_API_KEY"), model_name=os.getenv("MODEL_NAME")
+        api_key=global_config.gemini_api_key, model_name=global_config.gemini_model_name
     ),  # type: ignore
-    "duckdb_resource": DuckDBResource(
-        database_path=os.getenv(
-            "DUCKDB_DATABASE_PATH", "database/business_cards.duckdb"
-        )
-    ),
+    "duckdb_resource": DuckDBResource(database_path=global_config.duckdb_database_path),
     "google_sheets": GoogleSheetsResource(
-        credentials_path=str(os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH"))
+        credentials_path=global_config.google_sheets_credentials_path
     ),
     "email_client": EmailClientResource(
         email_client=PostmarkEmailClient(
-            api_token=str(os.getenv("POSTMARK_API_TOKEN")),
-            sender_email=str(os.getenv("POSTMARK_SENDER_EMAIL")),
+            api_token=global_config.postmark_api_token,
+            sender_email=global_config.postmark_sender_email,
         )
     ),
 }

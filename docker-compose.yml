@@ -1,5 +1,3 @@
-version: '3.8'
-
 volumes:
   image_data_source_volume:
     driver: local
@@ -33,13 +31,25 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    env_file:
-      - ./data_orchestrator.py/dagster_project/.env.test
     volumes:
       - image_data_source_volume:/mnt/image_data_source
       - image_data_processed_volume:/mnt/image_data_processed
       - json_data_source_volume:/mnt/json_data_source
       - json_data_processed_volume:/mnt/json_data_processed
+    secrets:
+      - google_sheets_credentials
+      - google_api_key
+      - postmark_api_token
+      - postmark_sender_email
+
+  image_server:
+    image: python:3.12-slim
+    working_dir: /usr/src/app
+    ports:
+      - "8000:8000"
+    volumes:
+      - image_data_source_volume:/usr/src/app
+    command: python -m http.server 8000
 
   validation_tool:
     build:
@@ -52,3 +62,13 @@ services:
       - image_data_processed_volume:/mnt/image_data_processed
       - json_data_source_volume:/mnt/json_data_source
       - json_data_processed_volume:/mnt/json_data_processed
+
+secrets:
+  google_sheets_credentials:
+    file: ${SECRET_GOOGLE_SHEETS_CREDENTIALS_PATH}
+  google_api_key:
+    file: ${SECRET_GOOGLE_API_KEY_PATH}
+  postmark_api_token:
+    file: ${SECRET_POSTMARK_API_TOKEN_PATH}
+  postmark_sender_email:
+    file: ${SECRET_POSTMARK_SENDER_EMAIL_PATH}

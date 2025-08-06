@@ -36,6 +36,7 @@ COPY dbt_project/ ./dbt_project/
 WORKDIR /app/dagster_project
 
 # Install Python dependencies using uv with --system (container best practice)
+# requests is needed for healthcheck
 RUN uv pip install --system . requests
 
 # Install 'dg' CLI (assumes it's available via pip)

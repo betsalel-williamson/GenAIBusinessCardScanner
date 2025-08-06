@@ -1,18 +1,14 @@
 import os
 import json
-from dagster import asset, AssetExecutionContext, Config, AssetKey
+from dagster import asset, AssetExecutionContext, AssetKey
 from .project import business_card_project
-
-
-class AssetConfig(Config):
-    output_dir: str = os.getenv("JSON_DATA_SOURCE", "output")
-    system_injected_prefix: str = os.getenv(
-        "SYSTEM_INJECTED_PREFIX", "[SYSTEM-INJECTED]"
-    )
+from .config import ResponseSchemaConfig
 
 
 @asset(deps=[AssetKey(["staging", "stg_cards_data"])])
-def response_schema_json(context: AssetExecutionContext, config: AssetConfig) -> dict:
+def response_schema_json(
+    context: AssetExecutionContext, config: ResponseSchemaConfig
+) -> dict:  # Removed file_config parameter
     """
     Parses the dbt manifest to generate a JSON schema for a SINGLE card object.
     """
@@ -40,7 +36,9 @@ def response_schema_json(context: AssetExecutionContext, config: AssetConfig) ->
         "properties": business_card_properties,
     }
 
-    output_path = os.path.join(config.output_dir, "response_schema.json")
+    output_path = os.path.join(
+        config.output_dir, "response_schema.json"
+    )  # Access output_dir from config
     with open(output_path, "w") as f:
         json.dump(schema, f, indent=2)
 
