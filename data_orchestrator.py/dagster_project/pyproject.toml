@@ -27,8 +27,7 @@ dependencies = [
     "gspread==6.2.1",
     "oauth2client==4.1.3",
     "postmarker==1.0",
-    "python-dotenv==1.1.1",
-    "PyYAML==6.0.1",
+    "python-dotenv==1.1.1"
 ]
 
 [dependency-groups]
@@ -46,7 +45,10 @@ dev = [
 module_name = "dagster_project"
 
 [tool.pytest.ini_options]
-filterwarnings = [ "ignore::DeprecationWarning:dbt_common" ]
+filterwarnings = [
+    "ignore::DeprecationWarning:dbt_common",
+    "ignore::DeprecationWarning:pydantic"
+]
 
 [tool.coverage.run]
 source = ["dagster_project"]
