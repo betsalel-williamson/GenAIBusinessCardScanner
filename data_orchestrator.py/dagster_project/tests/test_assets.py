@@ -212,7 +212,7 @@ def test_aggregated_results_json_to_db_robust_ingestion_and_export(tmp_path):
     # Check data rows for expected values and nulls (empty strings in CSV)
     # Company A: All fields present, phone with leading single quote
     assert (
-        "Company A,www.companya.com,John Doe,john.doe@companya.com,'111-222-3333,First contact"
+        r"Company A,www.companya.com,John Doe,john.doe@companya.com,'111-222-3333,First contact"
         in csv_content
     )
 
