@@ -3,6 +3,7 @@ from unittest.mock import patch
 from dagster import build_asset_context
 import os
 import duckdb
+import pandas as pd
 
 from dagster_project.schema_assets import response_schema_json, ResponseSchemaConfig
 from dagster_project.card_processing_assets import processed_card_json
@@ -194,45 +195,40 @@ def test_aggregated_results_json_to_db_robust_ingestion_and_export(tmp_path):
 
     # Assertions for CSV export (string-based to preserve literal quotes)
     assert csv_output_path.exists()
-    with open(csv_output_path, "r") as f:
-        csv_content = f.read()
 
-    print(csv_content)  # For debugging purposes
+    # Read CSV into pandas DataFrame for robust assertions
+    csv_df = pd.read_csv(csv_output_path)
 
-    # Check header row (order might vary due to dynamic select, but key columns should be there)
-    header_line = csv_content.splitlines()[0]
-    assert "company" in header_line
-    assert "website" in header_line
-    assert "full_name" in header_line
-    assert "email" in header_line
-    assert "phone" in header_line
-    assert "notes" in header_line
-    assert "title" in header_line
-    assert "address_1" in header_line
-    assert "products" in header_line
+    # Assertions for Company A
+    company_a_row = csv_df[csv_df["company"] == "Company A"].iloc[0]
+    assert company_a_row["website"] == "www.companya.com"
+    assert company_a_row["full_name"] == "John Doe"
+    assert company_a_row["email"] == "john.doe@companya.com"
+    assert company_a_row["phone"] == "'111-222-3333"
+    assert company_a_row["notes"] == "First contact"
+    assert pd.isna(company_a_row["title"])  # Check for NaN for missing title
 
-    # Check data rows for expected values and nulls (empty strings in CSV)
-    # Company A: All fields present, phone with leading single quote
-    assert (
-        r"Company A,www.companya.com,John Doe,john.doe@companya.com,'111-222-3333,First contact"
-        in csv_content.splitlines()[1]
-    )
+    # Assertions for Company B
+    company_b_row = csv_df[csv_df["company"] == "Company B"].iloc[0]
+    assert pd.isna(company_b_row["website"])
+    assert company_b_row["full_name"] == "Jane Smith"
+    assert pd.isna(company_b_row["phone"])
+    assert company_b_row["email"] == "jane.smith@companyb.com"
+    assert pd.isna(company_b_row["notes"])
+    assert company_b_row["title"] == "CEO"
+    assert company_b_row["address_1"] == "123 Main St"
 
-    # Company B: Missing website, phone; explicit null for notes
-    # Check for key values and empty strings for missing/null fields
-    assert "Company B" in csv_content
-    assert "Jane Smith" in csv_content
-    assert "jane.smith@companyb.com" in csv_content
-    # Check for empty strings where website and phone are missing
-    assert ",,Jane Smith" in csv_content  # Assuming website is before full_name
-    assert ",CEO," in csv_content  # Assuming title is after full_name
+    # Assertions for Company C
+    company_c_row = csv_df[csv_df["company"] == "Company C"].iloc[0]
+    assert pd.isna(company_c_row["phone"])
+    assert pd.isna(company_c_row["email"])
+    assert pd.isna(company_c_row["notes"])
+    assert pd.isna(company_c_row["title"])
+    assert pd.isna(company_c_row["address_1"])
+    assert company_c_row["website"] == "www.companyc.org"
+    assert company_c_row["full_name"] == "Peter Jones"
+    # Products column is a string in CSV, with inner quotes escaped
+    assert company_c_row["products"] == "[Product X, Product Y]"
 
-    # Company C: Missing phone, email, notes, title, address_1; has products
-    assert "Company C" in csv_content
-    assert "www.companyc.org" in csv_content
-    assert "Peter Jones" in csv_content
-    # Products as a string in CSV, with inner quotes escaped
-    assert '"[Product X, Product Y]"' in csv_content
-
-    # Ensure correct number of lines (header + 3 data rows)
-    assert len(csv_content.splitlines()) == 4
+    # Ensure correct number of rows
+    assert len(csv_df) == 3
