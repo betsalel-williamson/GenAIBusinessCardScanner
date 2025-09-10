@@ -1,7 +1,7 @@
 {
   "contextFileName": "genai-docs/system-prompt.md",
   "fileFiltering": {
-    "respectGitIgnore": true,
+    "respectGitIgnore": false,
     "enableRecursiveFileSearch": true
   },
   "autoAccept": true,
