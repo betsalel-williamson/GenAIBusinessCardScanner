@@ -2,8 +2,8 @@ import os
 import json
 from pathlib import Path
 import time
-import google.generativeai as genai
-from google.generativeai import protos as genai_protos
+import google.genai as genai
+from google.genai import types as genai_types
 from google.api_core import exceptions as google_exceptions
 from dagster import (
     ConfigurableResource,
@@ -18,7 +18,7 @@ class GeminiResource(ConfigurableResource):
     prompt_template_path: str = "config/system_prompt_template.md"
     model_name: str = "gemini-1.5-flash"
 
-    _model: genai.GenerativeModel
+    _client: genai.Client
     _log = get_dagster_logger()
 
     def _generate_prompt_from_schema(self, schema: dict) -> str:
@@ -36,18 +36,19 @@ class GeminiResource(ConfigurableResource):
         return template.replace("{{FIELD_DEFINITIONS}}", field_text)
 
     def _convert_json_schema_to_gemini_schema(
-        self, json_dict: dict
-    ) -> genai_protos.Schema:
+        self,
+        json_dict: dict,
+    ) -> genai_types.Schema:
         if not json_dict:
             return None
 
         type_map = {
-            "STRING": genai_protos.Type.STRING,
-            "NUMBER": genai_protos.Type.NUMBER,
-            "INTEGER": genai_protos.Type.INTEGER,
-            "BOOLEAN": genai_protos.Type.BOOLEAN,
-            "ARRAY": genai_protos.Type.ARRAY,
-            "OBJECT": genai_protos.Type.OBJECT,
+            "STRING": genai_types.Type.STRING,
+            "NUMBER": genai_types.Type.NUMBER,
+            "INTEGER": genai_types.Type.INTEGER,
+            "BOOLEAN": genai_types.Type.BOOLEAN,
+            "ARRAY": genai_types.Type.ARRAY,
+            "OBJECT": genai_types.Type.OBJECT,
         }
         json_type_str = json_dict.get("type", "").upper()
         gemini_type = type_map.get(json_type_str)
@@ -59,23 +60,22 @@ class GeminiResource(ConfigurableResource):
             "description": json_dict.get("description"),
             "format": json_dict.get("format"),
         }
-        if gemini_type == genai_protos.Type.OBJECT and "properties" in json_dict:
+        if gemini_type == genai_types.Type.OBJECT and "properties" in json_dict:
             props = {
                 k: self._convert_json_schema_to_gemini_schema(v)
                 for k, v in json_dict["properties"].items()
             }
             kwargs["properties"] = props
-        if gemini_type == genai_protos.Type.ARRAY and "items" in json_dict:
+        if gemini_type == genai_types.Type.ARRAY and "items" in json_dict:
             kwargs["items"] = self._convert_json_schema_to_gemini_schema(
                 json_dict["items"]
             )
 
         final_kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        return genai_protos.Schema(**final_kwargs)
+        return genai_types.Schema(**final_kwargs)
 
     def setup_for_execution(self, context: InitResourceContext) -> None:
-        genai.configure(api_key=self.api_key)
-        self._model = genai.GenerativeModel(self.model_name)
+        self._client = genai.Client(api_key=self.api_key)
         context.log.info(f"Gemini resource configured to use model: {self.model_name}")
 
     def process_single_pdf(self, pdf_path: str, schema: dict) -> dict:
@@ -84,21 +84,23 @@ class GeminiResource(ConfigurableResource):
         gemini_schema = self._convert_json_schema_to_gemini_schema(schema)
 
         pdf_bytes = Path(pdf_path).read_bytes()
-        file_part = genai_protos.Part(
-            inline_data=genai_protos.Blob(mime_type="application/pdf", data=pdf_bytes)
+        file_part = genai_types.Part(
+            inline_data=genai_types.Blob(mime_type="application/pdf", data=pdf_bytes)
         )
 
         prompt_parts = [system_prompt, f"Filename: {pdf_filename}", file_part]
 
-        generation_config = genai.GenerationConfig(
+        generation_config = genai_types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=gemini_schema,
             max_output_tokens=8192,
         )
 
         try:
-            response = self._model.generate_content(
-                prompt_parts, generation_config=generation_config
+            response = self._client.models.generate_content(
+                model=self.model_name,
+                contents=prompt_parts,
+                generation_config=generation_config,
             )
             return json.loads(response.text)
         except google_exceptions.ResourceExhausted as e:

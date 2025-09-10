@@ -2,14 +2,15 @@ import pytest
 from unittest.mock import patch, MagicMock
 import os
 from dagster_project.defs import GeminiResource
+import google.genai.types as genai_types
 
 
-@patch("google.generativeai.GenerativeModel")
-def test_gemini_resource(mock_generative_model):
+@patch("google.genai.Client")
+def test_gemini_resource(mock_gemini_client):
     """Test the Gemini resource."""
-    mock_model_instance = MagicMock()
-    mock_generative_model.return_value = mock_model_instance
-    mock_model_instance.generate_content.return_value.text = '{"foo": "bar"}'
+    mock_client_instance = MagicMock()
+    mock_gemini_client.return_value = mock_client_instance
+    mock_client_instance.models.generate_content.return_value.text = '{"foo": "bar"}'
 
     import tempfile
     import os
@@ -80,7 +81,7 @@ def test_process_single_pdf_handles_json_decode_error(mocker, sample_schema):
     mocker.patch.object(
         GeminiResource,
         "_convert_json_schema_to_gemini_schema",
-        return_value=MagicMock(),
+        return_value=genai_types.Schema(type=genai_types.Type.OBJECT, properties={}),
     )
     mocker.patch(
         "pathlib.Path.read_bytes",
@@ -90,11 +91,15 @@ def test_process_single_pdf_handles_json_decode_error(mocker, sample_schema):
     # Mock the Gemini model's response
     mock_response = MagicMock()
     mock_response.text = "this is not valid json"  # Malformed response
-    mock_model = MagicMock()
-    mock_model.generate_content.return_value = mock_response
+
+    # Mock the genai.Client and its generate_content method
+    mock_gemini_client = mocker.patch("google.genai.Client")
+    mock_client_instance = MagicMock()
+    mock_gemini_client.return_value = mock_client_instance
+    mock_client_instance.models.generate_content.return_value = mock_response
 
     resource = GeminiResource(api_key="test-key")
-    resource._model = mock_model  # Inject the mock model
+    resource.setup_for_execution(MagicMock())  # Initialize _client
 
     # Spy on the logger
     log_spy = mocker.spy(resource._log, "error")
