@@ -1,7 +1,7 @@
 {
   "contextFileName": "genai-specs/README.md",
   "fileFiltering": {
-    "respectGitIgnore": false,
+    "respectGitIgnore": true,
     "enableRecursiveFileSearch": true
   },
   "autoAccept": true,
